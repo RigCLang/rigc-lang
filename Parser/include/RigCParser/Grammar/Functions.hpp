@@ -14,6 +14,11 @@ struct CodeBlock
 {
 };
 
+struct ReturnStatement
+	:
+	p::seq< RetKeyword, opt_ws, Expression >
+{};
+
 struct ParamDefinition
 	: p::seq<
 		Name,

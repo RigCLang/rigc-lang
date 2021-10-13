@@ -24,6 +24,7 @@
 			"name": "ParserApp",
 			"type": "app",
 			"language": "C++20",
+			"includeFolders": "ParserApp/include",
 			"files": [
 				"ParserApp/include/RigCParserApp/**.hpp",
 				"ParserApp/src/**.cpp"
@@ -31,8 +32,10 @@
 			"dependencies": [ "self:Parser" ]
 		},
 		{
-			"name": "Intepreter",
+			"name": "Interpreter",
+			"language": "C++20",
 			"type": "app",
+			"includeFolders": "Interpreter/include",
 			"files": [
 				"Interpreter/include/RigCInterpreter/**.hpp",
 				"Interpreter/src/**.cpp"

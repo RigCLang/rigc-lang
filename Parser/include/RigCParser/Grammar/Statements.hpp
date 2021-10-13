@@ -14,6 +14,7 @@ namespace rigc
 struct NonExpression
 	:
 	p::sor<
+		ReturnStatement,
 		VariableDefinition
 	>
 {

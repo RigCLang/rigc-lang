@@ -20,6 +20,7 @@ DEFINE_KEYWORD(Else,	'e','l','s','e');
 DEFINE_KEYWORD(While,	'w','h','i','l','e');
 DEFINE_KEYWORD(Do,		'd','o');
 DEFINE_KEYWORD(For,		'f','o','r');
+DEFINE_KEYWORD(Ret,		'r','e','t');
 
 }
 
