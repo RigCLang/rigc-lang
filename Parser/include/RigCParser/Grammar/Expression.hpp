@@ -1,9 +1,9 @@
 #pragma once
 
-#include RIGC_PCH
+#include RIGCPARSER_PCH
 
-#include <RigC/Grammar/Keywords.hpp>
-#include <RigC/Grammar/Tokens.hpp>
+#include <RigCParser/Grammar/Keywords.hpp>
+#include <RigCParser/Grammar/Tokens.hpp>
 
 namespace rigc
 {

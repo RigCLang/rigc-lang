@@ -2,17 +2,47 @@
 	"name": "RigC",
 	"projects": [
 		{
-			"name": "RigC",
+			"name": "Parser",
+			"type": "static lib",
+			"language": "C++20",
+			"files": [
+				"Parser/include/RigC/**.hpp",
+				"Parser/src/**.cpp"
+			],
+			"includeFolders": { "public": "Parser/include" },
+			"dependencies": { "public": [ "pegtl" ] },
+			"defines": {
+				"interface": "RIGCPARSER_PCH=<RigCParser/RigCParserPCH.hpp>"
+			},
+			"pch": {
+				"header": "Parser/include/RigCParser/RigCParserPCH.hpp",
+				"source": "Parser/src/RigCParserPCH.cpp",
+				"definition": "RIGCPARSER_PCH"
+			}
+		},
+		{
+			"name": "ParserApp",
 			"type": "app",
 			"language": "C++20",
-			"files": [ "include/RigC/**.hpp", "src/**.cpp" ],
-			"includeFolders": [ "include" ],
-			"dependencies": [ "pegtl" ],
+			"files": [
+				"ParserApp/include/RigCParserApp/**.hpp",
+				"ParserApp/src/**.cpp"
+			],
+			"dependencies": [ "self:Parser" ]
+		},
+		{
+			"name": "Intepreter",
+			"type": "app",
+			"files": [
+				"Interpreter/include/RigCInterpreter/**.hpp",
+				"Interpreter/src/**.cpp"
+			],
 			"pch": {
-				"header": "include/RigC/RigCPCH.hpp",
-				"source": "src/RigCPCH.cpp",
-				"definition": "RIGC_PCH"
-			}
+				"header": "Interpreter/include/RigCInterpreter/RigCInterpreterPCH.hpp",
+				"source": "Interpreter/src/RigCInterpreterPCH.cpp",
+				"definition": "RIGCINTERPRETER_PCH"
+			},
+			"dependencies": [ "self:Parser" ]
 		}
 	]
 }

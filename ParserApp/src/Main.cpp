@@ -1,6 +1,4 @@
-#include RIGC_PCH
-
-#include <RigC/Grammar.hpp>
+#include <RigCParser/Grammar.hpp>
 
 int main(int argc, char *argv[])
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGC_PCH
+#include RIGCPARSER_PCH
 
 namespace rigc
 {

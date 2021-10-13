@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGC_PCH
+#include RIGCPARSER_PCH
 
 #define DEFINE_KEYWORD(name, ...) \
 	struct name##Keyword \

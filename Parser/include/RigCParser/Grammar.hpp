@@ -1,11 +1,11 @@
 #pragma once
 
-#include RIGC_PCH
+#include RIGCPARSER_PCH
 
-#include <RigC/Grammar/Characters.hpp>
-#include <RigC/Grammar/Keywords.hpp>
-#include <RigC/Grammar/Statements.hpp>
-#include <RigC/Grammar/Tokens.hpp>
+#include <RigCParser/Grammar/Characters.hpp>
+#include <RigCParser/Grammar/Keywords.hpp>
+#include <RigCParser/Grammar/Statements.hpp>
+#include <RigCParser/Grammar/Tokens.hpp>
 
 namespace rigc
 {

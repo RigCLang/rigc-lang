@@ -1,8 +1,8 @@
 #pragma once
 
-#include RIGC_PCH
+#include RIGCPARSER_PCH
 
-#include <RigC/Grammar/Keywords.hpp>
+#include <RigCParser/Grammar/Keywords.hpp>
 
 namespace rigc
 {

@@ -1,12 +1,12 @@
 #pragma once
 
-#include RIGC_PCH
+#include RIGCPARSER_PCH
 
-#include <RigC/Grammar/Parts.hpp>
-#include <RigC/Grammar/Variables.hpp>
-#include <RigC/Grammar/Conditionals.hpp>
-#include <RigC/Grammar/Loops.hpp>
-#include <RigC/Grammar/Functions.hpp>
+#include <RigCParser/Grammar/Parts.hpp>
+#include <RigCParser/Grammar/Variables.hpp>
+#include <RigCParser/Grammar/Conditionals.hpp>
+#include <RigCParser/Grammar/Loops.hpp>
+#include <RigCParser/Grammar/Functions.hpp>
 
 namespace rigc
 {
