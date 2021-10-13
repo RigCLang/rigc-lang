@@ -21,8 +21,34 @@ struct Name
 	: p::identifier
 {};
 
+struct Type;
+
+struct TemplateParam
+	:
+	p::seq<Type>
+{
+};
+
+struct TemplateParamsInner
+	:
+	p::seq<
+		TemplateParam, 
+		p::opt< opt_ws,
+			p::opt<  p::seq< p::one<','>, opt_ws, TemplateParam>  >
+		>
+	>
+{
+};
+
+struct TemplateParams
+	:
+	p::seq< p::one<'<'>, opt_ws, TemplateParamsInner, opt_ws, p::one<'>'> >
+{
+};
+
 struct Type
-	: Name
+	:
+	p::seq< Name, p::opt<opt_ws, TemplateParams> >
 {};
 
 struct DeclType
