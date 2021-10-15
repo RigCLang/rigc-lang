@@ -1,0 +1,14 @@
+func square(x) { ret x*x; }
+
+func main {
+	var arr = [10, 20, square(10), 40, 50];
+
+	(square)(1);
+
+	Int i = 0;
+	while (i < arr.length())
+	{
+		print("Arr[{}]: {}", i, arr[i]);
+		++i;
+	}
+}

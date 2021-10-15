@@ -4,23 +4,13 @@
 
 #include <RigCParser/Grammar/Keywords.hpp>
 #include <RigCParser/Grammar/Tokens.hpp>
+#include <RigCParser/Grammar/Operators.hpp>
 
 namespace rigc
 {
 
 struct Expression;
-struct ExpressionCore;
 struct ExprInParen;
-
-struct TwoSidedOp
-	: p::seq<opt_ws, TwoArgOper, opt_ws, Expression>
-{
-};
-
-struct SelectOp
-	: p::seq<opt_ws, p::one<'?'>, opt_ws, Expression, opt_ws, p::one<':'>, Expression>
-{
-};
 
 struct Digits
 	: p::plus<p::digit>
@@ -29,6 +19,13 @@ struct Digits
 
 struct IntegerLiteral
 	: Digits
+{
+};
+
+struct ListOfArrayElements;
+
+struct ArrayLiteral
+	: p::seq< p::one<'['>, opt_ws, ListOfArrayElements, opt_ws, p::one<']'> >
 {
 };
 
@@ -52,68 +49,91 @@ struct StringLiteral
 {
 };
 
-struct VariableModification2S
-	: p::seq< Name, opt_ws, ModOper2S, opt_ws, Expression>
-{
-};
-
-struct VariableModification1S
+template <typename... Operators>
+struct AtomicExprPart
 	:
-	p::sor<
-		p::seq< ModOper1S, opt_ws, ExprInParen >,
-		p::seq< ExprInParen , opt_ws, ModOper1S>
+	p::seq<
+		opt_ws,
+		p::sor<
+			Operators...,
+			ArrayLiteral,
+			IntegerLiteral,
+			StringLiteral,
+			struct FunctionCall,
+			Name
+		>,
+		opt_ws
 	>
 {
 };
 
-struct VariableModification
-	: p::sor<
-		VariableModification1S,
-		VariableModification2S
-	>
-{
-};
+struct AtomicExprPartFirst		: AtomicExprPart<> {};
+struct AtomicExprPartMid		: AtomicExprPart<InfixOperator> {};
+struct AtomicExprPartMidNoComma	: AtomicExprPart<InfixOperatorNoComma> {};
 
-
-struct ExpressionCore
+template <typename AtomicsMid>
+struct ExpressionBase
 	:
 	p::seq<
 		p::sor<
-			IntegerLiteral,
-			StringLiteral,
-			VariableModification,
-			struct FunctionCall,
-			p::identifier
-		>,
-		p::opt<
+				p::plus<PrefixOperator>,
+				AtomicExprPartFirst,
+				ExprInParen
+			>,
+		p::star<
 			p::sor<
-				SelectOp,
-				TwoSidedOp
+				AtomicsMid,
+				ExprInParen
 			>
+		>,
+		p::star<
+			PostfixOperator
 		>
 	>
 {
 };
 
-struct ExprInParen
-	: p::seq< p::one<'('>, opt_ws, ExpressionCore, opt_ws, p::one<')'> >
-{
-};
-
 struct Expression
-	: p::sor< ExprInParen, ExpressionCore >
+	: ExpressionBase<AtomicExprPartMid>
+{};
+
+struct ExprWithoutComma
+	: ExpressionBase<AtomicExprPartMidNoComma>
+{};
+
+struct ExprInParen
+	: p::seq<p::one<'('>, opt_ws, Expression, opt_ws, p::one<')'> >
 {
 };
 
-struct Arguments
-	:
-	p::seq< Expression, opt_ws, p::opt< p::one<','>, opt_ws, Arguments > >
+struct ArrayElement	: ExprWithoutComma {};
+struct FunctionArg	: ExprWithoutComma {};
+
+template <typename ElementType>
+struct ListOfExpressions
+	: p::opt<
+		ElementType, opt_ws,
+		p::star<
+			p::seq<
+				CommaOp, opt_ws,
+				ElementType
+			>
+		>,
+		opt_ws,
+		p::opt<CommaOp>
+	>
 {
 };
+
+struct ListOfArrayElements		: ListOfExpressions<ArrayElement> {};
+struct ListOfFunctionArguments	: ListOfExpressions<FunctionArg> {};
 
 struct FunctionCall
 	:
-	p::seq<Name, opt_ws, p::one<'('>, opt_ws, p::opt< Arguments >, opt_ws, p::one<')'> >
+	p::seq<
+		p::sor<Name, ExprInParen>,
+		opt_ws, p::one<'('>, opt_ws, p::opt< ListOfFunctionArguments >, opt_ws, p::one<')'>
+	>
 {
 };
 

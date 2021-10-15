@@ -12,9 +12,23 @@ struct whitespace
 {
 };
 
-using ws = whitespace;
+struct Comment
+	: p::seq< p::string<'/','/'>, p::until< p::eolf > >
+{
+};
 
-using opt_ws = p::opt<ws>;
+struct ws
+	: p::sor<
+		Comment,
+		p::seq< p::plus<whitespace>, p::opt<Comment> >
+	>
+{
+
+};
+
+// using ws = whitespace;
+
+using opt_ws = p::star<ws>;
 
 ///////////////////////////////////////////////
 struct char_semicolon
@@ -28,54 +42,6 @@ struct Semicolon
 {
 
 };
-
-//////////////////////////////////////////////
-struct TwoArgOper
-	: p::sor<
-		p::string< '+' >,
-		p::string< '-' >,
-		p::string< '*' >,
-		p::string< '/' >,
-		p::string< '%' >,
-		p::string< '=','=' >,
-		p::string< '!','=' >,
-		p::string< '>','>' >,
-		p::string< '<','<' >,
-		p::string< '>' >,
-		p::string< '<' >,
-		p::string< '>','=' >,
-		p::string< '<','=' >,
-		p::string< '&' >,
-		p::string< '|' >,
-		p::string< '^' >
-	>
-{
-};
-
-struct ModOper2S
-	: p::sor<
-		p::string< '+','=' >,
-		p::string< '-','=' >,
-		p::string< '*','=' >,
-		p::string< '/','=' >,
-		p::string< '%','=' >,
-		p::string< '>','>','=' >,
-		p::string< '<','<','=' >,
-		p::string< '&','=' >,
-		p::string< '|','=' >,
-		p::string< '^','=' >
-	>
-{
-};
-
-struct ModOper1S
-	: p::sor<
-		p::string< '+','+' >,
-		p::string< '-','-' >
-	>
-{
-};
-
 
 
 }

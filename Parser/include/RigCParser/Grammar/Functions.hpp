@@ -19,7 +19,7 @@ struct ReturnStatement
 	p::seq< RetKeyword, opt_ws, Expression >
 {};
 
-struct ParamDefinition
+struct Parameter
 	: p::seq<
 		Name,
 		p::opt< opt_ws, p::one<':'>, opt_ws, Type >,
@@ -30,7 +30,7 @@ struct ParamDefinition
 
 struct Params
 	:
-	p::seq< ParamDefinition, opt_ws, p::opt< p::one<','>, opt_ws, ParamDefinition > >
+	p::seq< Parameter, opt_ws, p::opt< p::one<','>, opt_ws, Parameter > >
 {
 };
 

@@ -30,6 +30,7 @@ ParserNodePtr parse(p::file_input<> &in)
 		// Generic catch block for other exceptions
 		std::cerr << e.what() << std::endl;
 	}
+	return nullptr;
 }
 
 }
