@@ -45,7 +45,7 @@ struct StringLiteralContents
 
 struct StringLiteral
 	:
-	p::seq< p::one<'"'>, p::star<StringLiteralContents>, p::one<'"'> >
+	p::if_must< p::one<'"'>, p::star<StringLiteralContents>, p::one<'"'> >
 {
 };
 
@@ -59,6 +59,7 @@ struct AtomicExprPart
 			ArrayLiteral,
 			IntegerLiteral,
 			StringLiteral,
+			struct ClosureDefinition,
 			struct FunctionCall,
 			Name
 		>,

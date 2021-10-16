@@ -8,7 +8,7 @@ namespace rigc
 {
 
 struct PackageImportNames
-	: p::seq< p::identifier, p::opt< p::seq< p::one<'.'>, PackageImportNames> > >
+	: p::seq< struct Name, p::opt< p::seq< p::one<'.'>, PackageImportNames> > >
 {
 };
 

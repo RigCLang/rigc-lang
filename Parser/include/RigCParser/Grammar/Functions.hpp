@@ -16,7 +16,7 @@ struct CodeBlock
 
 struct ReturnStatement
 	:
-	p::seq< RetKeyword, opt_ws, Expression >
+	p::if_must< RetKeyword, opt_ws, Expression >
 {};
 
 struct Parameter
@@ -35,14 +35,32 @@ struct Params
 };
 
 struct FunctionParams
-	: p::seq< p::one<'('>, opt_ws, p::opt<Params>, opt_ws, p::one<')'> >
+	: p::if_must< p::one<'('>, opt_ws, p::opt<Params>, opt_ws, p::one<')'> >
 {
 };
 
 struct FunctionDefinition
-	: p::seq< FuncKeyword, ws, Name, opt_ws, p::opt<FunctionParams>, opt_ws, CodeBlock >
+	: p::if_must< FuncKeyword, ws, Name, opt_ws, p::opt<FunctionParams>, opt_ws, CodeBlock >
 {
 };
+
+struct ClosureDefinition
+	: p::seq<
+		p::sor<
+			Name,
+			FunctionParams
+		>,
+		opt_ws,
+		p::if_must<
+			p::string<'=','>'>,
+			opt_ws,
+			p::sor<
+				Expression,
+				CodeBlock
+			>
+		>
+	>
+{};
 
 
 }

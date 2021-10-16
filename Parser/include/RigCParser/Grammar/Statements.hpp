@@ -50,7 +50,7 @@ struct Statements
 };
 
 struct ImportStatement
-	: p::seq< FromKeyword, ws, PackageImportFullName, ws, ImportKeyword, ws, p::identifier, Semicolon>
+	: p::if_must< FromKeyword, ws, PackageImportFullName, ws, ImportKeyword, ws, Name, Semicolon>
 {
 };
 

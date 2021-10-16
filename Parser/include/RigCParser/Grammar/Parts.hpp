@@ -24,7 +24,7 @@ struct Assignment
 };
 
 struct Initialization
-	: p::seq< opt_ws, p::one<'='>, opt_ws, InitializerValue >
+	: p::seq< opt_ws, p::if_must< p::one<'='>, opt_ws, InitializerValue > >
 {
 };
 
