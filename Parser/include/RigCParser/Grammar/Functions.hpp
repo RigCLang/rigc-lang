@@ -35,7 +35,7 @@ struct Params
 };
 
 struct FunctionParams
-	: p::if_must< p::one<'('>, opt_ws, p::opt<Params>, opt_ws, p::one<')'> >
+	: p::seq< p::one<'('>, opt_ws, p::opt<Params>, opt_ws, p::one<')'> >
 {
 };
 

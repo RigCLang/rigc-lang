@@ -1,6 +1,7 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/Executors/All.hpp>
+#include <RigCInterpreter/Executors/ExpressionExecutor.hpp>
 
 #include <RigCInterpreter/VM.hpp>
 
@@ -12,6 +13,7 @@ namespace rigc::vm
 std::map<ExecutorTrigger, ExecutorFunction*> Executors = {
 	MAKE_EXECUTOR(CodeBlock,			executeCodeBlock),
 	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
+	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
 	MAKE_EXECUTOR(Expression,			evaluateExpression),
 	MAKE_EXECUTOR(FunctionCall,			evaluateFunctionCall),
 	MAKE_EXECUTOR(Name,					evaluateName),
@@ -86,6 +88,27 @@ OptValue executeIfStatement(Instance &inst_, rigc::ParserNode& stmt_)
 }
 
 ////////////////////////////////////////
+OptValue executeWhileStatement(Instance &inst_, rigc::ParserNode& stmt_)
+{
+	auto& cond = *findElem<rigc::Condition>(stmt_, false);
+	auto& expr = *findElem<rigc::Expression>(cond, false);
+
+	auto body = findElem<rigc::CodeBlock>(stmt_, false);
+	if (!body)
+		body = findElem<rigc::Statement>(stmt_, false);
+
+	auto result = inst_.evaluate(expr);
+	while (result.has_value() && result.value().as<bool>(false))
+	{	
+		inst_.evaluate(*body);
+
+		result = inst_.evaluate(expr);
+	}
+
+	return {};
+}
+
+////////////////////////////////////////
 void print(Instance &inst_, rigc::ParserNode& args)
 {
 	for (auto const& c : args.children)
@@ -93,7 +116,7 @@ void print(Instance &inst_, rigc::ParserNode& args)
 		OptValue optVal = inst_.evaluate(*c);
 		if (optVal.has_value())
 		{
-			auto& val = *optVal;
+			Value& val = optVal->byValue();
 
 			if (val.is<int>())
 				std::cout << val.as<int>();
@@ -127,38 +150,22 @@ OptValue evaluateFunctionCall(Instance &inst_, rigc::ParserNode& stmt_)
 ////////////////////////////////////////
 OptValue evaluateExpression(Instance &inst_, rigc::ParserNode& expr_)
 {
-	size_t startStackSize = inst_.stack.size();
-	// std::cout << "Evaluating expression: " << expr_.string_view() << std::endl;
-
-	auto const& c = expr_.children;
-	for (auto const & subExpr : expr_.children) {
-		inst_.evaluate(*subExpr);
-	}
-
-	OptValue result;
-	if (!inst_.stack.empty())
-	{
-		result = inst_.stack.top();
-		while (inst_.stack.size() > startStackSize)
-			inst_.stack.pop();
-
-		inst_.stack.push(result.value());
-	}
-	
-	return result;
+	return ExpressionExecutor{inst_, expr_}.evaluate();
 }
 
 ////////////////////////////////////////
 OptValue evaluateName(Instance &inst_, rigc::ParserNode& expr_)
 {
-	Value* var = inst_.findVariableByName(expr_.string_view());
+	Ref<Value> ref = inst_.findVariableByName(expr_.string_view());
 
-	if (!var) {
+	if (!ref) {
 		throw std::runtime_error("No variable with name \"" + expr_.string() + "\"");
 	}
 
-	inst_.stack.push( *var );
-	return *var;
+	Value var(ref);
+
+	inst_.stack.push( var );
+	return var;
 }
 
 ////////////////////////////////////////

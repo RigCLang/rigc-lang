@@ -16,6 +16,7 @@ extern std::map<ExecutorTrigger, ExecutorFunction*> Executors;
 
 OptValue executeCodeBlock(Instance &inst_, rigc::ParserNode& stmt_);
 OptValue executeIfStatement(Instance &inst_, rigc::ParserNode& stmt_);
+OptValue executeWhileStatement(Instance &inst_, rigc::ParserNode& stmt_);
 
 OptValue evaluateFunctionCall(Instance &inst_, rigc::ParserNode& stmt_);
 OptValue evaluateExpression(Instance &inst_, rigc::ParserNode& stmt_);
