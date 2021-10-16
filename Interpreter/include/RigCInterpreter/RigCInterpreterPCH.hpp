@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <map>
 #include <optional>
+#include <variant>
 #include <ranges>
 #include <stack>
 #include <string>

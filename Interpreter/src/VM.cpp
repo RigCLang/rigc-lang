@@ -63,9 +63,13 @@ GlobalFunctions Instance::discoverGlobalFunctions(rigc::ParserNodePtr & root)
 //////////////////////////////////////////
 void Instance::executeFunction(rigc::ParserNode& func_)
 {
-	std::cout << "Executing " << funcName(func_) << std::endl;
+	this->pushScope();
+
+	// std::cout << "Executing " << funcName(func_) << std::endl;
 
 	this->evaluate( *findElem<rigc::CodeBlock>(func_) );
+
+	this->popScope();
 }
 
 //////////////////////////////////////////
@@ -77,6 +81,33 @@ OptValue Instance::evaluate(rigc::ParserNode& stmt_)
 	
 	std::cout << "No executors for \"" << stmt_.type << "\": " << stmt_.string_view() << std::endl;
 	return {};
+}
+
+//////////////////////////////////////////
+Value* Instance::findVariableByName(std::string_view name_)
+{
+	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+	{
+		auto& vars = it->get()->variables;
+		auto varIt = vars.find(name_);
+
+		if (varIt != vars.end())
+			return &(varIt->second);
+	}
+
+	return nullptr;
+}
+
+//////////////////////////////////////////
+void Instance::createVariable(std::string_view name_, Value value_)
+{
+	auto& vars = scopes.back()->variables;
+	if (vars.find(name_) != vars.end())
+	{
+		throw std::runtime_error("Variable with name \"" + std::string(name_) + "\" already defined.");
+	}
+
+	vars[name_] = std::move(value_);
 }
 
 

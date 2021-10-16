@@ -2,18 +2,13 @@
 
 #include RIGCINTERPRETER_PCH
 
+#include <RigCInterpreter/Value.hpp>
+#include <RigCInterpreter/Scope.hpp>
+
 namespace rigc::vm
 {
 struct Instance;
 using GlobalFunctions = std::vector< rigc::ParserNode *>;
-
-
-struct Value
-{
-	int32_t val;
-};
-
-using OptValue = std::optional<Value>;
 
 struct Instance
 {
@@ -22,7 +17,29 @@ struct Instance
 	void executeFunction(rigc::ParserNode& func_);
 	OptValue evaluate(rigc::ParserNode& stmt_);
 
+	Value* findVariableByName(std::string_view name_);
+
+	void createVariable(std::string_view name_, Value value_);
+
+	Scope& pushScope() {
+		auto scope = std::make_unique<Scope>();
+		auto* scopePtr = scope.get();
+
+		scopes.push_back(std::move(scope));
+
+		return *scopePtr;
+	}
+
+	void popScope()
+	{
+		if (!scopes.empty())
+		{
+			scopes.erase(scopes.begin() + scopes.size() - 1);
+		}
+	}
+
 	std::stack<Value> stack;
+	std::vector< std::unique_ptr<Scope> > scopes;
 private:
 
 	GlobalFunctions discoverGlobalFunctions(rigc::ParserNodePtr& root);	

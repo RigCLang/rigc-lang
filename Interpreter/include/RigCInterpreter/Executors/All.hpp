@@ -21,6 +21,11 @@ OptValue evaluateFunctionCall(Instance &inst_, rigc::ParserNode& stmt_);
 OptValue evaluateExpression(Instance &inst_, rigc::ParserNode& stmt_);
 
 OptValue evaluateName(Instance &inst_, rigc::ParserNode& stmt_);
-OptValue evaluateIntegralLiteral(Instance &inst_, rigc::ParserNode& stmt_);
+OptValue evaluateIntegerLiteral(Instance &inst_, rigc::ParserNode& stmt_);
+OptValue evaluateStringLiteral(Instance &inst_, rigc::ParserNode& stmt_);
+OptValue evaluateArrayLiteral(Instance &inst_, rigc::ParserNode& stmt_);
+OptValue evaluateArrayElement(Instance &inst_, rigc::ParserNode& stmt_);
+
+OptValue evaluateVariableDefinition(Instance &inst_, rigc::ParserNode& stmt_);
 
 }

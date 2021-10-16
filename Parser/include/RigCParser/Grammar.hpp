@@ -52,7 +52,9 @@ using Selector = p::parse_tree::selector< Rule,
 			InfixOperatorNoComma,
 			PostfixOperator,
 			IntegerLiteral,
-			StringLiteral
+			StringLiteral,
+			ArrayLiteral,
+			ListOfFunctionArguments
 		>
 	>;
 
