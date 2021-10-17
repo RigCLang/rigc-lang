@@ -102,12 +102,10 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 //////////////////////////////////////////
 Value* Instance::findVariableByName(std::string_view name_)
 {
-	std::string n(name_);
-
 	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
 	{
 		auto& vars = it->get()->variables;
-		auto varIt = vars.find(n);
+		auto varIt = vars.find(name_);
 
 		if (varIt != vars.end())
 			return &(varIt->second);
@@ -134,15 +132,13 @@ TypeBase const* Instance::findType(std::string_view name_)
 //////////////////////////////////////////
 void Instance::createVariable(std::string_view name_, Value value_)
 {
-	std::string n(name_);
-
 	auto& vars = scopes.back()->variables;
-	if (vars.find(n) != vars.end())
+	if (vars.find(name_) != vars.end())
 	{
 		throw std::runtime_error("Variable with name \"" + std::string(name_) + "\" already defined.");
 	}
 
-	vars[n] = std::move(value_);
+	vars[std::string(name_)] = std::move(value_);
 }
 
 

@@ -65,9 +65,9 @@ struct Scope
 	size_t initialStackSize = 0;
 
 	std::map<TypeBase*, Impls*>						impls;
-	std::map<std::string, FunctionOverloads>		functions;
-	std::map<std::string, Value>					variables;
-	std::map<std::string, TypeBase const*>			typeAliases;
+	std::map<std::string, FunctionOverloads, std::less<>>		functions;
+	std::map<std::string, Value, std::less<>>					variables;
+	std::map<std::string, TypeBase const*, std::less<>>			typeAliases;
 
 	static StaticString<char, 512> formatOperatorName(std::string_view opName_, Operator::Type type_)
 	{
@@ -91,7 +91,7 @@ struct Scope
 
 	FunctionOverloads const* findFunction(std::string_view funcName_) const
 	{
-		auto it = functions.find(std::string(funcName_));
+		auto it = functions.find(funcName_);
 		if (it != functions.end())
 			return &it->second;
 		
@@ -100,7 +100,7 @@ struct Scope
 
 	TypeBase const* findType(std::string_view typeName_) const
 	{
-		auto it = typeAliases.find(std::string(typeName_));
+		auto it = typeAliases.find(typeName_);
 		if (it != typeAliases.end())
 			return it->second;
 		
