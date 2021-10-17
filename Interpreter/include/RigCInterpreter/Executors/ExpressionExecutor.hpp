@@ -38,13 +38,13 @@ public:
 		}
 	};
 
-	ExpressionExecutor(Instance& vm_, rigc::ParserNode& ctx_)
+	ExpressionExecutor(Instance& vm_, rigc::ParserNode const& ctx_)
 		: vm(vm_), ctx(ctx_)
 	{
 	}
 
 	Instance& vm;
-	rigc::ParserNode& ctx;
+	rigc::ParserNode const& ctx;
 
 	OptValue evaluate();
 

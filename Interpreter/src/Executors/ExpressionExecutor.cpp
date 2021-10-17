@@ -139,82 +139,70 @@ Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, 
 
 	auto invOp = [&] { throw std::runtime_error("Invalid operator \"" + std::string(op_) + "\" for the type (TODO)."); };
 
-	//////////////////////// MATH /////////////////////////
-	if (op_ == "+")
-	{
-		if (lhs.byValue().is<int>())
-			return Value( lhs.byValue().as<int>() + rhs.byValue().as<int>() );
-		else if (lhs.byValue().is<std::string>())
-			return Value( lhs.byValue().as<std::string>() + rhs.byValue().as<std::string>() );
-		else
-			invOp();
-	}
-	else if (op_ == "-")
-	{
-		if (lhs.byValue().is<int>())
-			return Value( lhs.byValue().as<int>() - rhs.byValue().as<int>() );
-		else
-			invOp();
-	}
-	else if (op_ == "*")
-	{
-		if (lhs.byValue().is<int>())
-			return Value( lhs.byValue().as<int>() * rhs.byValue().as<int>() );
-		else
-			invOp();
-	}
-	else if (op_ == "/")
-	{
-		if (lhs.byValue().is<int>())
-			return Value( lhs.byValue().as<int>() / rhs.byValue().as<int>() );
-		else
-			invOp();
-	}
-	else if (op_ == "%")
-	{
-		if (lhs.byValue().is<int>())
-			return Value( lhs.byValue().as<int>() / rhs.byValue().as<int>() );
-		else
-			invOp();
-	}
-	//////////////////////// Relational /////////////////////////
-	else if (op_ == "<")
-	{
-		if (lhs.byValue().is<int>())
-			return Value(lhs.byValue().as<int>() < rhs.byValue().as<int>());
-		else
-			invOp();
-	}
-	else if (op_ == "<=")
-	{
-		if (lhs.byValue().is<int>())
-			return Value(lhs.byValue().as<int>() <= rhs.byValue().as<int>());
-		else
-			invOp();
-	}
-	else if (op_ == ">")
-	{
-		if (lhs.byValue().is<int>())
-			return Value(lhs.byValue().as<int>() > rhs.byValue().as<int>());
-		else
-			invOp();
-	}
-	else if (op_ == ">=")
-	{
-		if (lhs.byValue().is<int>())
-			return Value(lhs.byValue().as<int>() >= rhs.byValue().as<int>());
-		else
-			invOp();
-	}
-	//////////////////////// ASSIGNMENT /////////////////////////
-	else if (op_ == "=")
-	{
-		if (!lhs.isRef())
-			throw std::runtime_error("lhs of operator " + std::string(op_) + " has to be an lvalue");
+	FunctionParamTypes types;
+	types[0] = lhs.getType();
+	types[1] = rhs.getType();
 
-		lhs.byValue() = rhs.byValue();
-		return Value( lhs );
+	//////////////////////// MATH /////////////////////////
+	// if (op_ == "+" || op_ == "-" || op_ == "*" || op_ == "/" || = "=")
+	{
+		if (auto overloads = vm.univeralScope().findOperator(op_, Operator::Infix))
+		{
+			if (auto func = findOverload(*overloads, types, 2))
+			{
+				Function::Args args;
+				args[0] = lhs;
+				args[1] = rhs;
+				return func->invoke(vm, args, 2).value();
+			}
+		}
+		invOp();
 	}
+	// else if (op_ == "%")
+	// {
+	// 	if (lhs.byValue().is<int>())
+	// 		return Value( lhs.byValue().as<int>() / rhs.byValue().as<int>() );
+	// 	else
+	// 		invOp();
+	// }
+	// //////////////////////// Relational /////////////////////////
+	// else if (op_ == "<")
+	// {
+	// 	if (lhs.byValue().is<int>())
+	// 		return Value(lhs.byValue().as<int>() < rhs.byValue().as<int>());
+	// 	else
+	// 		invOp();
+	// }
+	// else if (op_ == "<=")
+	// {
+	// 	if (lhs.byValue().is<int>())
+	// 		return Value(lhs.byValue().as<int>() <= rhs.byValue().as<int>());
+	// 	else
+	// 		invOp();
+	// }
+	// else if (op_ == ">")
+	// {
+	// 	if (lhs.byValue().is<int>())
+	// 		return Value(lhs.byValue().as<int>() > rhs.byValue().as<int>());
+	// 	else
+	// 		invOp();
+	// }
+	// else if (op_ == ">=")
+	// {
+	// 	if (lhs.byValue().is<int>())
+	// 		return Value(lhs.byValue().as<int>() >= rhs.byValue().as<int>());
+	// 	else
+	// 		invOp();
+	// }
+	// //////////////////////// ASSIGNMENT /////////////////////////
+	// else if (op_ == "=")
+	// {
+	// 	if (!lhs.isRef())
+	// 		throw std::runtime_error("lhs of operator " + std::string(op_) + " has to be an lvalue");
+
+	// 	lhs.byValue() = rhs.byValue();
+	// 	return Value( lhs );
+	// }
 
 	return {};
 }

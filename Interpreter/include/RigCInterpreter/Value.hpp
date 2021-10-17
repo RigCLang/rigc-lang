@@ -2,6 +2,8 @@
 
 #include RIGCINTERPRETER_PCH
 
+#include <RigCInterpreter/Type.hpp>
+
 namespace rigc::vm
 {
 
@@ -49,7 +51,32 @@ struct Value
 			Ref<Value>
 		>;
 
-	Variants value;
+	Variants	value;
+	void*		data;
+	DeclType	type;
+
+	// Temp:
+	void* blob() const {
+		return data;
+	}
+
+	DeclType const& getType() const {
+		return type;
+	}
+
+	std::string_view typeName() const {
+		return type.decay().type->name;
+	}
+
+	template <typename T>
+	T& view() {
+		return *reinterpret_cast<T*>(data);
+	}
+
+	template <typename T>
+	T const& view() const {
+		return *reinterpret_cast<T*>(data);
+	}
 
 	Value() = default;
 

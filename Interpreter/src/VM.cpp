@@ -29,6 +29,9 @@ int runProgram(rigc::ParserNodePtr & root)
 //////////////////////////////////////////
 int Instance::run(rigc::ParserNodePtr & root)
 {
+	stack.resize(STACK_SIZE);
+	scopes.push_back( makeUniverseScope(*this) );
+
 	auto functions = this->discoverGlobalFunctions(root);
 
 	auto mainFunc = rg::find_if(functions,
@@ -61,19 +64,32 @@ GlobalFunctions Instance::discoverGlobalFunctions(rigc::ParserNodePtr & root)
 }
 
 //////////////////////////////////////////
-void Instance::executeFunction(rigc::ParserNode& func_)
+OptValue Instance::executeFunction(rigc::ParserNode const& func_, Function::Args const& args_, size_t argsCount_)
 {
 	this->pushScope();
 
-	// std::cout << "Executing " << funcName(func_) << std::endl;
+	// TODO: push parameters
 
-	this->evaluate( *findElem<rigc::CodeBlock>(func_) );
+	OptValue retVal;
+	if (func_.is_type<rigc::FunctionDefinition>()) {
+		retVal = this->evaluate( *findElem<rigc::CodeBlock>(func_) );
+	}
+	else if(func_.is_type<rigc::ClosureDefinition>()) {
+		auto body = findElem<rigc::CodeBlock>(func_);
+		if (!body)
+			body = findElem<rigc::Expression>(func_);
 
+		retVal = this->evaluate( *body );
+	}
+
+	this->returnTriggered = false;
 	this->popScope();
+
+	return retVal;
 }
 
 //////////////////////////////////////////
-OptValue Instance::evaluate(rigc::ParserNode& stmt_)
+OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 {
 	auto it = Executors.find(stmt_.type);
 	if (it != Executors.end())
@@ -86,10 +102,12 @@ OptValue Instance::evaluate(rigc::ParserNode& stmt_)
 //////////////////////////////////////////
 Value* Instance::findVariableByName(std::string_view name_)
 {
+	std::string n(name_);
+
 	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
 	{
 		auto& vars = it->get()->variables;
-		auto varIt = vars.find(name_);
+		auto varIt = vars.find(n);
 
 		if (varIt != vars.end())
 			return &(varIt->second);
@@ -99,15 +117,32 @@ Value* Instance::findVariableByName(std::string_view name_)
 }
 
 //////////////////////////////////////////
+TypeBase const* Instance::findType(std::string_view name_)
+{
+	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+	{
+		auto& types = it->get()->typeAliases;
+		auto typeIt = types.find(std::string(name_));
+
+		if (typeIt != types.end())
+			return typeIt->second;
+	}
+
+	return nullptr;
+}
+
+//////////////////////////////////////////
 void Instance::createVariable(std::string_view name_, Value value_)
 {
+	std::string n(name_);
+
 	auto& vars = scopes.back()->variables;
-	if (vars.find(name_) != vars.end())
+	if (vars.find(n) != vars.end())
 	{
 		throw std::runtime_error("Variable with name \"" + std::string(name_) + "\" already defined.");
 	}
 
-	vars[name_] = std::move(value_);
+	vars[n] = std::move(value_);
 }
 
 
