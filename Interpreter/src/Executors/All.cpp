@@ -193,7 +193,7 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 					evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
 
 			}
-			(*overloads)[0]->invoke(vm_, evaluatedArgs, numArgs);
+			return ( (*overloads)[0]->invoke(vm_, evaluatedArgs, numArgs) );
 		}
 	}
 
@@ -245,7 +245,22 @@ OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
 
-	scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), {}, 0));
+	Function::Params params;
+	size_t numParams = 0;
+
+	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
+	if (paramList)
+	{
+		for (auto const& param : paramList->children)
+		{
+			params[numParams++] = {
+				findElem<rigc::Name>(*param)->string_view(),
+				DeclType::fromType(*vm_.findType("Int32"))
+			};
+		}
+	}
+
+	scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 
 	return {};
 }

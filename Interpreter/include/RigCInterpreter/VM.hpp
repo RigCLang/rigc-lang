@@ -18,14 +18,17 @@ struct Instance
 
 	int run(rigc::ParserNodePtr & root);
 
-	OptValue executeFunction(rigc::ParserNode const& func_, Function::Args const& args_={}, size_t argsCount_=0);
+	OptValue executeFunction(Function const& func);
+	OptValue executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0);
 	OptValue evaluate(rigc::ParserNode const& stmt_);
 
 	Value* findVariableByName(std::string_view name_);
 	TypeBase const* findType(std::string_view name_);
 	FunctionOverloads const* findFunction(std::string_view name_);
 
-	void createVariable(std::string_view name_, Value value_);
+	void	createVariable(std::string_view name_,	Value value_);
+	Value	cloneVariable(std::string_view name_,	Value value_);
+	Value	cloneValue(Value value_);
 
 	Scope& pushScope() {
 		auto scope = std::make_unique<Scope>();
@@ -71,9 +74,12 @@ struct Instance
 	}
 
 	template <typename T>
-	Value allocateOnStack(DeclType const& type_, T const& value)
+	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0)
 	{
 		size_t toAlloc = type_.size();
+		if (toCopy == 0)
+			toCopy = toAlloc;
+			
 		size_t newSize = stackSize + toAlloc;
 		if (newSize > STACK_SIZE)
 			throw std::runtime_error("Stack overflow");
@@ -82,12 +88,18 @@ struct Instance
 		stackSize = newSize;
 
 		char* bytes = stack.data() + prevSize;
-		std::memcpy(bytes, reinterpret_cast<char const*>(&value), sizeof(value));
+		std::memcpy(bytes, sourceBytes_, toCopy);
 
 		Value val;
 		val.type = type_;
 		val.data = bytes;
 		return val;
+	}
+
+	template <typename T>
+	Value allocateOnStack(DeclType const& type_, T const& value)
+	{
+		return this->allocateOnStack<T>(type_, reinterpret_cast<void const*>(&value), sizeof(T));
 	}
 
 	template <typename T>

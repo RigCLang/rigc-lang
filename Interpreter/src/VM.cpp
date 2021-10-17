@@ -42,8 +42,7 @@ int Instance::run(rigc::ParserNodePtr& root)
 	if (!mainFuncOv)
 		throw std::runtime_error("\"main\" function not found.");
 
-	Function::Args args;
-	(*mainFuncOv)[0]->invoke(*this, args, 0);
+	this->executeFunction(*(*mainFuncOv)[0]);
 
 	return 0;
 }
@@ -64,28 +63,57 @@ GlobalFunctions Instance::discoverGlobalFunctions(rigc::ParserNodePtr & root)
 }
 
 //////////////////////////////////////////
-OptValue Instance::executeFunction(rigc::ParserNode const& func_, Function::Args const& args_, size_t argsCount_)
+OptValue Instance::executeFunction(Function const& func)
 {
+	Function::Args args;
+	return this->executeFunction(func, args, 0);
+}
+
+//////////////////////////////////////////
+OptValue Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_)
+{
+	OptValue retVal;
 	this->pushScope();
 
 	// TODO: push parameters
-
-	OptValue retVal;
-	if (func_.is_type<rigc::FunctionDefinition>()) {
-		retVal = this->evaluate( *findElem<rigc::CodeBlock>(func_) );
-	}
-	else if(func_.is_type<rigc::ClosureDefinition>()) {
-		auto body = findElem<rigc::CodeBlock>(func_);
-		if (!body)
-			body = findElem<rigc::Expression>(func_);
-
-		retVal = this->evaluate( *body );
+	for (size_t i = 0; i < func_.paramCount; ++i)
+	{
+		this->cloneVariable(func_.params[i].name, args_[i]);
 	}
 
+	// Raw function:
+	if (std::holds_alternative<Function::RawFn>(func_.impl))
+	{
+		auto const& fn = std::get<Function::RawFn>(func_.impl);
+		retVal = fn(*this, args_, argsCount_);
+	}
+	else
+	{
+		// Runtime function:
+		auto const& fn = *std::get<Function::RuntimeFn>(func_.impl);
+
+		
+		if (fn.is_type<rigc::FunctionDefinition>()) {
+			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
+		}
+		else if(fn.is_type<rigc::ClosureDefinition>()) {
+			auto body = findElem<rigc::CodeBlock>(fn);
+			if (!body)
+				body = findElem<rigc::Expression>(fn);
+
+			retVal = this->evaluate( *body );
+		}
+	}
 	this->returnTriggered = false;
 	this->popScope();
 
-	return retVal;
+	if (retVal.has_value())
+	{
+		Value val = this->cloneValue(*retVal);
+		return val; // extend lifetime
+	}
+
+	return {};
 }
 
 //////////////////////////////////////////
@@ -155,6 +183,20 @@ void Instance::createVariable(std::string_view name_, Value value_)
 	}
 
 	vars[std::string(name_)] = std::move(value_);
+}
+
+//////////////////////////////////////////
+Value Instance::cloneVariable(std::string_view name_, Value value_)
+{
+	Value val = this->cloneValue(value_);
+	this->createVariable(name_, val);
+	return val;
+}
+
+//////////////////////////////////////////
+Value Instance::cloneValue(Value value_)
+{
+	return this->allocateOnStack<char&>( value_.getType(), reinterpret_cast<void*>(value_.blob()) );
 }
 
 

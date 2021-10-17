@@ -83,13 +83,12 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 	{
 		if (actionIndex_ == 0 || actionIndex_ == actions.size() - 1)
 			throw std::runtime_error("Invalid infix operator position: " + std::to_string(actionIndex_));
-
+		
 		action_ = this->evalInfixOperator(
 				oper.string_view(),
 				actions[actionIndex_ - 1],
 				actions[actionIndex_ + 1]
 			);
-
 		actions.erase(actions.begin() + actionIndex_ + 1);
 		actions.erase(actions.begin() + actionIndex_ - 1);
 	}
@@ -153,7 +152,8 @@ Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, 
 				Function::Args args;
 				args[0] = lhs;
 				args[1] = rhs;
-				return func->invoke(vm, args, 2).value();
+				Value val = func->invoke(vm, args, 2).value();
+				return val;
 			}
 		}
 		invOp();
