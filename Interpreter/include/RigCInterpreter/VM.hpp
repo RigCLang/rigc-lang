@@ -23,6 +23,7 @@ struct Instance
 
 	Value* findVariableByName(std::string_view name_);
 	TypeBase const* findType(std::string_view name_);
+	FunctionOverloads const* findFunction(std::string_view name_);
 
 	void createVariable(std::string_view name_, Value value_);
 

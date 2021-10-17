@@ -21,6 +21,8 @@ DEFINE_KEYWORD(While,	'w','h','i','l','e');
 DEFINE_KEYWORD(Do,		'd','o');
 DEFINE_KEYWORD(For,		'f','o','r');
 DEFINE_KEYWORD(Ret,		'r','e','t');
+DEFINE_KEYWORD(True,	't','r','u','e');
+DEFINE_KEYWORD(False,	'f','a','l','s','e');
 
 }
 

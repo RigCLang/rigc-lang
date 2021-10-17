@@ -27,23 +27,23 @@ int runProgram(rigc::ParserNodePtr & root)
 }
 
 //////////////////////////////////////////
-int Instance::run(rigc::ParserNodePtr & root)
+int Instance::run(rigc::ParserNodePtr& root)
 {
 	stack.resize(STACK_SIZE);
 	scopes.push_back( makeUniverseScope(*this) );
 
-	auto functions = this->discoverGlobalFunctions(root);
-
-	auto mainFunc = rg::find_if(functions,
-		[](auto const& func) {
-			auto const& c = func->children;
-			return (funcName(*func) == "main");
-		});
-
-	if (mainFunc != functions.end())
+	for (auto const& stmt : root->children)
 	{
-		this->executeFunction(*(*mainFunc));
+		this->evaluate(*stmt);
 	}
+
+	auto mainFuncOv = this->univeralScope().findFunction("main");
+
+	if (!mainFuncOv)
+		throw std::runtime_error("\"main\" function not found.");
+
+	Function::Args args;
+	(*mainFuncOv)[0]->invoke(*this, args, 0);
 
 	return 0;
 }
@@ -120,10 +120,26 @@ TypeBase const* Instance::findType(std::string_view name_)
 	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
 	{
 		auto& types = it->get()->typeAliases;
-		auto typeIt = types.find(std::string(name_));
+		auto typeIt = types.find(name_);
 
 		if (typeIt != types.end())
 			return typeIt->second;
+	}
+
+	return nullptr;
+}
+
+//////////////////////////////////////////
+FunctionOverloads const* Instance::findFunction(std::string_view name_)
+{
+	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+	{
+		auto& funcs = it->get()->functions;
+		auto funcIt = funcs.find(name_);
+
+		if (funcIt != funcs.end())
+			return &funcIt->second;
+
 	}
 
 	return nullptr;

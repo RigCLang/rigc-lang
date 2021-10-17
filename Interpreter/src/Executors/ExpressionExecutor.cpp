@@ -134,8 +134,8 @@ Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, 
 	Value lhs	= this->evalSingleAction(lhs_);
 	Value rhs	= this->evalSingleAction(rhs_);
 
-	if (lhs.valueTypeIndex() != rhs.valueTypeIndex())
-		throw std::runtime_error("Incompatible operands for \"" + std::string(op_) + "\" operator.");
+	// if (lhs.valueTypeIndex() != rhs.valueTypeIndex())
+	// 	throw std::runtime_error("Incompatible operands for \"" + std::string(op_) + "\" operator.");
 
 	auto invOp = [&] { throw std::runtime_error("Invalid operator \"" + std::string(op_) + "\" for the type (TODO)."); };
 

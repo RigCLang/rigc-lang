@@ -44,6 +44,11 @@ struct Statement
 {};
 
 
+struct SingleBlockStatement
+	: Statement
+{
+};
+
 struct Statements
 	: p::star< p::seq<opt_ws, Statement > >
 {

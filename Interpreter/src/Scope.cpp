@@ -14,6 +14,7 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 
 	auto scope = std::make_unique<Scope>();
 
+	MAKE_BUILTIN_TYPE(bool,		Bool);
 	MAKE_BUILTIN_TYPE(char,		Char);
 	MAKE_BUILTIN_TYPE(char16_t,	Char16);
 	MAKE_BUILTIN_TYPE(char32_t,	Char32);

@@ -24,6 +24,11 @@ struct IntegerLiteral
 
 struct ListOfArrayElements;
 
+struct BoolLiteral
+	: p::sor<TrueKeyword, FalseKeyword>
+{
+};
+
 struct ArrayLiteral
 	: p::seq< p::one<'['>, opt_ws, ListOfArrayElements, opt_ws, p::one<']'> >
 {
@@ -57,6 +62,7 @@ struct AtomicExprPart
 		p::sor<
 			Operators...,
 			ArrayLiteral,
+			BoolLiteral,
 			IntegerLiteral,
 			StringLiteral,
 			struct ClosureDefinition,

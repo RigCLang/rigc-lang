@@ -14,20 +14,28 @@ using ExecutorFunction	= OptValue(Instance&, rigc::ParserNode const&);
 
 extern std::map<ExecutorTrigger, ExecutorFunction*> Executors;
 
-OptValue executeCodeBlock(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue executeIfStatement(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue executeWhileStatement(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue executeReturnStatement(Instance &inst_, rigc::ParserNode const& stmt_);
+#define DECLARE_EXECUTOR(Name) \
+	OptValue Name(Instance &vm_, rigc::ParserNode const& stmt_)
 
-OptValue evaluateFunctionCall(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue evaluateExpression(Instance &inst_, rigc::ParserNode const& stmt_);
+DECLARE_EXECUTOR(executeCodeBlock);
+DECLARE_EXECUTOR(executeSingleStatement);
+DECLARE_EXECUTOR(executeIfStatement);
+DECLARE_EXECUTOR(executeWhileStatement);
+DECLARE_EXECUTOR(executeReturnStatement);
 
-OptValue evaluateName(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue evaluateIntegerLiteral(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue evaluateStringLiteral(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue evaluateArrayLiteral(Instance &inst_, rigc::ParserNode const& stmt_);
-OptValue evaluateArrayElement(Instance &inst_, rigc::ParserNode const& stmt_);
+DECLARE_EXECUTOR(evaluateFunctionDefinition);
+DECLARE_EXECUTOR(evaluateFunctionCall);
+DECLARE_EXECUTOR(evaluateExpression);
 
-OptValue evaluateVariableDefinition(Instance &inst_, rigc::ParserNode const& stmt_);
+DECLARE_EXECUTOR(evaluateName);
+DECLARE_EXECUTOR(evaluateIntegerLiteral);
+DECLARE_EXECUTOR(evaluateBoolLiteral);
+DECLARE_EXECUTOR(evaluateStringLiteral);
+DECLARE_EXECUTOR(evaluateArrayLiteral);
+DECLARE_EXECUTOR(evaluateArrayElement);
+
+DECLARE_EXECUTOR(evaluateVariableDefinition);
+
+#undef DECLARE_EXECUTOR
 
 }

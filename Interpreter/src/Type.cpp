@@ -50,6 +50,66 @@ OptValue builtinDivOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
 
 //////////////////////////////////////
 template <typename T>
+OptValue builtinLowerThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
+{
+	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
+	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+
+	return vm_.allocateOnStack<bool>("Bool", lhsData < rhsData);
+}
+
+//////////////////////////////////////
+template <typename T>
+OptValue builtinGreaterThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
+{
+	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
+	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+
+	return vm_.allocateOnStack<bool>("Bool", lhsData > rhsData);
+}
+
+//////////////////////////////////////
+template <typename T>
+OptValue builtinLowerEqThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
+{
+	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
+	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+
+	return vm_.allocateOnStack<bool>("Bool", lhsData <= rhsData);
+}
+
+//////////////////////////////////////
+template <typename T>
+OptValue builtinGreaterEqThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
+{
+	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
+	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+
+	return vm_.allocateOnStack<bool>("Bool", lhsData >= rhsData);
+}
+
+//////////////////////////////////////
+template <typename T>
+OptValue builtinEqualOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
+{
+	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
+	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+
+	return vm_.allocateOnStack<bool>("Bool", lhsData == rhsData);
+}
+
+//////////////////////////////////////
+template <typename T>
+OptValue builtinNotEqualOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
+{
+	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
+	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+
+	return vm_.allocateOnStack<bool>("Bool", lhsData != rhsData);
+}
+
+//////////////////////////////////////
+template <typename T>
 OptValue builtinAssignOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
 {
 	T & lhsData = *reinterpret_cast<T *>(lhs_.blob());
@@ -59,9 +119,6 @@ OptValue builtinAssignOperator(Instance &vm_, Value const& lhs_, Value const& rh
 
 	return lhs_;
 }
-
-
-
 
 //////////////////////////////////////
 template <typename T>
@@ -80,10 +137,21 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 			}; \
 		universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2));
 
-	MAKE_INFIX_OP(Add,		"+");
-	MAKE_INFIX_OP(Sub,		"-");
-	MAKE_INFIX_OP(Mult,		"*");
-	MAKE_INFIX_OP(Div,		"/");	
+	if constexpr (!std::is_same_v<T, bool>)
+	{
+		MAKE_INFIX_OP(Add,		"+");
+		MAKE_INFIX_OP(Sub,		"-");
+		MAKE_INFIX_OP(Mult,		"*");
+		MAKE_INFIX_OP(Div,		"/");	
+
+		MAKE_INFIX_OP(LowerThan,		"<");
+		MAKE_INFIX_OP(GreaterThan,		">");
+		MAKE_INFIX_OP(LowerEqThan,		"<=");
+		MAKE_INFIX_OP(GreaterEqThan,	">=");	
+	}
+
+	MAKE_INFIX_OP(Equal,	"==");	
+	MAKE_INFIX_OP(NotEqual,	"!=");	
 	MAKE_INFIX_OP(Assign,	"=");	
 
 	return t;
@@ -94,6 +162,7 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 #define LINK_BUILTIN_TYPE(TypeName) \
 	template TypeBase& TypeBase::Builtin<TypeName>(Instance&, Scope&, std::string_view, size_t)
 
+LINK_BUILTIN_TYPE(bool);
 LINK_BUILTIN_TYPE(char);
 LINK_BUILTIN_TYPE(char16_t);
 LINK_BUILTIN_TYPE(char32_t);

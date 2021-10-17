@@ -41,17 +41,17 @@ using Ptr = T*;
 
 struct Value
 {
-	using Variants = std::variant<
-			bool,
-			int,
-			float,
-			std::string,
-			std::vector< Value >,
-			Ptr<Value>,
-			Ref<Value>
-		>;
+	// using Variants = std::variant<
+	// 		bool,
+	// 		int,
+	// 		float,
+	// 		std::string,
+	// 		std::vector< Value >,
+	// 		Ptr<Value>,
+	// 		Ref<Value>
+	// 	>;
 
-	Variants	value;
+	// Variants	value;
 	void*		data;
 	DeclType	type;
 
@@ -78,72 +78,72 @@ struct Value
 		return *reinterpret_cast<T*>(data);
 	}
 
-	Value() = default;
+	// Value() = default;
 
-	Value(Variants v)
-		: value(std::move(v))
-	{} 	
+	// Value(Variants v)
+	// 	: value(std::move(v))
+	// {} 	
 
-	template <typename T>
-	bool is() const {
-		return std::holds_alternative<T>(value);
-	}
+	// template <typename T>
+	// bool is() const {
+	// 	return std::holds_alternative<T>(value);
+	// }
 
-	template <typename T>
-	T const& as() const {
-		return std::get<T>(value);
-	}
+	// template <typename T>
+	// T const& as() const {
+	// 	return std::get<T>(value);
+	// }
 
-	template <typename T>
-	T& as() {
-		return std::get<T>(value);
-	}
+	// template <typename T>
+	// T& as() {
+	// 	return std::get<T>(value);
+	// }
 
-	template <typename T>
-	T as(T alternative_) {
-		if (this->is<T>())
-			return std::get<T>(value);
+	// template <typename T>
+	// T as(T alternative_) {
+	// 	if (this->is<T>())
+	// 		return std::get<T>(value);
 		
-		return alternative_;
-	}
+	// 	return alternative_;
+	// }
 
-	bool isRef() const {
-		return this->is< Ref<Value> >();
-	}
+	// bool isRef() const {
+	// 	return this->is< Ref<Value> >();
+	// }
 
-	bool isPtr() const {
-		return this->is< Ptr<Value> >();
-	}
+	// bool isPtr() const {
+	// 	return this->is< Ptr<Value> >();
+	// }
 
-	Ref<Value> ref() const {
-		return this->as< Ref<Value> >();
-	}
+	// Ref<Value> ref() const {
+	// 	return this->as< Ref<Value> >();
+	// }
 
-	Ptr<Value> ptr() const {
-		return this->as< Ptr<Value> >();
-	}
+	// Ptr<Value> ptr() const {
+	// 	return this->as< Ptr<Value> >();
+	// }
 
-	Value const& byValue() const {
-		if (this->isRef())
-			return *this->ref();
+	// Value const& byValue() const {
+	// 	if (this->isRef())
+	// 		return *this->ref();
 		
-		return *this;
-	}
+	// 	return *this;
+	// }
 
-	Value& byValue() {
-		if (this->isRef())
-			return *this->ref();
+	// Value& byValue() {
+	// 	if (this->isRef())
+	// 		return *this->ref();
 		
-		return *this;
-	}
+	// 	return *this;
+	// }
 
-	size_t typeIndex() const {
-		return value.index();
-	}
+	// size_t typeIndex() const {
+	// 	return value.index();
+	// }
 
-	size_t valueTypeIndex() const {
-		return this->byValue().value.index();
-	}
+	// size_t valueTypeIndex() const {
+	// 	return this->byValue().value.index();
+	// }
 };
 
 using OptValue = std::optional<Value>;

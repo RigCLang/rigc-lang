@@ -8,6 +8,7 @@ namespace rigc
 {
 
 struct Statement;
+struct SingleBlockStatement;
 struct CodeBlock;
 struct IfStatement;
 
@@ -20,7 +21,7 @@ struct OnlyIfStatement
 	:
 	p::seq< IfKeyword, opt_ws, Condition, opt_ws,
 		p::sor<
-			Statement,
+			SingleBlockStatement,
 			CodeBlock
 		>
 	>
@@ -34,7 +35,7 @@ struct ElseStatement
 			p::seq<ws, IfStatement>,
 			p::seq<opt_ws,
 				p::sor<
-					Statement,
+					SingleBlockStatement,
 					CodeBlock
 				>
 			>

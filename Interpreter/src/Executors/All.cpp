@@ -15,14 +15,17 @@ std::map<ExecutorTrigger, ExecutorFunction*> Executors = {
 	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
 	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
 	MAKE_EXECUTOR(ReturnStatement,		executeReturnStatement),
+	MAKE_EXECUTOR(SingleBlockStatement,	executeSingleStatement),
 	MAKE_EXECUTOR(Expression,			evaluateExpression),
 	MAKE_EXECUTOR(FunctionCall,			evaluateFunctionCall),
 	MAKE_EXECUTOR(Name,					evaluateName),
 	MAKE_EXECUTOR(IntegerLiteral,		evaluateIntegerLiteral),
+	MAKE_EXECUTOR(BoolLiteral,			evaluateBoolLiteral),
 	// MAKE_EXECUTOR(StringLiteral,		evaluateStringLiteral),
 	// MAKE_EXECUTOR(ArrayLiteral,			evaluateArrayLiteral),
 	// MAKE_EXECUTOR(ArrayElement,			evaluateArrayElement),
 	MAKE_EXECUTOR(VariableDefinition,	evaluateVariableDefinition),
+	MAKE_EXECUTOR(FunctionDefinition,	evaluateFunctionDefinition),
 	MAKE_EXECUTOR(InitializerValue,		evaluateExpression),
 	MAKE_EXECUTOR(FunctionArg,			evaluateExpression),
 };
@@ -43,10 +46,29 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 		{	
 			OptValue val = vm_.evaluate(*stmt);
 			if (vm_.returnTriggered)
+			{
+				vm_.popScope();
 				return val;
+			}
 		}
 	}
 
+	vm_.popScope();
+
+	return {};
+}
+
+////////////////////////////////////////
+OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+{
+	vm_.pushScope();
+
+	for (auto const& childStmt : stmt_.children)
+	{	
+		OptValue val = vm_.evaluate(*childStmt);
+		if (vm_.returnTriggered)
+			return val;
+	}
 	vm_.popScope();
 
 	return {};
@@ -66,31 +88,31 @@ OptValue executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 }
 
 ////////////////////////////////////////
-OptValue executeIfStatement(Instance &inst_, rigc::ParserNode const& stmt_)
+OptValue executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 {
 	auto& cond = *findElem<rigc::Condition>(stmt_, false);
 	auto& expr = *findElem<rigc::Expression>(cond, false);
 
 	auto body = findElem<rigc::CodeBlock>(stmt_, false);
 	if (!body)
-		body = findElem<rigc::Statement>(stmt_, false);
+		body = findElem<rigc::SingleBlockStatement>(stmt_, false);
 
-	auto result = inst_.evaluate(expr);
+	auto result = vm_.evaluate(expr);
 
-	if (result.has_value() && result.value().as<int>(0) == 1)
+	if (result.has_value() && result.value().view<bool>() == true)
 	{
-		inst_.evaluate(*body);
+		vm_.evaluate(*body);
 	}
 	else
 	{
 		if (auto elseStmt = findElem<rigc::ElseStatement>(stmt_, false))
 		{
 			if (auto ifStmt = findElem<rigc::IfStatement>(*elseStmt, false))
-				inst_.evaluate(*ifStmt);
+				vm_.evaluate(*ifStmt);
 			else if (auto body = findElem<rigc::CodeBlock>(*elseStmt, false))
-				inst_.evaluate(*body);
+				vm_.evaluate(*body);
 			else
-				inst_.evaluate(*findElem<rigc::Statement>(*elseStmt, false));
+				vm_.evaluate(*findElem<rigc::SingleBlockStatement>(*elseStmt, false));
 		}
 	}
 
@@ -98,32 +120,32 @@ OptValue executeIfStatement(Instance &inst_, rigc::ParserNode const& stmt_)
 }
 
 ////////////////////////////////////////
-OptValue executeWhileStatement(Instance &inst_, rigc::ParserNode const& stmt_)
+OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 {
 	auto& cond = *findElem<rigc::Condition>(stmt_, false);
 	auto& expr = *findElem<rigc::Expression>(cond, false);
 
 	auto body = findElem<rigc::CodeBlock>(stmt_, false);
 	if (!body)
-		body = findElem<rigc::Statement>(stmt_, false);
+		body = findElem<rigc::SingleBlockStatement>(stmt_, false);
 
-	auto result = inst_.evaluate(expr);
-	while (result.has_value() && result.value().as<bool>(false))
+	auto result = vm_.evaluate(expr);
+	while (result.has_value() && result.value().view<bool>())
 	{	
-		inst_.evaluate(*body);
+		vm_.evaluate(*body);
 
-		result = inst_.evaluate(expr);
+		result = vm_.evaluate(expr);
 	}
 
 	return {};
 }
 
 ////////////////////////////////////////
-void print(Instance &inst_, rigc::ParserNode const& args)
+void print(Instance &vm_, rigc::ParserNode const& args)
 {
 	for (auto const& c : args.children)
 	{
-		OptValue optVal = inst_.evaluate(*c);
+		OptValue optVal = vm_.evaluate(*c);
 		if (optVal.has_value())
 		{
 			Value& val = optVal.value();
@@ -131,6 +153,8 @@ void print(Instance &inst_, rigc::ParserNode const& args)
 
 			if (val.typeName() == "Int32")
 				std::cout << val.view<int>();
+			if (val.typeName() == "Bool")
+				std::cout << (val.view<bool>() ? "true" : "false");
 			else if (val.typeName() == "float")
 				std::cout << val.view<float>();
 			else if (val.typeName() == "std::string")
@@ -140,7 +164,7 @@ void print(Instance &inst_, rigc::ParserNode const& args)
 }
 
 ////////////////////////////////////////
-OptValue evaluateFunctionCall(Instance &inst_, rigc::ParserNode const& stmt_)
+OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 {
 	// std::cout << "Calling function " << stmt_.string_view() << std::endl;
 	
@@ -148,10 +172,28 @@ OptValue evaluateFunctionCall(Instance &inst_, rigc::ParserNode const& stmt_)
 
 	if (fnName)
 	{
+		auto args = findElem<rigc::ListOfFunctionArguments>(stmt_, false);
 		if (fnName->string_view() == "print")
 		{
-			auto args = findElem<rigc::ListOfFunctionArguments>(stmt_, false);
-			print(inst_, *args);
+			print(vm_, *args);
+		}
+		else
+		{
+			auto overloads = vm_.findFunction(fnName->string_view());
+
+			if (!overloads)
+				throw std::runtime_error("Function " + fnName->string() + " not found");
+
+			Function::Args evaluatedArgs;
+			size_t numArgs = 0;
+			if (args)
+			{
+				numArgs = args->children.size();
+				for(size_t i = 0; i < numArgs; ++i)
+					evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
+
+			}
+			(*overloads)[0]->invoke(vm_, evaluatedArgs, numArgs);
 		}
 	}
 
@@ -159,15 +201,15 @@ OptValue evaluateFunctionCall(Instance &inst_, rigc::ParserNode const& stmt_)
 }
 
 ////////////////////////////////////////
-OptValue evaluateExpression(Instance &inst_, rigc::ParserNode const& expr_)
+OptValue evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_)
 {
-	return ExpressionExecutor{inst_, expr_}.evaluate();
+	return ExpressionExecutor{vm_, expr_}.evaluate();
 }
 
 ////////////////////////////////////////
-OptValue evaluateName(Instance &inst_, rigc::ParserNode const& expr_)
+OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
 {
-	Ref<Value> ref = inst_.findVariableByName(expr_.string_view());
+	Ref<Value> ref = vm_.findVariableByName(expr_.string_view());
 
 	if (!ref) {
 		throw std::runtime_error("No variable with name \"" + expr_.string() + "\"");
@@ -175,31 +217,49 @@ OptValue evaluateName(Instance &inst_, rigc::ParserNode const& expr_)
 
 	Value var(*ref);
 
-	// inst_.stack.push( var );
+	// vm_.stack.push( var );
 	return var;
 }
 
 ////////////////////////////////////////
-OptValue evaluateVariableDefinition(Instance &inst_, rigc::ParserNode const& expr_)
+OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
 	auto varName	= findElem<rigc::Name>(expr_, false)->string_view();
 	auto valueExpr	= findElem<rigc::InitializerValue>(expr_, false);
 
 	Value value;
 	if (valueExpr) {
-		value = inst_.evaluate(*valueExpr).value();
+		value = vm_.evaluate(*valueExpr).value();
 	}
 
-	inst_.createVariable(varName, value);
+	vm_.createVariable(varName, value);
 
-	// inst_.stack.push( value );
+	// vm_.stack.push( value );
 	return value;
 }
 
 ////////////////////////////////////////
-OptValue evaluateIntegerLiteral(Instance &inst_, rigc::ParserNode const& expr_)
+OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
-	return inst_.allocateOnStack<int>( "Int32", std::stoi(expr_.string()) );
+	auto& scope = vm_.univeralScope();
+
+	auto name = findElem<rigc::Name>(expr_, false)->string_view();
+
+	scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), {}, 0));
+
+	return {};
+}
+
+////////////////////////////////////////
+OptValue evaluateIntegerLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	return vm_.allocateOnStack<int>( "Int32", std::stoi(expr_.string()) );
+}
+
+////////////////////////////////////////
+OptValue evaluateBoolLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	return vm_.allocateOnStack<bool>( "Bool", expr_.string_view()[0] == 't' ? true : false);
 }
 
 ////////////////////////////////////////
@@ -213,7 +273,7 @@ void replaceAll(std::string& s, std::string_view from, std::string_view to)
 }
 
 // ////////////////////////////////////////
-// OptValue evaluateStringLiteral(Instance &inst_, rigc::ParserNode const& expr_)
+// OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 // {
 // 	auto sv = expr_.string_view();
 
@@ -229,33 +289,33 @@ void replaceAll(std::string& s, std::string_view from, std::string_view to)
 
 // 	Value v( std::move(s));
 
-// 	// inst_.stack.push( v );
+// 	// vm_.stack.push( v );
 // 	return v;
 // }
 
 // ////////////////////////////////////////
-// OptValue evaluateArrayLiteral(Instance &inst_, rigc::ParserNode const& expr_)
+// OptValue evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 // {
 // 	std::vector<Value> arr;
 // 	arr.reserve(expr_.children.size());
 
 // 	for (auto const& c : expr_.children)
 // 	{
-// 		arr.push_back( inst_.evaluate(*c).value() );
+// 		arr.push_back( vm_.evaluate(*c).value() );
 // 	}
 
 // 	Value v( std::move(arr) );
 
-// 	// inst_.stack.push( v );
+// 	// vm_.stack.push( v );
 // 	return v;
 // }
 
 // ////////////////////////////////////////
-// OptValue evaluateArrayElement(Instance &inst_, rigc::ParserNode const& expr_)
+// OptValue evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_)
 // {
-// 	Value v( inst_.evaluate(*expr_.children[0]).value() );
+// 	Value v( vm_.evaluate(*expr_.children[0]).value() );
 
-// 	// inst_.stack.push( v );
+// 	// vm_.stack.push( v );
 // 	return v;
 // }
 
