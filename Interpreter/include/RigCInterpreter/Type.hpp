@@ -72,17 +72,15 @@ struct ArrayDeclType
 	using Span = std::array<size_t, MAX_DIMENSIONS>;
 
 	UnitDeclType	elementType;
-	Span			span;
+	Span			span{0};
 
-	bool size() const {
-		size_t dim = this->dimensions();
+	size_t size() const {
 		size_t elements = 1;
-		for(size_t d = 0; d < dim; ++d)
+		for(size_t d = 0; d < MAX_DIMENSIONS && span[d] != 0; ++d)
 		{
 			elements *= span[d];
 		}
-
-		return elements * elementType.type->size;
+		return (elements * elementType.type->size);
 	}
 
 	constexpr
@@ -157,7 +155,9 @@ struct DeclType
 
 	size_t size() const {
 		if (this->isArray())
-			return this->as<ArrayDeclType>().size();
+		{
+			return (this->as<ArrayDeclType>().size());
+		}
 		
 		return this->as<UnitDeclType>().type->size;
 	}

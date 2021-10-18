@@ -196,7 +196,7 @@ Value Instance::cloneVariable(std::string_view name_, Value value_)
 //////////////////////////////////////////
 Value Instance::cloneValue(Value value_)
 {
-	return this->allocateOnStack<char&>( value_.getType(), reinterpret_cast<void*>(value_.blob()) );
+	return this->allocateOnStack( value_.getType(), reinterpret_cast<void*>(value_.blob()), value_.getType().size() );
 }
 
 

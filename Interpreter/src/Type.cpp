@@ -8,117 +8,61 @@
 namespace rigc::vm
 {
 
-//////////////////////////////////////
-template <typename T>
-OptValue builtinAddOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+#define DEFINE_BUILTIN_MATH_OP(Name, Symbol) \
+	template <typename T> \
+	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_) \
+	{ \
+		T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob()); \
+		T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob()); \
+		\
+		return vm_.allocateOnStack<T>(lhs_.getType(), lhsData Symbol rhsData); \
+	}
 
-	return vm_.allocateOnStack<T>(lhs_.getType(), lhsData + rhsData);
-}
+#define DEFINE_BUILTIN_RELATIONAL_OP(Name, Symbol) \
+	template <typename T> \
+	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_) \
+	{ \
+		T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob()); \
+		T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob()); \
+		\
+		return vm_.allocateOnStack<bool>("Bool", lhsData Symbol rhsData); \
+	}
 
-//////////////////////////////////////
-template <typename T>
-OptValue builtinSubOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+#define DEFINE_BUILTIN_ASSIGN_OP(Name, Symbol)												\
+	template <typename T>																	\
+	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_)	\
+	{																						\
+		T&			lhsData = *reinterpret_cast<T*>(lhs_.blob());							\
+		T const&	rhsData = *reinterpret_cast<T const*>(rhs_.blob());						\
+																							\
+		lhsData Symbol rhsData;																\
+																							\
+		return lhs_;																		\
+	}
 
-	return vm_.allocateOnStack<T>(lhs_.getType(), lhsData - rhsData);
-}
+DEFINE_BUILTIN_MATH_OP		(Add,	+);
+DEFINE_BUILTIN_MATH_OP		(Sub,	-);
+DEFINE_BUILTIN_MATH_OP		(Mult,	*);
+DEFINE_BUILTIN_MATH_OP		(Div,	/);
+DEFINE_BUILTIN_MATH_OP		(Mod,	%);
 
-//////////////////////////////////////
-template <typename T>
-OptValue builtinMultOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
+DEFINE_BUILTIN_RELATIONAL_OP(LowerThan,		<);
+DEFINE_BUILTIN_RELATIONAL_OP(GreaterThan,	>);
+DEFINE_BUILTIN_RELATIONAL_OP(LowerEqThan,	<=);
+DEFINE_BUILTIN_RELATIONAL_OP(GreaterEqThan,	>=);
+DEFINE_BUILTIN_RELATIONAL_OP(Equal,			==);
+DEFINE_BUILTIN_RELATIONAL_OP(NotEqual,		!=);
 
-	return vm_.allocateOnStack<T>(lhs_.getType(), lhsData * rhsData);
-}
+DEFINE_BUILTIN_ASSIGN_OP	(Assign,		=);
+DEFINE_BUILTIN_ASSIGN_OP	(AddAssign,		+=);
+DEFINE_BUILTIN_ASSIGN_OP	(SubAssign,		-=);
+DEFINE_BUILTIN_ASSIGN_OP	(MultAssign,	*=);
+DEFINE_BUILTIN_ASSIGN_OP	(DivAssign,		/=);
+DEFINE_BUILTIN_ASSIGN_OP	(ModAssign,		%=);
 
-//////////////////////////////////////
-template <typename T>
-OptValue builtinDivOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	return vm_.allocateOnStack<T>(lhs_.getType(), lhsData / rhsData);
-}
-
-//////////////////////////////////////
-template <typename T>
-OptValue builtinLowerThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	return vm_.allocateOnStack<bool>("Bool", lhsData < rhsData);
-}
-
-//////////////////////////////////////
-template <typename T>
-OptValue builtinGreaterThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	return vm_.allocateOnStack<bool>("Bool", lhsData > rhsData);
-}
-
-//////////////////////////////////////
-template <typename T>
-OptValue builtinLowerEqThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	return vm_.allocateOnStack<bool>("Bool", lhsData <= rhsData);
-}
-
-//////////////////////////////////////
-template <typename T>
-OptValue builtinGreaterEqThanOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	return vm_.allocateOnStack<bool>("Bool", lhsData >= rhsData);
-}
-
-//////////////////////////////////////
-template <typename T>
-OptValue builtinEqualOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	return vm_.allocateOnStack<bool>("Bool", lhsData == rhsData);
-}
-
-//////////////////////////////////////
-template <typename T>
-OptValue builtinNotEqualOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	return vm_.allocateOnStack<bool>("Bool", lhsData != rhsData);
-}
-
-//////////////////////////////////////
-template <typename T>
-OptValue builtinAssignOperator(Instance &vm_, Value const& lhs_, Value const& rhs_)
-{
-	T & lhsData = *reinterpret_cast<T *>(lhs_.blob());
-	T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob());
-
-	lhsData = rhsData;
-
-	return lhs_;
-}
+#undef DEFINE_BUILTIN_MATH_OP
+#undef DEFINE_BUILTIN_RELATIONAL_OP
+#undef DEFINE_BUILTIN_ASSIGN_OP
 
 //////////////////////////////////////
 template <typename T>
@@ -139,19 +83,36 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 
 	if constexpr (!std::is_same_v<T, bool>)
 	{
-		MAKE_INFIX_OP(Add,		"+");
-		MAKE_INFIX_OP(Sub,		"-");
-		MAKE_INFIX_OP(Mult,		"*");
-		MAKE_INFIX_OP(Div,		"/");	
+		// Math
+		MAKE_INFIX_OP(Add,				"+");
+		MAKE_INFIX_OP(Sub,				"-");
+		MAKE_INFIX_OP(Mult,				"*");
+		MAKE_INFIX_OP(Div,				"/");
 
+		if constexpr (!std::is_floating_point_v<T>)	
+		{
+			MAKE_INFIX_OP(Mod,			"%");	
+			MAKE_INFIX_OP(ModAssign,	"%=");
+		}
+
+		// Math (assignment)
+		MAKE_INFIX_OP(AddAssign,		"+=");
+		MAKE_INFIX_OP(SubAssign,		"-=");
+		MAKE_INFIX_OP(MultAssign,		"*=");
+		MAKE_INFIX_OP(DivAssign,		"/=");	
+
+		// Relational
 		MAKE_INFIX_OP(LowerThan,		"<");
 		MAKE_INFIX_OP(GreaterThan,		">");
 		MAKE_INFIX_OP(LowerEqThan,		"<=");
-		MAKE_INFIX_OP(GreaterEqThan,	">=");	
+		MAKE_INFIX_OP(GreaterEqThan,	">=");
 	}
 
+	// Relational
 	MAKE_INFIX_OP(Equal,	"==");	
 	MAKE_INFIX_OP(NotEqual,	"!=");	
+
+	// Assignment
 	MAKE_INFIX_OP(Assign,	"=");	
 
 	return t;
@@ -188,7 +149,7 @@ bool operator==(UnitDeclType const& lhs_, UnitDeclType const& rhs_)
 //////////////////////////////////////////////////
 bool operator==(ArrayDeclType const& lhs_, ArrayDeclType const& rhs_)
 {
-	if(lhs_.elementType != rhs_.elementType || lhs_.isConst != rhs_.isConst)
+	if(lhs_.type != rhs_.type || lhs_.isConst != rhs_.isConst)
 		return false;
 
 	for (size_t i = 0; i < ArrayDeclType::MAX_DIMENSIONS; ++i)

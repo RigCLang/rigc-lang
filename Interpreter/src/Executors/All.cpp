@@ -21,7 +21,7 @@ std::map<ExecutorTrigger, ExecutorFunction*> Executors = {
 	MAKE_EXECUTOR(Name,					evaluateName),
 	MAKE_EXECUTOR(IntegerLiteral,		evaluateIntegerLiteral),
 	MAKE_EXECUTOR(BoolLiteral,			evaluateBoolLiteral),
-	// MAKE_EXECUTOR(StringLiteral,		evaluateStringLiteral),
+	MAKE_EXECUTOR(StringLiteral,		evaluateStringLiteral),
 	// MAKE_EXECUTOR(ArrayLiteral,			evaluateArrayLiteral),
 	// MAKE_EXECUTOR(ArrayElement,			evaluateArrayElement),
 	MAKE_EXECUTOR(VariableDefinition,	evaluateVariableDefinition),
@@ -157,8 +157,12 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 				std::cout << (val.view<bool>() ? "true" : "false");
 			else if (val.typeName() == "float")
 				std::cout << val.view<float>();
-			else if (val.typeName() == "std::string")
-				std::cout << val.view<std::string>();
+			else if (val.getType().isArray() && val.typeName() == "Char")
+			{
+				auto chars = &val.view<char const>();
+
+				std::cout << std::string_view(chars, type.size());
+			}
 		}
 	}
 }
@@ -232,7 +236,7 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 		value = vm_.evaluate(*valueExpr).value();
 	}
 
-	vm_.createVariable(varName, value);
+	vm_.createVariable(varName, vm_.cloneValue(value));
 
 	// vm_.stack.push( value );
 	return value;
@@ -287,26 +291,27 @@ void replaceAll(std::string& s, std::string_view from, std::string_view to)
 	}
 }
 
-// ////////////////////////////////////////
-// OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
-// {
-// 	auto sv = expr_.string_view();
+////////////////////////////////////////
+OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	auto sv = expr_.string_view();
 
-// 	std::string s(sv, 1, sv.length() - 2);
-// 	s.reserve(s.size() * 2);
-// 	replaceAll(s, "\\n",	"\n");
-// 	replaceAll(s, "\\t",	"\t");
-// 	replaceAll(s, "\\r",	"\r");
-// 	replaceAll(s, "\\a",	"\a");
-// 	replaceAll(s, "\\v",	"\v");
-// 	replaceAll(s, "\\\\",	"\\");
-// 	replaceAll(s, "\\\"",	"\"");
+	std::string s(sv, 1, sv.length() - 2);
+	s.reserve(s.size() * 2);
+	replaceAll(s, "\\n",	"\n");
+	replaceAll(s, "\\t",	"\t");
+	replaceAll(s, "\\r",	"\r");
+	replaceAll(s, "\\a",	"\a");
+	replaceAll(s, "\\v",	"\v");
+	replaceAll(s, "\\\\",	"\\");
+	replaceAll(s, "\\\"",	"\"");
 
-// 	Value v( std::move(s));
+	ArrayDeclType t;
+	t.span[0]		= s.size();
+	t.elementType	= { vm_.findType("Char"), false };
 
-// 	// vm_.stack.push( v );
-// 	return v;
-// }
+	return vm_.allocateOnStack( t, s.data(), s.size() );
+}
 
 // ////////////////////////////////////////
 // OptValue evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_)

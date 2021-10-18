@@ -73,7 +73,6 @@ struct Instance
 		return ref;
 	}
 
-	template <typename T>
 	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0)
 	{
 		size_t toAlloc = type_.size();
@@ -99,7 +98,7 @@ struct Instance
 	template <typename T>
 	Value allocateOnStack(DeclType const& type_, T const& value)
 	{
-		return this->allocateOnStack<T>(type_, reinterpret_cast<void const*>(&value), sizeof(T));
+		return this->allocateOnStack(type_, reinterpret_cast<void const*>(&value), sizeof(T));
 	}
 
 	template <typename T>
