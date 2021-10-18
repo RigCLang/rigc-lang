@@ -68,6 +68,11 @@ struct Value
 		return type.decay().type->name;
 	}
 
+	std::string fullTypeName() const
+	{
+		return type.name();
+	}
+
 	template <typename T>
 	T& view() {
 		return *reinterpret_cast<T*>(data);

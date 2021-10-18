@@ -151,7 +151,10 @@ Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, 
 		}
 	}
 
-	throw std::runtime_error("Invalid operator \"" + std::string(op_) + "\" for the type (TODO).");
+	throw std::runtime_error(
+			"No matching operator \"" + std::string(op_) + "\" for argument types: ( " +
+			lhs.fullTypeName() + ", " + rhs.fullTypeName() + " )"
+		);
 }
 
 ////////////////////////////////////////

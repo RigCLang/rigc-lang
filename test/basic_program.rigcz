@@ -12,5 +12,8 @@ func pow(num, exp)
 }
 
 func main {
+	var x = 123;
+	x += 30;
+	x += "hello";
 	print(pow(2, 10), "\n");
 }

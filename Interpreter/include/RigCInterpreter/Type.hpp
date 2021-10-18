@@ -63,6 +63,11 @@ struct UnitDeclType
 		t.isConst = false;
 		return t;
 	}
+
+	std::string name() const
+	{
+		return type->name;
+	}
 };
 
 struct ArrayDeclType
@@ -74,13 +79,17 @@ struct ArrayDeclType
 	UnitDeclType	elementType;
 	Span			span{0};
 
-	size_t size() const {
-		size_t elements = 1;
+	size_t elements() const {
+		size_t e = 1;
 		for(size_t d = 0; d < MAX_DIMENSIONS && span[d] != 0; ++d)
 		{
-			elements *= span[d];
+			e *= span[d];
 		}
-		return (elements * elementType.type->size);
+		return e;
+	}
+
+	size_t size() const {
+		return (this->elements() * elementType.type->size);
 	}
 
 	constexpr
@@ -94,6 +103,19 @@ struct ArrayDeclType
 		}
 
 		return d;
+	}
+
+	std::string name() const
+	{
+		std::string n;
+		n.reserve(1024);
+		n += "Array< ";
+		n += elementType.type->name;
+		n += ", ";
+		n += std::to_string(this->elements());
+		n += " >";
+
+		return n;
 	}
 };
 
@@ -151,6 +173,14 @@ struct DeclType
 	template <typename T>
 	T& as() {
 		return std::get<T>(*this);
+	}
+
+	std::string name() const
+	{
+		if (this->isArray())
+			return this->as<ArrayDeclType>().name();
+
+		return this->as<UnitDeclType>().name();
 	}
 
 	size_t size() const {
