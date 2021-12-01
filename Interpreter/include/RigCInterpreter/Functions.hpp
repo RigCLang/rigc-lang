@@ -43,6 +43,22 @@ struct Function
 		paramCount(paramCount_)
 	{
 	}
+
+	RuntimeFn runtimeImpl() const {
+		return std::get<RuntimeFn>(impl);
+	}
+
+	RawFn rawImpl() const {
+		return std::get<RawFn>(impl);
+	}
+
+	void const* addr() const {
+		if (std::holds_alternative<RuntimeFn>(impl)) {
+			return runtimeImpl();
+		} else {
+			return rawImpl().target<RawFnSign*>();
+		}
+	}
 };
 
 }

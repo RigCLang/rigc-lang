@@ -4,6 +4,7 @@
 
 #include <RigCInterpreter/Value.hpp>
 #include <RigCInterpreter/Scope.hpp>
+#include <RigCInterpreter/Stack.hpp>
 
 #include <RigCInterpreter/Functions.hpp>
 
@@ -22,7 +23,7 @@ struct Instance
 	OptValue executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0);
 	OptValue evaluate(rigc::ParserNode const& stmt_);
 
-	Value* findVariableByName(std::string_view name_);
+	OptValue findVariableByName(std::string_view name_);
 	TypeBase const* findType(std::string_view name_);
 	FunctionOverloads const* findFunction(std::string_view name_);
 
@@ -30,31 +31,43 @@ struct Instance
 	Value	cloneVariable(std::string_view name_,	Value value_);
 	Value	cloneValue(Value value_);
 
-	Scope& pushScope() {
-		auto scope = std::make_unique<Scope>();
-		auto* scopePtr = scope.get();
+	Scope& scopeOf(void const *addr_)
+	{
+		auto it = scopes.find(addr_);
+		if (it == scopes.end())
+		{
+			auto scope = std::make_unique<Scope>();
+			auto& scopeRef = *scope;
+			scopes[addr_] = std::move(scope);
+			return scopeRef;
+		}
 
-		scope->initialStackSize = stackSize;
-		scopes.push_back(std::move(scope));
+		return *scopes[addr_];
+	}
 
-		return *scopePtr;
+	Scope& pushScope(void const* addr_)
+	{
+		Scope& scope = scopeOf(addr_);
+		currentScope = &scope;
+		StackFrame& frame = stack.pushFrame();
+		frame.scope = &scope;
+		return scope;
 	}
 
 	void popScope()
 	{
-		// 2 because of the universe scope
-		if (scopes.size() >= 2)
+		// 2 because of the universe scope stack frame
+		if (stack.frames.size() >= 2)
 		{
-			stackSize = scopes.back()->initialStackSize;
-
-			scopes.erase(scopes.begin() + scopes.size() - 1);
+			stack.popFrame();
+			currentScope = stack.frames.back().scope;
 		}
 	}
 
 	bool returnTriggered = false;
 
 	Scope& univeralScope() {
-		return *scopes[0];
+		return *scopes[nullptr];
 	}
 
 	Function& registerFunction(Function func_)
@@ -73,18 +86,35 @@ struct Instance
 		return ref;
 	}
 
+	FrameBasedValue reserveOnStack(DeclType const& type_, bool lookBack_ = false)
+	{
+		auto& frame = stack.frames.back();
+
+		FrameBasedValue result;
+		result.type			= type_;
+		result.stackOffset	= currentScope->baseFrameOffset;
+		if (lookBack_)
+			result.stackOffset -= type_.size();
+		else
+			currentScope->baseFrameOffset += type_.size();
+
+		return result;
+	}
+
 	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0)
 	{
 		size_t toAlloc = type_.size();
 		if (toCopy == 0)
 			toCopy = toAlloc;
-			
-		size_t newSize = stackSize + toAlloc;
+
+		size_t newSize = stack.size + toAlloc;
 		if (newSize > STACK_SIZE)
 			throw std::runtime_error("Stack overflow");
 
-		size_t prevSize = stackSize;
-		stackSize = newSize;
+		size_t prevSize = stack.size;
+		stack.size = newSize;
+
+		currentScope->baseFrameOffset += toAlloc;
 
 		char* bytes = stack.data() + prevSize;
 		std::memcpy(bytes, sourceBytes_, toCopy);
@@ -111,23 +141,19 @@ struct Instance
 		return this->allocateOnStack<T>( DeclType::fromType(*type), value );
 	}
 
-	void shrinkStack(size_t newSize)
-	{
-		stack.resize(newSize);
-	}
-
-	std::vector<char>	stack;
+	Stack				stack;
 	// Do not use stack.size(), resize etc to
 	// be 100% sure that it won't reallocate
 	size_t				stackSize = 0;
 
-	// std::stack<Value> stack;
-	std::vector< std::unique_ptr<Scope> >		scopes;
-	std::vector< std::unique_ptr<TypeBase> >	types;
-	std::vector< std::unique_ptr<Function> >	functions;
+	Scope* currentScope = nullptr;
+
+	std::map<void const*, std::unique_ptr<Scope>>	scopes;
+	std::vector< std::unique_ptr<TypeBase> >		types;
+	std::vector< std::unique_ptr<Function> >		functions;
 private:
 
-	GlobalFunctions discoverGlobalFunctions(rigc::ParserNodePtr& root);	
+	GlobalFunctions discoverGlobalFunctions(rigc::ParserNodePtr& root);
 };
 
 int runProgram(rigc::ParserNodePtr & root);
@@ -139,7 +165,7 @@ rigc::ParserNode* findElem(rigc::ParserNode const& node, bool recursive = true)
 		[&](auto const& child){
 			return child->is_type<T>();
 		});
-	
+
 	if (it == node.children.end())
 	{
 		if (!recursive) return nullptr;

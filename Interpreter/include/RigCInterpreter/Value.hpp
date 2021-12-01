@@ -3,6 +3,7 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/Type.hpp>
+#include <RigCInterpreter/Stack.hpp>
 
 namespace rigc::vm
 {
@@ -39,26 +40,9 @@ struct Ref
 template <typename T>
 using Ptr = T*;
 
-struct Value
+struct ValueBase
 {
-	// using Variants = std::variant<
-	// 		bool,
-	// 		int,
-	// 		float,
-	// 		std::string,
-	// 		std::vector< Value >,
-	// 		Ptr<Value>,
-	// 		Ref<Value>
-	// 	>;
-
-	// Variants	value;
-	void*		data;
 	DeclType	type;
-
-	// Temp:
-	void* blob() const {
-		return data;
-	}
 
 	DeclType const& getType() const {
 		return type;
@@ -72,6 +56,12 @@ struct Value
 	{
 		return type.name();
 	}
+};
+
+struct Value
+	: ValueBase
+{
+	void* data;
 
 	template <typename T>
 	T& view() {
@@ -83,74 +73,40 @@ struct Value
 		return *reinterpret_cast<T*>(data);
 	}
 
-	// Value() = default;
+	// Temp:
+	void* blob() const {
+		return data;
+	}
+};
 
-	// Value(Variants v)
-	// 	: value(std::move(v))
-	// {} 	
+struct FrameBasedValue
+	: ValueBase
+{
+	size_t stackOffset;
 
-	// template <typename T>
-	// bool is() const {
-	// 	return std::holds_alternative<T>(value);
-	// }
+	template <typename T>
+	T& view(StackFrame const& frame_) {
+		return *reinterpret_cast<T*>(this->blob(frame_));
+	}
 
-	// template <typename T>
-	// T const& as() const {
-	// 	return std::get<T>(value);
-	// }
+	template <typename T>
+	T const& view(StackFrame const& frame_) const {
+		return *reinterpret_cast<T*>(this->blob(frame_));
+	}
 
-	// template <typename T>
-	// T& as() {
-	// 	return std::get<T>(value);
-	// }
+	// Temp:
+	void const* blob(StackFrame const& frame_) const
+	{
+		return static_cast<void const*>(frame_.stack->data() + stackOffset);
+	}
 
-	// template <typename T>
-	// T as(T alternative_) {
-	// 	if (this->is<T>())
-	// 		return std::get<T>(value);
-		
-	// 	return alternative_;
-	// }
-
-	// bool isRef() const {
-	// 	return this->is< Ref<Value> >();
-	// }
-
-	// bool isPtr() const {
-	// 	return this->is< Ptr<Value> >();
-	// }
-
-	// Ref<Value> ref() const {
-	// 	return this->as< Ref<Value> >();
-	// }
-
-	// Ptr<Value> ptr() const {
-	// 	return this->as< Ptr<Value> >();
-	// }
-
-	// Value const& byValue() const {
-	// 	if (this->isRef())
-	// 		return *this->ref();
-		
-	// 	return *this;
-	// }
-
-	// Value& byValue() {
-	// 	if (this->isRef())
-	// 		return *this->ref();
-		
-	// 	return *this;
-	// }
-
-	// size_t typeIndex() const {
-	// 	return value.index();
-	// }
-
-	// size_t valueTypeIndex() const {
-	// 	return this->byValue().value.index();
-	// }
+	Value toAbsolute(StackFrame const& frame_) const
+	{
+		return Value{ type, const_cast<void*>(this->blob(frame_)) };
+	}
 };
 
 using OptValue = std::optional<Value>;
+
 
 }

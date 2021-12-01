@@ -5,49 +5,11 @@
 #include <RigCInterpreter/Value.hpp>
 #include <RigCInterpreter/Type.hpp>
 #include <RigCInterpreter/Functions.hpp>
+#include <RigCInterpreter/InlineString.hpp>
+#include <RigCInterpreter/StackFrame.hpp>
 
 namespace rigc::vm
 {
-
-template <typename T, size_t MaxLength>
-struct StaticString
-	 : std::array<T, MaxLength>
-{
-	size_t numChars = 0;
-
-	template <size_t OtherLen>
-	constexpr StaticString& operator+=(StaticString<T, OtherLen> const& other_) {
-		size_t toAdd = std::min(OtherLen, MaxLength - numChars);
-
-		for(size_t i = 0; i < toAdd; ++i)
-			(*this)[numChars + i] = other_[i];
-		numChars += toAdd;
-
-		return *this;
-	}
-
-	template <size_t OtherLen>
-	constexpr StaticString& operator+=(T const (&other_)[OtherLen]) {
-		size_t actualLength = OtherLen - 1;
-		size_t toAdd = std::min(actualLength, MaxLength - numChars);
-
-		for(size_t i = 0; i < toAdd; ++i)
-			(*this)[numChars + i] = other_[i];
-		numChars += toAdd;
-
-		return *this;
-	}
-
-	constexpr StaticString& operator+=(std::string_view const& other_) {
-		size_t toAdd = std::min(other_.length(), MaxLength - numChars);
-
-		for(size_t i = 0; i < toAdd; ++i)
-			(*this)[numChars + i] = other_[i];
-		numChars += toAdd;
-
-		return *this;
-	}
-};
 
 using FunctionOverloads		= std::vector<Function*>;
 using FunctionParamTypes	= std::array<DeclType, Function::MAX_PARAMS>;
@@ -60,14 +22,14 @@ Function const* findOverload(
 
 struct Scope
 {
+
 	using Impls				= std::vector<TypeImpl*>;
+	size_t baseFrameOffset = 0;
 
-	size_t initialStackSize = 0;
-
-	std::map<TypeBase*, Impls*>						impls;
-	std::map<std::string, FunctionOverloads, std::less<>>		functions;
-	std::map<std::string, Value, std::less<>>					variables;
-	std::map<std::string, TypeBase const*, std::less<>>			typeAliases;
+	std::map<TypeBase*, Impls*>									impls;
+	std::map<std::string, FunctionOverloads, std::less<> >		functions;
+	std::map<std::string, FrameBasedValue, std::less<> >		variables;
+	std::map<std::string, TypeBase const*, std::less<> >		typeAliases;
 
 	static StaticString<char, 512> formatOperatorName(std::string_view opName_, Operator::Type type_)
 	{
@@ -94,7 +56,7 @@ struct Scope
 		auto it = functions.find(funcName_);
 		if (it != functions.end())
 			return &it->second;
-		
+
 		return nullptr;
 	}
 
@@ -103,7 +65,7 @@ struct Scope
 		auto it = typeAliases.find(typeName_);
 		if (it != typeAliases.end())
 			return it->second;
-		
+
 		return nullptr;
 	}
 

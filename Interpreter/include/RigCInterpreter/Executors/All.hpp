@@ -12,7 +12,7 @@ using OptValue = std::optional<struct Value>;
 using ExecutorTrigger	= std::string_view;
 using ExecutorFunction	= OptValue(Instance&, rigc::ParserNode const&);
 
-extern std::map<ExecutorTrigger, ExecutorFunction*> Executors;
+extern std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors;
 
 #define DECLARE_EXECUTOR(Name) \
 	OptValue Name(Instance &vm_, rigc::ParserNode const& stmt_)

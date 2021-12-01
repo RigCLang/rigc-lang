@@ -12,7 +12,7 @@ namespace rigc::vm
 std::string_view funcName(rigc::ParserNode & func_)
 {
 	auto name = findElem<rigc::Name>(func_, false);
-	
+
 	if (name)
 		return name->string_view();
 	else
@@ -29,8 +29,9 @@ int runProgram(rigc::ParserNodePtr & root)
 //////////////////////////////////////////
 int Instance::run(rigc::ParserNodePtr& root)
 {
-	stack.resize(STACK_SIZE);
-	scopes.push_back( makeUniverseScope(*this) );
+	stack.container.resize(STACK_SIZE);
+	scopes[nullptr] = makeUniverseScope(*this);
+	this->pushScope(nullptr);
 
 	for (auto const& stmt : root->children)
 	{
@@ -73,12 +74,12 @@ OptValue Instance::executeFunction(Function const& func)
 OptValue Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_)
 {
 	OptValue retVal;
-	this->pushScope();
+	this->pushScope(func_.addr());
 
 	// TODO: push parameters
 	for (size_t i = 0; i < func_.paramCount; ++i)
 	{
-		this->cloneVariable(func_.params[i].name, args_[i]);
+		this->cloneValue(args_[i]);
 	}
 
 	// Raw function:
@@ -92,7 +93,7 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 		// Runtime function:
 		auto const& fn = *std::get<Function::RuntimeFn>(func_.impl);
 
-		
+
 		if (fn.is_type<rigc::FunctionDefinition>()) {
 			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
@@ -119,35 +120,39 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 //////////////////////////////////////////
 OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 {
-	auto it = Executors.find(stmt_.type);
+	constexpr std::string_view prefix = "struct rigc::";
+
+	auto it = Executors.find( stmt_.type.substr( prefix.size() ));
 	if (it != Executors.end())
 		return it->second(*this, stmt_);
-	
+
 	std::cout << "No executors for \"" << stmt_.type << "\": " << stmt_.string_view() << std::endl;
 	return {};
 }
 
 //////////////////////////////////////////
-Value* Instance::findVariableByName(std::string_view name_)
+OptValue Instance::findVariableByName(std::string_view name_)
 {
-	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
 	{
-		auto& vars = it->get()->variables;
+		auto& vars = it->scope->variables;
 		auto varIt = vars.find(name_);
 
 		if (varIt != vars.end())
-			return &(varIt->second);
+		{
+			return varIt->second.toAbsolute(*it);
+		}
 	}
 
-	return nullptr;
+	return std::nullopt;
 }
 
 //////////////////////////////////////////
 TypeBase const* Instance::findType(std::string_view name_)
 {
-	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
 	{
-		auto& types = it->get()->typeAliases;
+		auto& types = it->scope->typeAliases;
 		auto typeIt = types.find(name_);
 
 		if (typeIt != types.end())
@@ -160,9 +165,9 @@ TypeBase const* Instance::findType(std::string_view name_)
 //////////////////////////////////////////
 FunctionOverloads const* Instance::findFunction(std::string_view name_)
 {
-	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
 	{
-		auto& funcs = it->get()->functions;
+		auto& funcs = it->scope->functions;
 		auto funcIt = funcs.find(name_);
 
 		if (funcIt != funcs.end())
@@ -176,21 +181,21 @@ FunctionOverloads const* Instance::findFunction(std::string_view name_)
 //////////////////////////////////////////
 void Instance::createVariable(std::string_view name_, Value value_)
 {
-	auto& vars = scopes.back()->variables;
-	if (vars.find(name_) != vars.end())
-	{
-		throw std::runtime_error("Variable with name \"" + std::string(name_) + "\" already defined.");
-	}
+	// auto& vars = currentScope->variables;
+	// if (vars.find(name_) != vars.end())
+	// {
+	// 	throw std::runtime_error("Variable with name \"" + std::string(name_) + "\" already defined.");
+	// }
 
-	vars[std::string(name_)] = std::move(value_);
+	// vars[std::string(name_)] = std::move(value_);
 }
 
 //////////////////////////////////////////
 Value Instance::cloneVariable(std::string_view name_, Value value_)
 {
-	Value val = this->cloneValue(value_);
-	this->createVariable(name_, val);
-	return val;
+	// Value val = this->cloneValue(value_);
+	// this->createVariable(name_, val);
+	return value_;
 }
 
 //////////////////////////////////////////

@@ -8,9 +8,9 @@
 namespace rigc::vm
 {
 
-#define MAKE_EXECUTOR(ClassName, Executor) { "struct rigc::" #ClassName, Executor }
+#define MAKE_EXECUTOR(ClassName, Executor) { #ClassName, Executor }
 
-std::map<ExecutorTrigger, ExecutorFunction*> Executors = {
+std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 	MAKE_EXECUTOR(CodeBlock,			executeCodeBlock),
 	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
 	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
@@ -32,18 +32,18 @@ std::map<ExecutorTrigger, ExecutorFunction*> Executors = {
 
 #undef MAKE_EXECUTOR
 
-	
+
 ////////////////////////////////////////
 OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 {
-	vm_.pushScope();
+	vm_.pushScope(&codeBlock_);
 
 	auto stmts = findElem<rigc::Statements>(codeBlock_);
 
 	if (stmts)
 	{
 		for (auto const& stmt : stmts->children)
-		{	
+		{
 			OptValue val = vm_.evaluate(*stmt);
 			if (vm_.returnTriggered)
 			{
@@ -61,10 +61,10 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 ////////////////////////////////////////
 OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 {
-	vm_.pushScope();
+	vm_.pushScope(&stmt_);
 
 	for (auto const& childStmt : stmt_.children)
-	{	
+	{
 		OptValue val = vm_.evaluate(*childStmt);
 		if (vm_.returnTriggered)
 			return val;
@@ -82,7 +82,7 @@ OptValue executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 	OptValue retVal;
 	if (expr)
 		retVal = vm_.evaluate(*expr);
-	
+
 	vm_.returnTriggered = true;
 	return retVal;
 }
@@ -129,9 +129,10 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 	if (!body)
 		body = findElem<rigc::SingleBlockStatement>(stmt_, false);
 
+	// TODO: fix stack overflow
 	auto result = vm_.evaluate(expr);
 	while (result.has_value() && result.value().view<bool>())
-	{	
+	{
 		vm_.evaluate(*body);
 
 		result = vm_.evaluate(expr);
@@ -171,7 +172,7 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 {
 	// std::cout << "Calling function " << stmt_.string_view() << std::endl;
-	
+
 	auto fnName = findElem<rigc::Name>(stmt_, false);
 
 	if (fnName)
@@ -213,16 +214,13 @@ OptValue evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_)
 ////////////////////////////////////////
 OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
 {
-	Ref<Value> ref = vm_.findVariableByName(expr_.string_view());
+	auto optValue = vm_.findVariableByName(expr_.string_view());
 
-	if (!ref) {
+	if (!optValue) {
 		throw std::runtime_error("No variable with name \"" + expr_.string() + "\"");
 	}
 
-	Value var(*ref);
-
-	// vm_.stack.push( var );
-	return var;
+	return optValue;
 }
 
 ////////////////////////////////////////
@@ -236,9 +234,11 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 		value = vm_.evaluate(*valueExpr).value();
 	}
 
-	vm_.createVariable(varName, vm_.cloneValue(value));
+	if (!vm_.currentScope->variables.contains(varName))
+	{
+		vm_.currentScope->variables[std::string(varName)] = vm_.reserveOnStack(value.type, true);
+	}
 
-	// vm_.stack.push( value );
 	return value;
 }
 

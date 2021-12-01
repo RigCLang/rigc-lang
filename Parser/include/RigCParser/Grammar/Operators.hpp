@@ -116,8 +116,6 @@ template <typename... Optionals>
 struct InfixOperatorBase
 	: p::seq<
 		p::sor<
-			AssignOp,
-
 			AddEqOp,
 			SubEqOp,
 			MultEqOp,
@@ -151,6 +149,8 @@ struct InfixOperatorBase
 			LowerOrEqOp,
 			GreaterThanOp,
 			LowerThanOp,
+
+			AssignOp,
 
 			TernaryFirstOp,
 			TernarySecondOp,

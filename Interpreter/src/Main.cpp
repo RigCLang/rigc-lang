@@ -9,18 +9,18 @@ int main(int argc, char* argv[])
 	if (argc < 2)
 		return 0;
 
-	try
-	{
+	// try
+	// {
 		pegtl::file_input in(argv[1]);
 
 		auto root = rigc::parse( in );
 		if (root) {
 			return rigc::vm::runProgram(root);
 		}
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
+	// }
+	// catch (const std::exception &e)
+	// {
+		// std::cerr << e.what() << std::endl;
+	// }
 }
 

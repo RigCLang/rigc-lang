@@ -13,6 +13,7 @@
 #include <ranges>
 #include <stack>
 #include <string>
+#include <string_view>
 #include <cstring>
 #include <functional>
 
