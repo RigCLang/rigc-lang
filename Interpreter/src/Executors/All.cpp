@@ -130,12 +130,17 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 		body = findElem<rigc::SingleBlockStatement>(stmt_, false);
 
 	// TODO: fix stack overflow
-	auto result = vm_.evaluate(expr);
-	while (result.has_value() && result.value().view<bool>())
-	{
-		vm_.evaluate(*body);
 
-		result = vm_.evaluate(expr);
+	while (true)
+	{
+		vm_.pushScope(body);
+
+		auto result = vm_.evaluate(expr);
+
+		if (result.has_value() && result.value().view<bool>())
+			vm_.evaluate(*body);
+
+		vm_.popScope();
 	}
 
 	return {};
