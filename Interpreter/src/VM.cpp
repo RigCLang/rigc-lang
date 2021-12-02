@@ -75,6 +75,7 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 {
 	OptValue retVal;
 	Scope& fnScope = this->pushScope(func_.addr());
+	fnScope.func = true;
 
 	// TODO: push parameters
 	for (size_t i = 0; i < func_.paramCount; ++i)
@@ -145,7 +146,7 @@ OptValue Instance::findVariableByName(std::string_view name_)
 		return this->allocateOnStack( DeclType::fromType( *findType("Int32") ), reinterpret_cast<void*>(&size), sizeof(int) );
 	}
 
-	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
+	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); )
 	{
 		auto& vars = it->scope->variables;
 		auto varIt = vars.find(name_);
@@ -154,6 +155,11 @@ OptValue Instance::findVariableByName(std::string_view name_)
 		{
 			return varIt->second.toAbsolute(*it);
 		}
+
+		if (it->scope->func)
+			it = stack.frames.rend() - 1;
+		else
+			++it;
 	}
 
 	return std::nullopt;

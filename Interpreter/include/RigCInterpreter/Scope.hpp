@@ -26,6 +26,10 @@ struct Scope
 	using Impls				= std::vector<TypeImpl*>;
 	size_t baseFrameOffset = 0;
 
+	// Whether the scope belongs to a function
+	// (contains parameters and local variables)
+	bool func = false;
+
 	std::map<TypeBase*, Impls*>									impls;
 	std::map<std::string, FunctionOverloads, std::less<> >		functions;
 	std::map<std::string, FrameBasedValue, std::less<> >		variables;
