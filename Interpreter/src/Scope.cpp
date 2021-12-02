@@ -35,6 +35,16 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 }
 
 
+///////////////////////////////////////////////////////////////
+Function const* Scope::findConversion(DeclType const& from_, DeclType const& to_) const
+{
+	auto overloads = this->findFunction("operator convert");
+	if (!overloads)
+		return nullptr;
+
+	return findOverload(*overloads, { from_ }, 1, to_);
+}
+
 // TODO: add support for second-pass functions
 ///////////////////////////////////////////////////////////////
 bool testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_, size_t numArgs_)
@@ -52,12 +62,19 @@ bool testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_
 }
 
 ///////////////////////////////////////////////////////////////
-Function const* findOverload(FunctionOverloads const& funcs_, FunctionParamTypes const& paramTypes_, size_t numArgs_)
+Function const* findOverload(
+		FunctionOverloads const&	funcs_,
+		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
+		Function::ReturnType		returnType_
+	)
 {
 	for (size_t i = 0; i < funcs_.size(); ++i)
 	{
 		if (testFunctionOverload(*funcs_[i], paramTypes_, numArgs_))
-			return funcs_[i];
+		{
+			if (!returnType_ || funcs_[i]->returnType == returnType_)
+				return funcs_[i];
+		}
 	}
 
 	return nullptr;

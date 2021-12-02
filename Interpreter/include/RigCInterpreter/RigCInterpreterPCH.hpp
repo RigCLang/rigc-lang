@@ -17,4 +17,6 @@
 #include <cstring>
 #include <functional>
 
+#include <fmt/format.h>
+
 namespace rg = std::ranges;

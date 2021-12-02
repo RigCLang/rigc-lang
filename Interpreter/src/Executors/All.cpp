@@ -22,6 +22,8 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 	MAKE_EXECUTOR(IntegerLiteral,		evaluateIntegerLiteral),
 	MAKE_EXECUTOR(BoolLiteral,			evaluateBoolLiteral),
 	MAKE_EXECUTOR(StringLiteral,		evaluateStringLiteral),
+	MAKE_EXECUTOR(Float32Literal,		evaluateFloat32Literal),
+	MAKE_EXECUTOR(Float64Literal,		evaluateFloat64Literal),
 	// MAKE_EXECUTOR(ArrayLiteral,			evaluateArrayLiteral),
 	// MAKE_EXECUTOR(ArrayElement,			evaluateArrayElement),
 	MAKE_EXECUTOR(VariableDefinition,	evaluateVariableDefinition),
@@ -165,6 +167,10 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 
 			if (val.typeName() == "Int32")
 				std::cout << val.view<int>();
+			if (val.typeName() == "Float32")
+				std::cout << val.view<float>();
+			if (val.typeName() == "Float64")
+				std::cout << val.view<double>();
 			if (val.typeName() == "Bool")
 				std::cout << (val.view<bool>() ? "true" : "false");
 			else if (val.typeName() == "float")
@@ -237,18 +243,48 @@ OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
 ////////////////////////////////////////
 OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
+	auto declType	= findElem<rigc::DeclType>(expr_, false)->string_view();
 	auto varName	= findElem<rigc::Name>(expr_, false)->string_view();
 	auto valueExpr	= findElem<rigc::InitializerValue>(expr_, false);
+
+	bool deduceType = (declType == "var" || declType == "const");
 
 	Value value;
 	if (valueExpr) {
 		value = vm_.evaluate(*valueExpr).value();
 	}
+	else if (deduceType) {
+		throw std::runtime_error(
+				fmt::format("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
+			);
+	}
+
+	DeclType type;
+	if (deduceType)
+		type = value.type;
+	else
+	{
+		if (auto t = vm_.findType(declType))
+			type = DeclType::fromType(*t);
+		else
+			throw std::runtime_error(fmt::format("Type {} not found", declType));
+
+		if (value.type != type)
+		{
+			auto converted = vm_.tryConvert(value, type);
+			if (!converted)
+				throw std::runtime_error(fmt::format("Cannot convert {} to {}", value.typeName(), type.name()));
+
+			value = converted.value();
+		}
+	}
+
+
 	vm_.cloneValue(value);
 
 	if (!vm_.currentScope->variables.contains(varName))
 	{
-		vm_.currentScope->variables[std::string(varName)] = vm_.reserveOnStack(value.type, true);
+		vm_.currentScope->variables[std::string(varName)] = vm_.reserveOnStack(type, true);
 	}
 
 	return value;
@@ -285,6 +321,19 @@ OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_
 OptValue evaluateIntegerLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 {
 	return vm_.allocateOnStack<int>( "Int32", std::stoi(expr_.string()) );
+}
+
+////////////////////////////////////////
+OptValue evaluateFloat32Literal(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	auto n = expr_.string();
+	return vm_.allocateOnStack<float>( "Float32", std::stof( n.substr(0, n.size() - 1) ) );
+}
+
+////////////////////////////////////////
+OptValue evaluateFloat64Literal(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	return vm_.allocateOnStack<double>( "Float64", std::stod(expr_.string()) );
 }
 
 ////////////////////////////////////////

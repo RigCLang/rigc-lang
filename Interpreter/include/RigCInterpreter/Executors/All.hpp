@@ -30,6 +30,8 @@ DECLARE_EXECUTOR(evaluateExpression);
 DECLARE_EXECUTOR(evaluateName);
 DECLARE_EXECUTOR(evaluateIntegerLiteral);
 DECLARE_EXECUTOR(evaluateBoolLiteral);
+DECLARE_EXECUTOR(evaluateFloat32Literal);
+DECLARE_EXECUTOR(evaluateFloat64Literal);
 DECLARE_EXECUTOR(evaluateStringLiteral);
 DECLARE_EXECUTOR(evaluateArrayLiteral);
 DECLARE_EXECUTOR(evaluateArrayElement);

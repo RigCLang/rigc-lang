@@ -109,4 +109,11 @@ struct FrameBasedValue
 using OptValue = std::optional<Value>;
 
 
+using ConversionFunc = OptValue(Instance &, Value const&);
+
+template <typename T>
+void addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_);
+template <typename T>
+void addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_);
+
 }

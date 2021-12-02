@@ -148,7 +148,7 @@ struct DeclType
 		return this->as<UnitDeclType>();
 	}
 
-	
+
 	bool isConst() const {
 		if (this->isArray())
 			return this->as<ArrayDeclType>().isConst;
@@ -188,7 +188,7 @@ struct DeclType
 		{
 			return (this->as<ArrayDeclType>().size());
 		}
-		
+
 		return this->as<UnitDeclType>().type->size;
 	}
 };

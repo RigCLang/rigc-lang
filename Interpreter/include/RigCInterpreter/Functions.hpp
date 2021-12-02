@@ -18,12 +18,13 @@ struct FunctionParam
 struct Function
 {
 	constexpr static size_t MAX_PARAMS = 128;
-	using Params	= std::array<FunctionParam,	MAX_PARAMS>;
-	using Args		= std::array<Value,			MAX_PARAMS>;
+	using Params		= std::array<FunctionParam,	MAX_PARAMS>;
+	using Args			= std::array<Value,			MAX_PARAMS>;
 
-	using RuntimeFn	= rigc::ParserNode*;
-	using RawFnSign	= OptValue(Instance&, Args&, size_t);
-	using RawFn		= std::function<RawFnSign>;
+	using RuntimeFn		= rigc::ParserNode*;
+	using RawFnSign		= OptValue(Instance&, Args&, size_t);
+	using RawFn			= std::function<RawFnSign>;
+	using ReturnType	= std::optional<DeclType>;
 
 	using Impl = std::variant<
 			RuntimeFn,
@@ -33,6 +34,7 @@ struct Function
 	Impl		impl;
 	Params		params;
 	size_t		paramCount;
+	ReturnType	returnType;
 
 	OptValue invoke(Instance& vm_, Args& args_, size_t argCount_) const;
 

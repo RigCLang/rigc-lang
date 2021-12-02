@@ -27,8 +27,9 @@ struct Instance
 	TypeBase const* findType(std::string_view name_);
 	FunctionOverloads const* findFunction(std::string_view name_);
 
-	void	createVariable(std::string_view name_,	Value value_);
-	Value	cloneVariable(std::string_view name_,	Value value_);
+	Function const* findConversion(DeclType const& from_, DeclType const& to_);
+	OptValue tryConvert(Value value_, DeclType const& to_);
+
 	Value	cloneValue(Value value_);
 
 	Scope& scopeOf(void const *addr_)

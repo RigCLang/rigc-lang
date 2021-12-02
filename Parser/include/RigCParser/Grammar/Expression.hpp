@@ -22,6 +22,16 @@ struct IntegerLiteral
 {
 };
 
+struct Float64Literal
+	: p::seq<IntegerLiteral, p::one<'.'>, p::star<Digits> >
+{
+};
+
+struct Float32Literal
+	: p::seq<Float64Literal, p::one<'f'> >
+{
+};
+
 struct ListOfArrayElements;
 
 struct BoolLiteral
@@ -60,10 +70,12 @@ struct AtomicExprPart
 	p::seq<
 		opt_ws,
 		p::sor<
+			Float32Literal,
+			Float64Literal,
+			IntegerLiteral,
+			BoolLiteral,
 			Operators...,
 			ArrayLiteral,
-			BoolLiteral,
-			IntegerLiteral,
 			StringLiteral,
 			struct ClosureDefinition,
 			struct FunctionCall,

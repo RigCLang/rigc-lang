@@ -17,7 +17,8 @@ using FunctionParamTypes	= std::array<DeclType, Function::MAX_PARAMS>;
 Function const* findOverload(
 		FunctionOverloads const&	funcs_,
 		FunctionParamTypes const&	paramTypes_,
-		size_t						numArgs_
+		size_t						numArgs_,
+		Function::ReturnType		returnType_ = std::nullopt
 	);
 
 struct Scope
@@ -54,6 +55,8 @@ struct Scope
 		fmtName += opName_;
 		return fmtName;
 	}
+
+	Function const* findConversion(DeclType const& from_, DeclType const& to_) const;
 
 	FunctionOverloads const* findFunction(std::string_view funcName_) const
 	{

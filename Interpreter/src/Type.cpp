@@ -40,6 +40,7 @@ namespace rigc::vm
 		return lhs_;																		\
 	}
 
+
 DEFINE_BUILTIN_MATH_OP		(Add,	+);
 DEFINE_BUILTIN_MATH_OP		(Sub,	-);
 DEFINE_BUILTIN_MATH_OP		(Mult,	*);
@@ -64,6 +65,7 @@ DEFINE_BUILTIN_ASSIGN_OP	(ModAssign,		%=);
 #undef DEFINE_BUILTIN_RELATIONAL_OP
 #undef DEFINE_BUILTIN_ASSIGN_OP
 
+
 //////////////////////////////////////
 template <typename T>
 TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_)
@@ -81,6 +83,7 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 			}; \
 		universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2));
 
+
 	if constexpr (!std::is_same_v<T, bool>)
 	{
 		// Math
@@ -89,9 +92,9 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 		MAKE_INFIX_OP(Mult,				"*");
 		MAKE_INFIX_OP(Div,				"/");
 
-		if constexpr (!std::is_floating_point_v<T>)	
+		if constexpr (!std::is_floating_point_v<T>)
 		{
-			MAKE_INFIX_OP(Mod,			"%");	
+			MAKE_INFIX_OP(Mod,			"%");
 			MAKE_INFIX_OP(ModAssign,	"%=");
 		}
 
@@ -99,7 +102,7 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 		MAKE_INFIX_OP(AddAssign,		"+=");
 		MAKE_INFIX_OP(SubAssign,		"-=");
 		MAKE_INFIX_OP(MultAssign,		"*=");
-		MAKE_INFIX_OP(DivAssign,		"/=");	
+		MAKE_INFIX_OP(DivAssign,		"/=");
 
 		// Relational
 		MAKE_INFIX_OP(LowerThan,		"<");
@@ -109,19 +112,48 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 	}
 
 	// Relational
-	MAKE_INFIX_OP(Equal,	"==");	
-	MAKE_INFIX_OP(NotEqual,	"!=");	
+	MAKE_INFIX_OP(Equal,	"==");
+	MAKE_INFIX_OP(NotEqual,	"!=");
 
 	// Assignment
-	MAKE_INFIX_OP(Assign,	"=");	
+	MAKE_INFIX_OP(Assign,	"=");
 
 	return t;
 
 	#undef MAKE_INFIX_OP
 }
 
+template <typename T>
+void addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_)
+{
+	Function::Params convertParams;
+	convertParams[0] = { "from", from_ };
+
+	static auto const& OPERATOR_Convert = [&func_](Instance &vm_, Function::Args args_, size_t argCount_)
+		{
+			return func_(vm_, args_[0]);
+		};
+	Function f(OPERATOR_Convert, convertParams, 1);
+	f.returnType = to_;
+	universeScope_.registerFunction( vm_, "operator convert", std::move(f) );
+}
+
+template <typename T>
+void addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_)
+{
+	addTypeConversion<T>(
+			vm_, universeScope_,
+			DeclType::fromType(*vm_.findType(from_)),
+			DeclType::fromType(*vm_.findType(to_)),
+			func_
+		);
+}
+
 #define LINK_BUILTIN_TYPE(TypeName) \
-	template TypeBase& TypeBase::Builtin<TypeName>(Instance&, Scope&, std::string_view, size_t)
+	template TypeBase& TypeBase::Builtin<TypeName>(Instance&, Scope&, std::string_view, size_t); \
+	template void addTypeConversion<TypeName>(Instance&, Scope&, DeclType const&, DeclType const&, ConversionFunc&); \
+	template void addTypeConversion<TypeName>(Instance&, Scope&, std::string_view, std::string_view, ConversionFunc&)
+
 
 LINK_BUILTIN_TYPE(bool);
 LINK_BUILTIN_TYPE(char);

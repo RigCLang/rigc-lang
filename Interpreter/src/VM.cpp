@@ -26,12 +26,34 @@ int runProgram(rigc::ParserNodePtr & root)
 	return instance.run(root);
 }
 
+#define DEFINE_BUILTIN_CONVERT_OP(ToCppType, ToRuntimeType)									\
+	template <typename FromType>															\
+	OptValue builtinConvertOperator_##ToRuntimeType(Instance &vm_, Value const& lhs_)		\
+	{																						\
+		FromType const&	lhsData = *reinterpret_cast<FromType const*>(lhs_.blob());			\
+		return vm_.allocateOnStack<ToCppType>(#ToRuntimeType, ToCppType(lhsData));			\
+	}
+
+DEFINE_BUILTIN_CONVERT_OP	(int32_t, Int32);
+
+#undef DEFINE_BUILTIN_CONVERT_OP
+
 //////////////////////////////////////////
 int Instance::run(rigc::ParserNodePtr& root)
 {
 	stack.container.resize(STACK_SIZE);
 	scopes[nullptr] = makeUniverseScope(*this);
+	Scope& scope = *scopes[nullptr];
 	this->pushScope(nullptr);
+
+	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
+		addTypeConversion<FromCppType>(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
+
+	ADD_CONVERSION(float, Float32, Int32);
+	ADD_CONVERSION(double, Float64, Int32);
+
+	#undef ADD_CONVERSION
+
 
 	for (auto const& stmt : root->children)
 	{
@@ -138,6 +160,27 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 }
 
 //////////////////////////////////////////
+Function const* Instance::findConversion(DeclType const& from_, DeclType const& to_)
+{
+	return this->univeralScope().findConversion(from_, to_);
+}
+
+//////////////////////////////////////////
+OptValue Instance::tryConvert(Value value_, DeclType const& to_)
+{
+	if (value_.type == to_)
+		return value_;
+
+	auto cvt = this->findConversion(value_.type, to_);
+	if (!cvt)
+		return std::nullopt;
+
+	Function::Args args;
+	args[0] = value_;
+	return this->executeFunction(*cvt, args, 1);
+}
+
+//////////////////////////////////////////
 OptValue Instance::findVariableByName(std::string_view name_)
 {
 	if (name_ == "stackSize")
@@ -194,26 +237,6 @@ FunctionOverloads const* Instance::findFunction(std::string_view name_)
 	}
 
 	return nullptr;
-}
-
-//////////////////////////////////////////
-void Instance::createVariable(std::string_view name_, Value value_)
-{
-	// auto& vars = currentScope->variables;
-	// if (vars.find(name_) != vars.end())
-	// {
-	// 	throw std::runtime_error("Variable with name \"" + std::string(name_) + "\" already defined.");
-	// }
-
-	// vars[std::string(name_)] = std::move(value_);
-}
-
-//////////////////////////////////////////
-Value Instance::cloneVariable(std::string_view name_, Value value_)
-{
-	// Value val = this->cloneValue(value_);
-	// this->createVariable(name_, val);
-	return value_;
 }
 
 //////////////////////////////////////////
