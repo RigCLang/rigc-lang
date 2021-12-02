@@ -45,7 +45,7 @@
 				"source": "Interpreter/src/RigCInterpreterPCH.cpp",
 				"definition": "RIGCINTERPRETER_PCH"
 			},
-			"dependencies": [ "self:Parser" ]
+			"dependencies": [ "self:Parser", "fmt@8.0.1" ]
 		}
 	]
 }
