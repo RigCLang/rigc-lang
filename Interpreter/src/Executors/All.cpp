@@ -138,9 +138,15 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 		auto result = vm_.evaluate(expr);
 
 		if (result.has_value() && result.value().view<bool>())
+		{
 			vm_.evaluate(*body);
-
-		vm_.popScope();
+			vm_.popScope();
+		}
+		else
+		{
+			vm_.popScope();
+			break;
+		}
 	}
 
 	return {};
@@ -238,6 +244,7 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 	if (valueExpr) {
 		value = vm_.evaluate(*valueExpr).value();
 	}
+	vm_.cloneValue(value);
 
 	if (!vm_.currentScope->variables.contains(varName))
 	{

@@ -97,7 +97,7 @@ struct FrameBasedValue
 	// Temp:
 	void const* blob(StackFrame const& frame_) const
 	{
-		return static_cast<void const*>(frame_.stack->data() + stackOffset);
+		return static_cast<void const*>(frame_.stack->data() + frame_.initialStackSize + stackOffset);
 	}
 
 	Value toAbsolute(StackFrame const& frame_) const

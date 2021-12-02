@@ -74,12 +74,18 @@ OptValue Instance::executeFunction(Function const& func)
 OptValue Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_)
 {
 	OptValue retVal;
-	this->pushScope(func_.addr());
+	Scope& fnScope = this->pushScope(func_.addr());
 
 	// TODO: push parameters
 	for (size_t i = 0; i < func_.paramCount; ++i)
 	{
 		this->cloneValue(args_[i]);
+
+		auto& param = func_.params[i];
+		if (!fnScope.variables.contains(param.name))
+		{
+			fnScope.variables[std::string(param.name)] = this->reserveOnStack(param.type, true);
+		}
 	}
 
 	// Raw function:
@@ -133,6 +139,12 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 //////////////////////////////////////////
 OptValue Instance::findVariableByName(std::string_view name_)
 {
+	if (name_ == "stackSize")
+	{
+		int size = static_cast<int>(stack.size);
+		return this->allocateOnStack( DeclType::fromType( *findType("Int32") ), reinterpret_cast<void*>(&size), sizeof(int) );
+	}
+
 	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
 	{
 		auto& vars = it->scope->variables;
