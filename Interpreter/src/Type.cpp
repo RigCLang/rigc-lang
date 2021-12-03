@@ -129,7 +129,7 @@ void addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& fro
 	Function::Params convertParams;
 	convertParams[0] = { "from", from_ };
 
-	static auto const& OPERATOR_Convert = [&func_](Instance &vm_, Function::Args args_, size_t argCount_)
+	auto const& OPERATOR_Convert = [&func_](Instance &vm_, Function::Args args_, size_t argCount_)
 		{
 			return func_(vm_, args_[0]);
 		};

@@ -34,7 +34,12 @@ int runProgram(rigc::ParserNodePtr & root)
 		return vm_.allocateOnStack<ToCppType>(#ToRuntimeType, ToCppType(lhsData));			\
 	}
 
-DEFINE_BUILTIN_CONVERT_OP	(int32_t, Int32);
+DEFINE_BUILTIN_CONVERT_OP	(int16_t,	Int16);
+DEFINE_BUILTIN_CONVERT_OP	(int32_t,	Int32);
+DEFINE_BUILTIN_CONVERT_OP	(int64_t,	Int64);
+
+DEFINE_BUILTIN_CONVERT_OP	(float,		Float32);
+DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 
 #undef DEFINE_BUILTIN_CONVERT_OP
 
@@ -49,8 +54,28 @@ int Instance::run(rigc::ParserNodePtr& root)
 	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
 		addTypeConversion<FromCppType>(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
 
-	ADD_CONVERSION(float, Float32, Int32);
-	ADD_CONVERSION(double, Float64, Int32);
+
+	// // Int16 -> floats
+	ADD_CONVERSION(int16_t,	Int16,		Float32);
+	ADD_CONVERSION(int16_t,	Int16,		Float64);
+
+	// // Int32 -> floats
+	ADD_CONVERSION(int32_t,	Int32,		Float32);
+	ADD_CONVERSION(int32_t,	Int32,		Float64);
+
+	// // Int64 -> floats
+	ADD_CONVERSION(int64_t,	Int64,		Float32);
+	ADD_CONVERSION(int64_t,	Int64,		Float64);
+
+	// // Float32 -> ints
+	ADD_CONVERSION(float,	Float32,	Int16);
+	ADD_CONVERSION(float,	Float32,	Int32);
+	ADD_CONVERSION(float,	Float32,	Int64);
+
+	// // Float64 -> ints
+	ADD_CONVERSION(double,	Float64,	Int16);
+	ADD_CONVERSION(double,	Float64,	Int32);
+	ADD_CONVERSION(double,	Float64,	Int64);
 
 	#undef ADD_CONVERSION
 
