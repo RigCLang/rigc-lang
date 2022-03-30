@@ -68,13 +68,13 @@ DEFINE_BUILTIN_ASSIGN_OP	(ModAssign,		%=);
 
 //////////////////////////////////////
 template <typename T>
-TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_)
+IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_)
 {
-	TypeBase& t = universeScope_.registerType(vm_, name_, TypeBase(name_, size_) );
-
+	auto t = std::make_shared<CoreType>(CoreType::fromCppType<T>());
+	universeScope_.types.add(t);
 	Function::Params infixParams;
-	infixParams[0] = { "lhs", DeclType::fromType(t) };
-	infixParams[1] = { "rhs", DeclType::fromType(t) };
+	infixParams[0] = { "lhs", t };
+	infixParams[1] = { "rhs", t };
 
 	#define MAKE_INFIX_OP(Name, Incantation) \
 		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
@@ -118,7 +118,7 @@ TypeBase& TypeBase::Builtin(Instance &vm_, Scope& universeScope_, std::string_vi
 	// Assignment
 	MAKE_INFIX_OP(Assign,	"=");
 
-	return t;
+	return t.get();
 
 	#undef MAKE_INFIX_OP
 }
@@ -143,14 +143,14 @@ void addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view fr
 {
 	addTypeConversion<T>(
 			vm_, universeScope_,
-			DeclType::fromType(*vm_.findType(from_)),
-			DeclType::fromType(*vm_.findType(to_)),
+			vm_.findType(from_)->shared_from_this(),
+			vm_.findType(to_)->shared_from_this(),
 			func_
 		);
 }
 
 #define LINK_BUILTIN_TYPE(TypeName) \
-	template TypeBase& TypeBase::Builtin<TypeName>(Instance&, Scope&, std::string_view, size_t); \
+	template IType* CreateCoreType<TypeName>(Instance&, Scope&, std::string_view, size_t); \
 	template void addTypeConversion<TypeName>(Instance&, Scope&, DeclType const&, DeclType const&, ConversionFunc&); \
 	template void addTypeConversion<TypeName>(Instance&, Scope&, std::string_view, std::string_view, ConversionFunc&)
 
@@ -172,40 +172,40 @@ LINK_BUILTIN_TYPE(double);
 
 #undef LINK_BUILTIN_TYPE
 
-//////////////////////////////////////////////////
-bool operator==(UnitDeclType const& lhs_, UnitDeclType const& rhs_)
-{
-	return lhs_.type == rhs_.type && lhs_.isConst == rhs_.isConst;
-}
+// //////////////////////////////////////////////////
+// bool operator==(UnitDeclType const& lhs_, UnitDeclType const& rhs_)
+// {
+// 	return lhs_.type == rhs_.type && lhs_.isConst == rhs_.isConst;
+// }
 
-//////////////////////////////////////////////////
-bool operator==(ArrayDeclType const& lhs_, ArrayDeclType const& rhs_)
-{
-	if(lhs_.type != rhs_.type || lhs_.isConst != rhs_.isConst)
-		return false;
+// //////////////////////////////////////////////////
+// bool operator==(ArrayDeclType const& lhs_, ArrayDeclType const& rhs_)
+// {
+// 	if(lhs_.type != rhs_.type || lhs_.isConst != rhs_.isConst)
+// 		return false;
 
-	for (size_t i = 0; i < ArrayDeclType::MAX_DIMENSIONS; ++i)
-	{
-		if (lhs_.span[i] != rhs_.span[i])
-			return false;
-	}
+// 	for (size_t i = 0; i < ArrayDeclType::MAX_DIMENSIONS; ++i)
+// 	{
+// 		if (lhs_.span[i] != rhs_.span[i])
+// 			return false;
+// 	}
 
-	return true;
-}
+// 	return true;
+// }
 
-//////////////////////////////////////////////////
-bool operator==(DeclType const& lhs_, DeclType const& rhs_)
-{
-	if (&lhs_ == &rhs_)
-		return true;
+// //////////////////////////////////////////////////
+// bool operator==(DeclType const& lhs_, DeclType const& rhs_)
+// {
+// 	if (&lhs_ == &rhs_)
+// 		return true;
 
-	if (lhs_.index() != rhs_.index())
-		return false;
+// 	if (lhs_.index() != rhs_.index())
+// 		return false;
 
-	if (lhs_.isArray())
-		return lhs_.as<ArrayDeclType>() == rhs_.as<ArrayDeclType>();
+// 	if (lhs_.isArray())
+// 		return lhs_.as<ArrayDeclType>() == rhs_.as<ArrayDeclType>();
 
-	return lhs_.as<UnitDeclType>() == rhs_.as<UnitDeclType>();
-}
+// 	return lhs_.as<UnitDeclType>() == rhs_.as<UnitDeclType>();
+// }
 
 }

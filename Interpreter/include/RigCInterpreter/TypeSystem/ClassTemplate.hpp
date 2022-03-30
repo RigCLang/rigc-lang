@@ -1,0 +1,25 @@
+#pragma once
+
+#include RIGCINTERPRETER_PCH
+
+#include <RigCInterpreter/TypeSystem/TemplateParameter.hpp>
+
+namespace rigc::vm
+{
+
+class ClassTemplate
+{
+public:
+	ClassTemplate(std::string name_, Vec<TemplateParameter> parameters_)
+		: name(std::move(name_))
+		, parameters(std::move(parameters_))
+	{
+	}
+
+	std::string name;
+	Vec<TemplateParameter> parameters;
+
+	DeclType instantiate(vm::Instance& vm_, Vec<TemplateParameterValue> const& params_) const;
+};
+
+};

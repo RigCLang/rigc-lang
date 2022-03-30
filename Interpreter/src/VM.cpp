@@ -3,6 +3,7 @@
 #include <RigCInterpreter/VM.hpp>
 
 #include <RigCInterpreter/Executors/All.hpp>
+#include <RigCInterpreter/TypeSystem/ClassTemplate.hpp>
 
 namespace rigc::vm
 {
@@ -151,6 +152,9 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 		if (fn.is_type<rigc::FunctionDefinition>()) {
 			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
+		else if (fn.is_type<rigc::MethodDef>()) {
+			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
+		}
 		else if(fn.is_type<rigc::ClosureDefinition>()) {
 			auto body = findElem<rigc::CodeBlock>(fn);
 			if (!body)
@@ -211,7 +215,7 @@ OptValue Instance::findVariableByName(std::string_view name_)
 	if (name_ == "stackSize")
 	{
 		int size = static_cast<int>(stack.size);
-		return this->allocateOnStack( DeclType::fromType( *findType("Int32") ), reinterpret_cast<void*>(&size), sizeof(int) );
+		return this->allocateOnStack( "Int32", size );
 	}
 
 	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); )
@@ -234,15 +238,15 @@ OptValue Instance::findVariableByName(std::string_view name_)
 }
 
 //////////////////////////////////////////
-TypeBase const* Instance::findType(std::string_view name_)
+IType* Instance::findType(std::string_view name_)
 {
-	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
+	auto scope = currentScope;
+	while (scope)
 	{
-		auto& types = it->scope->typeAliases;
-		auto typeIt = types.find(name_);
+		if (auto type = scope->types.find(name_))
+			return type.get();
 
-		if (typeIt != types.end())
-			return typeIt->second;
+		scope = scope->parent;
 	}
 
 	return nullptr;
@@ -267,7 +271,104 @@ FunctionOverloads const* Instance::findFunction(std::string_view name_)
 //////////////////////////////////////////
 Value Instance::cloneValue(Value value_)
 {
-	return this->allocateOnStack( value_.getType(), reinterpret_cast<void*>(value_.blob()), value_.getType().size() );
+	return this->allocateOnStack( value_.getType(), reinterpret_cast<void*>(value_.blob()), value_.getType()->size() );
+}
+
+//////////////////////////////////////////
+Function& Instance::registerFunction(Function func_)
+{
+	auto f = std::make_unique<Function>( std::move(func_) );
+	auto& ref = *f;
+	functions.push_back(std::move(f));
+	return ref;
+}
+
+//////////////////////////////////////////
+IType& Instance::registerType(IType& type_)
+{
+	types.push_back( &type_ );
+	return type_;
+}
+
+//////////////////////////////////////////
+FrameBasedValue Instance::reserveOnStack(DeclType const& type_, bool lookBack_)
+{
+	auto& frame = stack.frames.back();
+
+	FrameBasedValue result;
+	result.type			= type_;
+	result.stackOffset	= currentScope->baseFrameOffset;
+	if (lookBack_)
+		result.stackOffset -= type_->size();
+	else
+		currentScope->baseFrameOffset += type_->size();
+
+	return result;
+}
+
+//////////////////////////////////////////
+Value Instance::allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy)
+{
+	size_t toAlloc = type_->size();
+	if (toCopy == 0)
+		toCopy = toAlloc;
+
+	size_t newSize = stack.size + toAlloc;
+	if (newSize > STACK_SIZE)
+		throw std::runtime_error("Stack overflow");
+
+	size_t prevSize = stack.size;
+	stack.size = newSize;
+
+	currentScope->baseFrameOffset += toAlloc;
+
+	char* bytes = stack.data() + prevSize;
+	if (sourceBytes_)
+		std::memcpy(bytes, sourceBytes_, toCopy);
+
+	Value val;
+	val.type = type_;
+	val.data = bytes;
+	return val;
+}
+
+//////////////////////////////////////////
+Scope& Instance::scopeOf(void const *addr_)
+{
+	auto it = scopes.find(addr_);
+	if (it == scopes.end())
+	{
+		auto scope = std::make_unique<Scope>();
+		auto& scopeRef = *scope;
+		scopes[addr_] = std::move(scope);
+		return scopeRef;
+	}
+
+	return *scopes[addr_];
+}
+
+//////////////////////////////////////////
+Scope& Instance::pushScope(void const* addr_)
+{
+	Scope& scope = scopeOf(addr_);
+	if (!scope.parent)
+		scope.parent = currentScope;
+
+	currentScope = &scope;
+	StackFrame& frame = stack.pushFrame();
+	frame.scope = &scope;
+	return scope;
+}
+
+//////////////////////////////////////////
+void Instance::popScope()
+{
+	// 2 because of the universe scope stack frame
+	if (stack.frames.size() >= 2)
+	{
+		stack.popFrame();
+		currentScope = stack.frames.back().scope;
+	}
 }
 
 

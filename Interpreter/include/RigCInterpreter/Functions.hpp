@@ -63,4 +63,6 @@ struct Function
 	}
 };
 
+using FunctionOverloads = std::vector<Function*>;
+
 }

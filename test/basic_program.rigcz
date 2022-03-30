@@ -1,19 +1,12 @@
-func pow(num, exp)
-{
-	var i = 1;
-	var n = num;
-	while (i < exp)
-	{
-		n *= num;
-		i += 1;
+class Greeter {
+	greet {
+		ret "Witaj";
 	}
-
-	ret n;
 }
 
 func main {
-	var x = 123;
-	x += 30;
-	x += "hello";
-	print(pow(2, 10), "\n");
+	Greeter greeter;
+	var greet = greeter.greet();
+	print("Greeter says {}\n", greet);
+	print("typeOf(greet) = {}\n", typeOf(greet));
 }

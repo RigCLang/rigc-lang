@@ -36,6 +36,10 @@ DECLARE_EXECUTOR(evaluateStringLiteral);
 DECLARE_EXECUTOR(evaluateArrayLiteral);
 DECLARE_EXECUTOR(evaluateArrayElement);
 
+DECLARE_EXECUTOR(evaluateClassDefinition);
+DECLARE_EXECUTOR(evaluateMethodDefinition);
+
+
 DECLARE_EXECUTOR(evaluateVariableDefinition);
 
 #undef DECLARE_EXECUTOR

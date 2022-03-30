@@ -2,8 +2,10 @@
 
 #include <RigCInterpreter/Executors/All.hpp>
 #include <RigCInterpreter/Executors/ExpressionExecutor.hpp>
-
 #include <RigCInterpreter/VM.hpp>
+
+#include <RigCInterpreter/TypeSystem/ArrayType.hpp>
+#include <RigCInterpreter/TypeSystem/ClassType.hpp>
 
 namespace rigc::vm
 {
@@ -30,6 +32,8 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 	MAKE_EXECUTOR(FunctionDefinition,	evaluateFunctionDefinition),
 	MAKE_EXECUTOR(InitializerValue,		evaluateExpression),
 	MAKE_EXECUTOR(FunctionArg,			evaluateExpression),
+	MAKE_EXECUTOR(ClassDefinition,		evaluateClassDefinition),
+	MAKE_EXECUTOR(MethodDef,			evaluateMethodDefinition),
 };
 
 #undef MAKE_EXECUTOR
@@ -157,32 +161,63 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 ////////////////////////////////////////
 void print(Instance &vm_, rigc::ParserNode const& args)
 {
-	for (auto const& c : args.children)
+	size_t numArgs = args.children.size();
+	if (numArgs == 0)
+		return;
+
+	OptValue format = vm_.evaluate(*args.children[0]);
+	if (!format.has_value() || !format->getType()->isArray() && format->typeName() != "Char")
+		return;
+
+	auto chars = &format->view<char const>();
+	auto fmtView = std::string_view(chars, format->getType()->size());
+
+	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
+
+	for (size_t c = 1; c < numArgs; ++c)
 	{
-		OptValue optVal = vm_.evaluate(*c);
+		OptValue optVal = vm_.evaluate(*args.children[c]);
 		if (optVal.has_value())
 		{
 			Value& val = optVal.value();
 			DeclType const& type = val.getType();
 
-			if (val.typeName() == "Int32")
-				std::cout << val.view<int>();
-			if (val.typeName() == "Float32")
-				std::cout << val.view<float>();
-			if (val.typeName() == "Float64")
-				std::cout << val.view<double>();
-			if (val.typeName() == "Bool")
-				std::cout << (val.view<bool>() ? "true" : "false");
-			else if (val.typeName() == "float")
-				std::cout << val.view<float>();
-			else if (val.getType().isArray() && val.typeName() == "Char")
+			auto typeName = val.typeName();
+			if (typeName == "Int32")
+				store.push_back(val.view<int>());
+			if (typeName == "Float32")
+				store.push_back(val.view<float>());
+			if (typeName == "Float64")
+				store.push_back(val.view<double>());
+			if (typeName == "Bool")
+				store.push_back((val.view<bool>() ? "true" : "false"));
+			else if (val.getType()->isArray() && typeName == "Char")
 			{
 				auto chars = &val.view<char const>();
 
-				std::cout << std::string_view(chars, type.size());
+				store.push_back(std::string(chars, type->size()));
 			}
 		}
 	}
+
+	fmt::vprint(fmtView, store);
+}
+
+////////////////////////////////////////
+OptValue typeOf(Instance &vm_, rigc::ParserNode const& args)
+{
+	for (auto const& c : args.children)
+	{
+		OptValue optVal = vm_.evaluate(*c);
+		if (optVal.has_value())
+		{
+			auto name = optVal.value().fullTypeName();
+			auto t = wrap<ArrayType>(vm_.univeralScope().types, vm_.findType("Char")->shared_from_this(), name.size());
+
+			return vm_.allocateOnStack( t, name.data(), name.size() );
+		}
+	}
+	return std::nullopt;
 }
 
 ////////////////////////////////////////
@@ -199,6 +234,10 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 		{
 			print(vm_, *args);
 		}
+		else if (fnName->string_view() == "typeOf")
+		{
+			return typeOf(vm_, *args);
+		}
 		else
 		{
 			auto overloads = vm_.findFunction(fnName->string_view());
@@ -213,9 +252,17 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 				numArgs = args->children.size();
 				for(size_t i = 0; i < numArgs; ++i)
 					evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
-
 			}
-			return ( (*overloads)[0]->invoke(vm_, evaluatedArgs, numArgs) );
+
+			FunctionParamTypes types;
+			for (size_t i = 0; i < numArgs; ++i)
+				types[i] = evaluatedArgs[i].getType();
+
+			auto func = findOverload(*overloads, types, numArgs);
+			if (func)
+				return func->invoke(vm_, evaluatedArgs, numArgs);
+			else
+				throw std::runtime_error("Function " + fnName->string() + " not found");
 		}
 	}
 
@@ -265,15 +312,19 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 	else
 	{
 		if (auto t = vm_.findType(declType))
-			type = DeclType::fromType(*t);
+			type = t->shared_from_this();
 		else
 			throw std::runtime_error(fmt::format("Type {} not found", declType));
 
-		if (value.type != type)
+		if (!valueExpr)
+		{
+			value = vm_.allocateOnStack(type, nullptr);
+		}
+		else if (value.type != type)
 		{
 			auto converted = vm_.tryConvert(value, type);
 			if (!converted)
-				throw std::runtime_error(fmt::format("Cannot convert {} to {}", value.typeName(), type.name()));
+				throw std::runtime_error(fmt::format("Cannot convert {} to {}", value.typeName(), type->name()));
 
 			value = converted.value();
 		}
@@ -291,9 +342,26 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 }
 
 ////////////////////////////////////////
+void evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_)
+{
+	for (auto const& param : paramsNode_.children)
+	{
+		auto paramName	= findElem<rigc::Name>(*param)->string_view();
+		auto declType	= findElem<rigc::Type>(*param);
+		auto typeName	= declType ? declType->string_view() : "Int32";
+
+		params_[numParams_++] = {
+			paramName,
+			vm_.findType(typeName)->shared_from_this()
+		};
+	}
+}
+
+
+////////////////////////////////////////
 OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
-	auto& scope = vm_.univeralScope();
+	auto& scope = *vm_.currentScope;
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
 
@@ -302,15 +370,7 @@ OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
 	if (paramList)
-	{
-		for (auto const& param : paramList->children)
-		{
-			params[numParams++] = {
-				findElem<rigc::Name>(*param)->string_view(),
-				DeclType::fromType(*vm_.findType("Int32"))
-			};
-		}
-	}
+		evaluateFunctionParams(vm_, *paramList, params, numParams);
 
 	scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 
@@ -367,11 +427,58 @@ OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 	replaceAll(s, "\\\\",	"\\");
 	replaceAll(s, "\\\"",	"\"");
 
-	ArrayDeclType t;
-	t.span[0]		= s.size();
-	t.elementType	= { vm_.findType("Char"), false };
+	auto type = wrap<ArrayType>(vm_.univeralScope().types, vm_.findType("Char")->shared_from_this(), s.size());
 
-	return vm_.allocateOnStack( t, s.data(), s.size() );
+	vm_.univeralScope().types.add(type);
+
+	return vm_.allocateOnStack( std::move(type), s.data(), s.size() );
+}
+
+////////////////////////////////////////
+OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	auto type = std::make_shared<ClassType>();
+	type->parse(expr_);
+	vm_.currentScope->types.add(type);
+
+	auto prevClass = vm_.currentClass;
+	vm_.currentClass = type.get();
+
+	// Evaluate the class body
+	auto body = findElem<rigc::ClassCodeBlock>(expr_, false);
+	for (auto const& child : body->children)
+	{
+		vm_.evaluate(*child);
+	}
+
+	vm_.currentClass = prevClass;
+
+	return {};
+}
+
+
+////////////////////////////////////////
+OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	auto& scope = *vm_.currentScope;
+
+	auto name = findElem<rigc::Name>(expr_, false)->string_view();
+
+	Function::Params params;
+	size_t numParams = 0;
+	params[numParams++] = {
+		"self",
+		vm_.currentClass->shared_from_this()
+	};
+
+	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
+	if (paramList)
+		evaluateFunctionParams(vm_, *paramList, params, numParams);
+
+	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+	vm_.currentClass->methods[name].push_back(&method);
+
+	return {};
 }
 
 // ////////////////////////////////////////

@@ -48,13 +48,13 @@ struct ValueBase
 		return type;
 	}
 
-	std::string_view typeName() const {
-		return type.decay().type->name;
+	std::string typeName() const {
+		return type->decay()->name();
 	}
 
 	std::string fullTypeName() const
 	{
-		return type.name();
+		return type->name();
 	}
 };
 
@@ -76,6 +76,29 @@ struct Value
 	// Temp:
 	void* blob() const {
 		return data;
+	}
+};
+
+struct CompileTimeValue
+	: ValueBase
+{
+	std::vector<std::byte> buffer;
+
+	template <typename T>
+	T& view() {
+		return *reinterpret_cast<T*>(this->blob());
+	}
+
+	template <typename T>
+	T const& view() const {
+		return *reinterpret_cast<T const*>(this->blob());
+	}
+
+	void* blob() {
+		return reinterpret_cast<void*>(buffer.data());
+	}
+	void const* blob() const {
+		return reinterpret_cast<void const*>(buffer.data());
 	}
 };
 

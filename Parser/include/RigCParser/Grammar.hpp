@@ -6,6 +6,7 @@
 #include <RigCParser/Grammar/Keywords.hpp>
 #include <RigCParser/Grammar/Statements.hpp>
 #include <RigCParser/Grammar/Tokens.hpp>
+#include <RigCParser/Grammar/Classes.hpp>
 
 namespace rigc
 {
@@ -15,7 +16,7 @@ namespace rigc
 
 struct GlobalNS
 	:
-	p::star< p::sor<ImportStatement, FunctionDefinition, ws> >
+	p::star< p::sor<ImportStatement, ClassDefinition, FunctionDefinition, ws> >
 {
 };
 
@@ -28,6 +29,9 @@ template< typename Rule >
 using Selector = p::parse_tree::selector< Rule,
 	p::parse_tree::store_content::on<
 			ImportStatement,
+			ClassDefinition,
+			ClassCodeBlock,
+			MethodDef,
 			FunctionDefinition,
 			VariableDefinition,
 			InitializerValue,

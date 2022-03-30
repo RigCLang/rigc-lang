@@ -3,6 +3,7 @@
 #include RIGCPARSER_PCH
 
 #include <RigCParser/Grammar/Keywords.hpp>
+#include <RigCParser/Grammar/Literals.hpp>
 
 namespace rigc
 {
@@ -32,7 +33,7 @@ struct TemplateParam
 struct TemplateParamsInner
 	:
 	p::seq<
-		TemplateParam, 
+		TemplateParam,
 		p::opt< opt_ws,
 			p::opt<  p::seq< p::one<','>, opt_ws, TemplateParam>  >
 		>
@@ -42,13 +43,13 @@ struct TemplateParamsInner
 
 struct TemplateParams
 	:
-	p::seq< p::one<'<'>, opt_ws, TemplateParamsInner, opt_ws, p::one<'>'> >
+	p::if_must< p::one<'<'>, opt_ws, TemplateParamsInner, opt_ws, p::one<'>'> >
 {
 };
 
 struct Type
 	:
-	p::seq< Name, p::opt<opt_ws, TemplateParams> >
+	p::sor< IntegerLiteral, p::seq< Name, p::opt<opt_ws, TemplateParams> > >
 {};
 
 struct DeclType

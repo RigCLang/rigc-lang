@@ -20,8 +20,24 @@ bool isOperator(rigc::ParserNode const& node_)
 ////////////////////////////////////////
 int operatorPriority(rigc::ParserNode const& node_)
 {
-	if (node_.string_view() == "=")
-		return 999;
+	auto op = node_.string_view();
+	if (op == ",") return 17;
+	if (op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "%=")
+		return 16;
+	if (op == "||") return 15;
+	if (op == "&&") return 14;
+	if (op == "|") return 13;
+	if (op == "^") return 12;
+	if (op == "&") return 11;
+	if (op == "==" || op == "!=") return 10;
+	if (op == "<" || op == ">" || op == "<=" || op == ">=") return 9;
+	if (op == "<<" || op == ">>") return 8;
+	if (op == "+" || op == "-") return 7;
+	if (op == "*" || op == "/" || op == "%") return 6;
+
+	if (op == "++" || op == "--") return 2;
+
+
 	return 1;
 }
 
@@ -60,7 +76,7 @@ OptValue ExpressionExecutor::evaluate()
 				}
 			}
 		}
-		
+
 		this->evaluateAction(actions[bestIdx], bestIdx);
 
 		numPending = 0;
@@ -83,7 +99,7 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 	{
 		if (actionIndex_ == 0 || actionIndex_ == actions.size() - 1)
 			throw std::runtime_error("Invalid infix operator position: " + std::to_string(actionIndex_));
-		
+
 		action_ = this->evalInfixOperator(
 				oper.string_view(),
 				actions[actionIndex_ - 1],
@@ -113,7 +129,7 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 				oper.string_view(),
 				actions[actionIndex_ - 1]
 			);
-		
+
 		actions.erase(actions.begin() + actionIndex_ - 1);
 	}
 }
@@ -123,7 +139,7 @@ Value ExpressionExecutor::evalSingleAction(Action & lhs_)
 {
 	if (lhs_.is<PendingAction>())
 		return *vm.evaluate(*lhs_.as<PendingAction>());
-	
+
 	return lhs_.as<ProcessedAction>();
 }
 
@@ -131,30 +147,77 @@ Value ExpressionExecutor::evalSingleAction(Action & lhs_)
 Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_)
 {
 	Value lhs	= this->evalSingleAction(lhs_);
-	Value rhs	= this->evalSingleAction(rhs_);
 
-	// if (lhs.valueTypeIndex() != rhs.valueTypeIndex())
-	// 	throw std::runtime_error("Incompatible operands for \"" + std::string(op_) + "\" operator.");
-
-	FunctionParamTypes types;
-	types[0] = lhs.getType();
-	types[1] = rhs.getType();
-
-	if (auto overloads = vm.univeralScope().findOperator(op_, Operator::Infix))
+	if (op_ == ".")
 	{
-		if (auto func = findOverload(*overloads, types, 2))
+		auto rhsExpr = rhs_.as<PendingAction>();
+
+		if (rhsExpr->is_type<rigc::FunctionCall>())
 		{
+			auto methodName = findElem<rigc::Name>(*rhsExpr);
+			FunctionParamTypes paramTypes;
+			size_t numParams = 0;
+			paramTypes[numParams++] = lhs.type;
+
+			// Todo:
+			// add rest of parameters
+
+			auto overloadsIt = lhs.type->methods.find(methodName->string());
+			if (overloadsIt == lhs.type->methods.end())
+				throw std::runtime_error(fmt::format("Method {} not found in type {}.", methodName->string_view(), lhs.type->name()));
+
+			auto fn = findOverload(overloadsIt->second, paramTypes, numParams);
+
+			if (!fn) {
+				throw std::runtime_error(fmt::format("Not matching method {} to call with params: {}.", methodName->string_view(), lhs.type->name()));
+			}
+
 			Function::Args args;
 			args[0] = lhs;
-			args[1] = rhs;
-			return func->invoke(vm, args, 2).value();
+			// fmt::print("Calling method {} on {}\n", methodName->string_view(), lhs_.as<PendingAction>()->string_view());
+			return *fn->invoke(vm, args, numParams);
 		}
-	}
+		return vm.allocateOnStack("Int32", 1);
 
-	throw std::runtime_error(
-			"No matching operator \"" + std::string(op_) + "\" for argument types: ( " +
-			lhs.fullTypeName() + ", " + rhs.fullTypeName() + " )"
-		);
+		// auto overloads = lhs.getType().methods;
+
+		// if (auto func = findOverload(*overloads, types, 2))
+		// {
+		// 	Function::Args args;
+		// 	args[0] = lhs;
+		// 	args[1] = rhs;
+		// 	return func->invoke(vm, args, 2).value();
+		// }
+	}
+	else
+	{
+		Value rhs	= this->evalSingleAction(rhs_);
+
+		// if (lhs.valueTypeIndex() != rhs.valueTypeIndex())
+		// 	throw std::runtime_error("Incompatible operands for \"" + std::string(op_) + "\" operator.");
+
+		FunctionParamTypes types;
+
+		size_t typeIdx = 0;
+		types[typeIdx++] = lhs.getType();
+		types[typeIdx++] = rhs.getType();
+
+		if (auto overloads = vm.univeralScope().findOperator(op_, Operator::Infix))
+		{
+			if (auto func = findOverload(*overloads, types, 2))
+			{
+				Function::Args args;
+				args[0] = lhs;
+				args[1] = rhs;
+				return func->invoke(vm, args, 2).value();
+			}
+		}
+
+		throw std::runtime_error(
+				"No matching operator \"" + std::string(op_) + "\" for argument types: ( " +
+				lhs.fullTypeName() + ", " + rhs.fullTypeName() + " )"
+			);
+	}
 }
 
 ////////////////////////////////////////

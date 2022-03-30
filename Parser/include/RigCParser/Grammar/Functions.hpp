@@ -30,7 +30,7 @@ struct Parameter
 
 struct Params
 	:
-	p::seq< Parameter, opt_ws, p::opt< p::one<','>, opt_ws, Parameter > >
+	p::seq< Parameter, opt_ws, p::star< p::one<','>, opt_ws, Parameter > >
 {
 };
 

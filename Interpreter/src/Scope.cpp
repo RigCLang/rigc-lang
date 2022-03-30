@@ -10,7 +10,7 @@ namespace rigc::vm
 std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 {
 #define MAKE_BUILTIN_TYPE(CppName, RigCName) \
-	TypeBase::Builtin<CppName>(vm_, *scope, #RigCName, sizeof(CppName))
+	CreateCoreType<CppName>(vm_, *scope, #RigCName)
 
 	auto scope = std::make_unique<Scope>();
 
@@ -34,6 +34,26 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 #undef MAKE_BUILTIN_TYPE
 }
 
+///////////////////////////////////////////////////////////////
+StaticString<char, 512> Scope::formatOperatorName(std::string_view opName_, Operator::Type type_)
+{
+	constexpr char opPrefix[]		= "operator ";
+	constexpr char prefixOpText[]	= "pr";
+	constexpr char postfixOpText[]	= "po";
+	constexpr char infixOpText[]	= "in";
+
+	StaticString<char, 512> fmtName;
+	fmtName += opPrefix;
+	if (type_ == Operator::Infix)
+		fmtName += infixOpText;
+	else if (type_ == Operator::Prefix)
+		fmtName += prefixOpText;
+	else if (type_ == Operator::Postfix)
+		fmtName += postfixOpText;
+
+	fmtName += opName_;
+	return fmtName;
+}
 
 ///////////////////////////////////////////////////////////////
 Function const* Scope::findConversion(DeclType const& from_, DeclType const& to_) const
@@ -62,6 +82,16 @@ bool testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_
 }
 
 ///////////////////////////////////////////////////////////////
+FunctionOverloads const* Scope::findFunction(std::string_view funcName_) const
+{
+	auto it = functions.find(funcName_);
+	if (it != functions.end())
+		return &it->second;
+
+	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
 Function const* findOverload(
 		FunctionOverloads const&	funcs_,
 		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
@@ -80,10 +110,31 @@ Function const* findOverload(
 	return nullptr;
 }
 
+
 ///////////////////////////////////////////////////////////////
-TypeBase& Scope::registerType(struct Instance& vm_, std::string_view name_, TypeBase type_)
+IType const* Scope::findType(std::string_view typeName_) const
 {
-	TypeBase& t = vm_.registerType( std::move(type_) );
+	auto it = typeAliases.find(typeName_);
+	if (it != typeAliases.end())
+		return it->second;
+
+	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
+FunctionOverloads const* Scope::findOperator(std::string_view opName_, Operator::Type type_) const
+{
+	auto fmtName = formatOperatorName(opName_, type_);
+	return this->findFunction(
+			std::string_view( fmtName.data(), fmtName.numChars )
+		);
+}
+
+
+///////////////////////////////////////////////////////////////
+IType& Scope::registerType(Instance& vm_, std::string_view name_, IType& type_)
+{
+	IType& t = vm_.registerType( type_ );
 
 	typeAliases[std::string(name_)] = &t;
 
@@ -104,7 +155,7 @@ Function& Scope::registerFunction(Instance& vm_, std::string_view name_, Functio
 }
 
 ///////////////////////////////////////////////////////////////
-Function& Scope::registerOperator(struct Instance& vm_, std::string_view name_, Operator::Type type_, Function func_)
+Function& Scope::registerOperator(Instance& vm_, std::string_view name_, Operator::Type type_, Function func_)
 {
 	auto fmtName = formatOperatorName(name_, type_);
 	return this->registerFunction(
