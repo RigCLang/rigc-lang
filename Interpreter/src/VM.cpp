@@ -3,6 +3,7 @@
 #include <RigCInterpreter/VM.hpp>
 
 #include <RigCInterpreter/Executors/All.hpp>
+#include <RigCInterpreter/Value.hpp>
 #include <RigCInterpreter/TypeSystem/ClassTemplate.hpp>
 
 namespace rigc::vm
@@ -112,6 +113,15 @@ GlobalFunctions Instance::discoverGlobalFunctions(rigc::ParserNodePtr & root)
 }
 
 //////////////////////////////////////////
+Value Instance::allocateReference(Value const& toValue_)
+{
+	auto stackPtr = stack.container.data();
+	auto stackPos = reinterpret_cast<char const*>(toValue_.data) - reinterpret_cast<char const*>(stackPtr);
+	// fmt::print("Allocating reference to {}, type: {}\n", stackPos, toValue_.type->name());
+	return this->allocateOnStack<void const*>(wrap<RefType>(univeralScope().types, toValue_.type), toValue_.blob());
+}
+
+//////////////////////////////////////////
 OptValue Instance::executeFunction(Function const& func)
 {
 	Function::Args args;
@@ -122,32 +132,48 @@ OptValue Instance::executeFunction(Function const& func)
 OptValue Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_)
 {
 	OptValue retVal;
-	Scope& fnScope = this->pushScope(func_.addr());
-	fnScope.func = true;
-
-	// TODO: push parameters
-	for (size_t i = 0; i < func_.paramCount; ++i)
-	{
-		this->cloneValue(args_[i]);
-
-		auto& param = func_.params[i];
-		if (!fnScope.variables.contains(param.name))
-		{
-			fnScope.variables[std::string(param.name)] = this->reserveOnStack(param.type, true);
-		}
-	}
 
 	// Raw function:
 	if (std::holds_alternative<Function::RawFn>(func_.impl))
 	{
+		// Process parameters (conversions)
+		for (size_t i = 0; i < func_.paramCount; ++i)
+		{
+			auto& param = func_.params[i];
+			// TODO: allow conversions, not only refs
+			if (param.type != args_[i].type)
+				args_[i] = args_[i].deref();
+		}
+
 		auto const& fn = std::get<Function::RawFn>(func_.impl);
 		retVal = fn(*this, args_, argsCount_);
 	}
 	else
 	{
+		Scope& fnScope = this->pushScope(func_.addr());
+		fnScope.func = true;
+
+		// Process parameters (conversions)
+		for (size_t i = 0; i < func_.paramCount; ++i)
+		{
+			auto& param = func_.params[i];
+
+			// TODO: allow conversions, not only refs
+			if (param.type != args_[i].type)
+			{
+				// fmt::print("Converting {} to {}\n", args_[i].type->name(), param.type->name());
+				this->cloneValue(args_[i].deref());
+			}
+			else
+				this->cloneValue(args_[i]);
+
+			if (!fnScope.variables.contains(param.name))
+			{
+				fnScope.variables[std::string(param.name)] = this->reserveOnStack(param.type, true);
+			}
+		}
 		// Runtime function:
 		auto const& fn = *std::get<Function::RuntimeFn>(func_.impl);
-
 
 		if (fn.is_type<rigc::FunctionDefinition>()) {
 			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
@@ -162,9 +188,10 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 
 			retVal = this->evaluate( *body );
 		}
+
+		this->popScope();
 	}
 	this->returnTriggered = false;
-	this->popScope();
 
 	if (retVal.has_value())
 	{

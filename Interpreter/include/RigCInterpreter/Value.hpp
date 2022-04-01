@@ -3,6 +3,7 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/Type.hpp>
+#include <RigCInterpreter/TypeSystem/RefType.hpp>
 #include <RigCInterpreter/Stack.hpp>
 
 namespace rigc::vm
@@ -84,6 +85,18 @@ struct Value
 		mem.type = std::move(type_);
 		mem.data = reinterpret_cast<char*>(data) + offset_;
 		return mem;
+	}
+
+	Value deref() const
+	{
+		if (auto ref = dynamic_cast<RefType*>(type.get()))
+		{
+			Value val;
+			val.type = ref->inner;
+			val.data = this->view<void*>();
+			return val;
+		}
+		throw std::runtime_error("Cannot deref non-ref type");
 	}
 };
 

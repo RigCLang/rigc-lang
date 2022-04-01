@@ -106,6 +106,7 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 				actions[actionIndex_ - 1],
 				actions[actionIndex_ + 1]
 			);
+		// fmt::print("Infix operator: {} resulted in type {}\n", oper.string_view(), action_.as<ProcessedAction>()->type->name());
 		actions.erase(actions.begin() + actionIndex_ + 1);
 		actions.erase(actions.begin() + actionIndex_ - 1);
 	}
@@ -171,8 +172,10 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 				paramTypes[numParams++]	= evaluatedArgs[i + 1].type;
 			}
 
-			auto overloadsIt = lhs.type->methods.find(methodName->string());
-			if (overloadsIt == lhs.type->methods.end())
+			auto deref = lhs.deref();
+
+			auto overloadsIt = deref.type->methods.find(methodName->string());
+			if (overloadsIt == deref.type->methods.end())
 				throw std::runtime_error(fmt::format("Method {} not found in type {}.", methodName->string_view(), lhs.type->name()));
 
 			auto fn = findOverload(overloadsIt->second, paramTypes, numParams);
@@ -186,6 +189,8 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 		}
 		else if (rhsExpr->is_type<rigc::Name>())
 		{
+			lhs = lhs.deref();
+
 			auto memberName = rhsExpr->string_view();
 			auto type = dynamic_cast<ClassType*>(lhs.type.get());
 			if (!type)
@@ -195,7 +200,7 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 			if (memberIt == type->dataMembers.end())
 				throw std::runtime_error(fmt::format("Member {} not found in type {}.", memberName, lhs.type->name()));
 
-			return lhs.member(memberIt->offset, memberIt->type);
+			return vm.allocateReference(lhs.member(memberIt->offset, memberIt->type));
 		}
 		else
 			throw std::runtime_error("Invalid expression.");

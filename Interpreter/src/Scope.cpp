@@ -75,7 +75,15 @@ bool testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_
 	for(size_t i = 0; i < numArgs_; ++i)
 	{
 		if (func_.params[i].type != paramTypes_[i])
-			return false;
+		{
+			if (auto ref = dynamic_cast<RefType*>(paramTypes_[i].get()))
+			{
+				if (ref->inner.get() != func_.params[i].type.get())
+					return false;
+			}
+			else
+				return false;
+		}
 	}
 
 	return true;

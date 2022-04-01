@@ -181,6 +181,8 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 		if (optVal.has_value())
 		{
 			Value& val = optVal.value();
+			if (auto ref = dynamic_cast<RefType*>(val.type.get()))
+				val = val.deref();
 			DeclType const& type = val.getType();
 
 			auto typeName = val.typeName();
@@ -285,7 +287,10 @@ OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
 		throw std::runtime_error("No variable with name \"" + expr_.string() + "\"");
 	}
 
-	return optValue;
+	if (auto ref = dynamic_cast<RefType*>(optValue->type.get()))
+		return optValue;
+
+	return vm_.allocateReference(optValue.value());
 }
 
 ////////////////////////////////////////
@@ -469,7 +474,7 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 	size_t numParams = 0;
 	params[numParams++] = {
 		"self",
-		vm_.currentClass->shared_from_this()
+		wrap<RefType>(vm_.univeralScope().types, vm_.currentClass->shared_from_this())
 	};
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);

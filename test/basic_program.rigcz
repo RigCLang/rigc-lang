@@ -1,13 +1,14 @@
-class Vector3f
+class Vector3
 {
-	x : Float32;
-	y : Float32;
-	z : Float32;
+	x : Int32;
+	y : Int32;
+	z : Int32;
 
 	construct {
-		self.x = 0.f;
-		self.y = 0.f;
-		self.z = 0.f;
+		self.x = 10;
+		self.y = 20;
+		self.z = 30;
+		print("typeOf(self) = {}\n", typeOf(self));
 	}
 
 	sum {
@@ -15,10 +16,12 @@ class Vector3f
 	}
 }
 
+func sumOf(v : Vector3) {
+	ret v.x + v.y + v.z;
+}
+
 func main {
-	Vector3f pos;
-	pos.x = 1.f;
-	pos.y = 2.f;
-	pos.z = 3.5f;
+	Vector3 pos;
+	pos.construct();
 	print("Pos: ({}, {}, {}), sum = {}\n", pos.x, pos.y, pos.z, pos.sum());
 }

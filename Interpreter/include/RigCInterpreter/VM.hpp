@@ -51,6 +51,8 @@ struct Instance
 
 	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0);
 
+	Value allocateReference(Value const& toValue_);
+
 	template <typename T>
 	Value allocateOnStack(DeclType const& type_, T const& value)
 	{
