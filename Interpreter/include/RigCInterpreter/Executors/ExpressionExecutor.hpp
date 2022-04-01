@@ -13,7 +13,7 @@ class ExpressionExecutor
 {
 public:
 	using PendingAction		= rigc::ParserNode*;
-	using ProcessedAction	= Value;
+	using ProcessedAction	= OptValue;
 
 	using ActionVariant		= std::variant<PendingAction, ProcessedAction>;
 
@@ -21,7 +21,7 @@ public:
 		: ActionVariant
 	{
 		using ActionVariant::ActionVariant;
-		
+
 		template <typename T>
 		bool is() const {
 			return std::holds_alternative<T>(*this);
@@ -52,9 +52,9 @@ private:
 
 	void evaluateAction(Action &action_, size_t actionIndex_);
 
-	Value evalSingleAction(Action& lhs_);
+	OptValue evalSingleAction(Action& lhs_);
 
-	Value evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_);
+	OptValue evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_);
 	Value evalPrefixOperator(std::string_view op_, Action& rhs_);
 	Value evalPostfixOperator(std::string_view op_, Action& lhs_);
 

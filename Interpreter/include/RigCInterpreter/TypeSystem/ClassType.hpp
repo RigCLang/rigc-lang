@@ -13,8 +13,8 @@ class ClassType
 	:
 	public IType
 {
-	std::string_view _name;
-	std::size_t _size = 1;
+	std::string_view	_name;
+	std::size_t			_size = 1;
 public:
 	rigc::ParserNode const* declaration = nullptr;
 
@@ -35,7 +35,15 @@ public:
 	struct DataMember {
 		std::string	name;
 		DeclType	type;
+		size_t		offset = 0;
 	};
+
+	inline void add(DataMember mem)
+	{
+		mem.offset = _size;
+		_size += mem.type->size();
+		dataMembers.emplace_back(std::move(mem));
+	}
 
 	Vec< DataMember > dataMembers;
 

@@ -34,6 +34,7 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 	MAKE_EXECUTOR(FunctionArg,			evaluateExpression),
 	MAKE_EXECUTOR(ClassDefinition,		evaluateClassDefinition),
 	MAKE_EXECUTOR(MethodDef,			evaluateMethodDefinition),
+	MAKE_EXECUTOR(DataMemberDef,		evaluateDataMemberDefinition),
 };
 
 #undef MAKE_EXECUTOR
@@ -331,7 +332,7 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 	}
 
 
-	vm_.cloneValue(value);
+	value = vm_.cloneValue(value);
 
 	if (!vm_.currentScope->variables.contains(varName))
 	{
@@ -477,6 +478,58 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 
 	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 	vm_.currentClass->methods[name].push_back(&method);
+
+	return {};
+}
+
+////////////////////////////////////////
+OptValue evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	auto typeExpr	= findElem<rigc::ExplicitType>(expr_, false);
+	auto varName	= findElem<rigc::Name>(expr_, false)->string_view();
+	auto valueExpr	= findElem<rigc::InitializerValue>(expr_, false);
+
+	// bool deduceType = (typeExpr == nullptr);
+
+	// Value value;
+	// if (valueExpr) {
+	// 	value = vm_.evaluate(*valueExpr).value();
+	// }
+	// else if (deduceType) {
+	// 	throw std::runtime_error(
+	// 			fmt::format("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
+	// 		);
+	// }
+
+	DeclType type;
+	// if (deduceType)
+	// 	type = value.type;
+	// else
+	{
+		auto declType = findElem<rigc::Type>(*typeExpr, false)->string_view();
+		if (auto t = vm_.findType(declType))
+			type = t->shared_from_this();
+		else
+			throw std::runtime_error(fmt::format("Type {} not found", declType));
+
+		// if (!valueExpr)
+		// {
+		// 	value = vm_.allocateOnStack(type, nullptr);
+		// }
+		// else if (value.type != type)
+		// {
+		// 	auto converted = vm_.tryConvert(value, type);
+		// 	if (!converted)
+		// 		throw std::runtime_error(fmt::format("Cannot convert {} to {}", value.typeName(), type->name()));
+
+		// 	value = converted.value();
+		// }
+	}
+
+
+	// value = vm_.cloneValue(value);
+
+	vm_.currentClass->add({ std::string(varName), std::move(type) });
 
 	return {};
 }

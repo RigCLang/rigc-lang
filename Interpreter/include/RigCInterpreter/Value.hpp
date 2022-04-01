@@ -77,6 +77,14 @@ struct Value
 	void* blob() const {
 		return data;
 	}
+
+	Value member(size_t offset_, DeclType type_) const
+	{
+		Value mem;
+		mem.type = std::move(type_);
+		mem.data = reinterpret_cast<char*>(data) + offset_;
+		return mem;
+	}
 };
 
 struct CompileTimeValue

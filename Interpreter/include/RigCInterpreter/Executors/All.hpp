@@ -38,6 +38,7 @@ DECLARE_EXECUTOR(evaluateArrayElement);
 
 DECLARE_EXECUTOR(evaluateClassDefinition);
 DECLARE_EXECUTOR(evaluateMethodDefinition);
+DECLARE_EXECUTOR(evaluateDataMemberDefinition);
 
 
 DECLARE_EXECUTOR(evaluateVariableDefinition);

@@ -2,6 +2,7 @@
 
 #include <RigCInterpreter/VM.hpp>
 #include <RigCInterpreter/Executors/ExpressionExecutor.hpp>
+#include <RigCInterpreter/TypeSystem/ClassType.hpp>
 
 namespace rigc::vm
 {
@@ -135,7 +136,7 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 }
 
 ////////////////////////////////////////
-Value ExpressionExecutor::evalSingleAction(Action & lhs_)
+OptValue ExpressionExecutor::evalSingleAction(Action & lhs_)
 {
 	if (lhs_.is<PendingAction>())
 		return *vm.evaluate(*lhs_.as<PendingAction>());
@@ -144,9 +145,9 @@ Value ExpressionExecutor::evalSingleAction(Action & lhs_)
 }
 
 ////////////////////////////////////////
-Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_)
+OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_)
 {
-	Value lhs	= this->evalSingleAction(lhs_);
+	Value lhs	= *this->evalSingleAction(lhs_);
 
 	if (op_ == ".")
 	{
@@ -159,8 +160,16 @@ Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, 
 			size_t numParams = 0;
 			paramTypes[numParams++] = lhs.type;
 
-			// Todo:
-			// add rest of parameters
+			auto args = findElem<rigc::ListOfFunctionArguments>(*rhsExpr, false);
+
+			Function::Args evaluatedArgs;
+			evaluatedArgs[0] = lhs;
+
+			for(size_t i = 0; i < args->children.size(); ++i)
+			{
+				evaluatedArgs[i + 1]	= vm.evaluate(*args->children[i]).value();
+				paramTypes[numParams++]	= evaluatedArgs[i + 1].type;
+			}
 
 			auto overloadsIt = lhs.type->methods.find(methodName->string());
 			if (overloadsIt == lhs.type->methods.end())
@@ -172,11 +181,25 @@ Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, 
 				throw std::runtime_error(fmt::format("Not matching method {} to call with params: {}.", methodName->string_view(), lhs.type->name()));
 			}
 
-			Function::Args args;
-			args[0] = lhs;
 			// fmt::print("Calling method {} on {}\n", methodName->string_view(), lhs_.as<PendingAction>()->string_view());
-			return *fn->invoke(vm, args, numParams);
+			return fn->invoke(vm, evaluatedArgs, numParams);
 		}
+		else if (rhsExpr->is_type<rigc::Name>())
+		{
+			auto memberName = rhsExpr->string_view();
+			auto type = dynamic_cast<ClassType*>(lhs.type.get());
+			if (!type)
+				throw std::runtime_error("Can't access member of non-class type.");
+
+			auto memberIt = rg::find(type->dataMembers, memberName, &ClassType::DataMember::name);
+			if (memberIt == type->dataMembers.end())
+				throw std::runtime_error(fmt::format("Member {} not found in type {}.", memberName, lhs.type->name()));
+
+			return lhs.member(memberIt->offset, memberIt->type);
+		}
+		else
+			throw std::runtime_error("Invalid expression.");
+
 		return vm.allocateOnStack("Int32", 1);
 
 		// auto overloads = lhs.getType().methods;
@@ -191,7 +214,7 @@ Value ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, 
 	}
 	else
 	{
-		Value rhs	= this->evalSingleAction(rhs_);
+		Value rhs	= *this->evalSingleAction(rhs_);
 
 		// if (lhs.valueTypeIndex() != rhs.valueTypeIndex())
 		// 	throw std::runtime_error("Incompatible operands for \"" + std::string(op_) + "\" operator.");

@@ -1,12 +1,24 @@
-class Greeter {
-	greet {
-		ret "Witaj";
+class Vector3f
+{
+	x : Float32;
+	y : Float32;
+	z : Float32;
+
+	construct {
+		self.x = 0.f;
+		self.y = 0.f;
+		self.z = 0.f;
+	}
+
+	sum {
+		ret self.x + self.y + self.z;
 	}
 }
 
 func main {
-	Greeter greeter;
-	var greet = greeter.greet();
-	print("Greeter says {}\n", greet);
-	print("typeOf(greet) = {}\n", typeOf(greet));
+	Vector3f pos;
+	pos.x = 1.f;
+	pos.y = 2.f;
+	pos.z = 3.5f;
+	print("Pos: ({}, {}, {}), sum = {}\n", pos.x, pos.y, pos.z, pos.sum());
 }
