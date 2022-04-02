@@ -68,6 +68,21 @@ struct IType
 
 	using MethodsMap = UMap<std::string_view, Vec<Function*>>;
 	MethodsMap methods;
+
+	template <std::derived_from<IType> T>
+	bool is() const {
+		return dynamic_cast<T const*>(this) != nullptr;
+	}
+
+	template <std::derived_from<IType> T>
+	T const* as() const {
+		return dynamic_cast<T const*>(this);
+	}
+
+	template <std::derived_from<IType> T>
+	T const* as() {
+		return dynamic_cast<T*>(this);
+	}
 };
 
 template <typename T>

@@ -339,6 +339,16 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 		if (!valueExpr)
 		{
 			value = vm_.allocateOnStack(type, nullptr);
+
+			if (auto c = type->as<ClassType>())
+			{
+				if (auto ctor = c->defaultConstructor())
+				{
+					Function::Args args;
+					args[0] = vm_.allocateReference(value);
+					ctor->invoke(vm_, args, 1);
+				}
+			}
 		}
 		else if (value.type != type)
 		{
