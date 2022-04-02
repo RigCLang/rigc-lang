@@ -18,7 +18,7 @@ struct Instance
 {
 	constexpr static size_t STACK_SIZE = 2 * 1024 * 1024; // 2MB
 
-	int run(rigc::ParserNodePtr & root);
+	int run(rigc::ParserNode const& root_);
 
 	OptValue executeFunction(Function const& func);
 	OptValue executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0);
@@ -85,7 +85,7 @@ private:
 
 };
 
-int runProgram(rigc::ParserNodePtr & root);
+int runProgram(rigc::ParserNode const & root_);
 
 /// <summary>
 /// Finds the first child of the node of the given type

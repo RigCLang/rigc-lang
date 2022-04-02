@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 
 		auto root = rigc::parse( in );
 		if (root) {
-			return rigc::vm::runProgram(root);
+			return rigc::vm::runProgram(*root);
 		}
 	// }
 	// catch (const std::exception &e)

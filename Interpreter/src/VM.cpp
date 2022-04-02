@@ -22,10 +22,10 @@ std::string_view funcName(rigc::ParserNode & func_)
 }
 
 //////////////////////////////////////////
-int runProgram(rigc::ParserNodePtr & root)
+int runProgram(rigc::ParserNode const& root_)
 {
 	Instance instance;
-	return instance.run(root);
+	return instance.run(root_);
 }
 
 #define DEFINE_BUILTIN_CONVERT_OP(ToCppType, ToRuntimeType)									\
@@ -46,7 +46,7 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 #undef DEFINE_BUILTIN_CONVERT_OP
 
 //////////////////////////////////////////
-int Instance::run(rigc::ParserNodePtr& root)
+int Instance::run(rigc::ParserNode const& root_)
 {
 	stack.container.resize(STACK_SIZE);
 	scopes[nullptr] = makeUniverseScope(*this);
@@ -81,8 +81,7 @@ int Instance::run(rigc::ParserNodePtr& root)
 
 	#undef ADD_CONVERSION
 
-
-	for (auto const& stmt : root->children)
+	for (auto const& stmt : root_.children)
 	{
 		this->evaluate(*stmt);
 	}
