@@ -302,22 +302,6 @@ Value Instance::cloneValue(Value value_)
 }
 
 //////////////////////////////////////////
-Function& Instance::registerFunction(Function func_)
-{
-	auto f = std::make_unique<Function>( std::move(func_) );
-	auto& ref = *f;
-	functions.push_back(std::move(f));
-	return ref;
-}
-
-//////////////////////////////////////////
-IType& Instance::registerType(IType& type_)
-{
-	types.push_back( &type_ );
-	return type_;
-}
-
-//////////////////////////////////////////
 FrameBasedValue Instance::reserveOnStack(DeclType const& type_, bool lookBack_)
 {
 	auto& frame = stack.frames.back();

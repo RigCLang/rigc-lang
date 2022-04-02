@@ -37,6 +37,7 @@ struct Scope
 	Scope* parent = nullptr;
 
 	std::map<IType*, Impls*>									impls;
+	std::vector< std::unique_ptr<Function> >					functionStorage;
 	std::map<std::string, FunctionOverloads, std::less<> >		functions;
 	std::map<std::string, FrameBasedValue, std::less<> >		variables;
 	std::map<std::string, IType*, std::less<> >					typeAliases;

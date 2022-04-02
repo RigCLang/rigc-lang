@@ -43,10 +43,6 @@ struct Instance
 		return *scopes[nullptr];
 	}
 
-	Function& registerFunction(Function func_);
-
-	IType& registerType(IType& type_);
-
 	FrameBasedValue reserveOnStack(DeclType const& type_, bool lookBack_ = false);
 
 	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0);
@@ -69,14 +65,22 @@ struct Instance
 		return this->allocateOnStack<T>( type->shared_from_this(), value );
 	}
 
-	ClassType*			currentClass	= nullptr;
-	bool				returnTriggered	= false;
+	/// Fixed-size memory pool used by emulated program to allocate
+	/// temporary values.
 	Stack				stack;
-	Scope*				currentScope = nullptr;
-	TypeRegistry									typeRegistry;
+
+	/// Current execution scope, related to the current stack frame.
+	Scope*				currentScope	= nullptr;
+
+	/// Currently parsed class type.
+	ClassType*			currentClass	= nullptr;
+
+	/// Whether currently executed function has triggered a return statement.
+	bool				returnTriggered	= false;
+
+	/// Maps memory address to a related scope.
+	/// Address might come from a parsed code (ParserNode)
 	std::map<void const*, std::unique_ptr<Scope>>	scopes;
-	std::vector< IType* >							types;
-	std::vector< std::unique_ptr<Function> >		functions;
 private:
 
 	GlobalFunctions discoverGlobalFunctions(rigc::ParserNodePtr& root);

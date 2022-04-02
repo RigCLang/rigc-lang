@@ -142,18 +142,17 @@ FunctionOverloads const* Scope::findOperator(std::string_view opName_, Operator:
 ///////////////////////////////////////////////////////////////
 IType& Scope::registerType(Instance& vm_, std::string_view name_, IType& type_)
 {
-	IType& t = vm_.registerType( type_ );
+	typeAliases[std::string(name_)] = &type_;
 
-	typeAliases[std::string(name_)] = &t;
-
-	return t;
+	return type_;
 }
 
 
 ///////////////////////////////////////////////////////////////
 Function& Scope::registerFunction(Instance& vm_, std::string_view name_, Function func_)
 {
-	Function& f = vm_.registerFunction( std::move(func_) );
+	functionStorage.emplace_back( std::make_unique<Function>(std::move(func_)) );
+	Function& f = *functionStorage.back();
 
 	// TODO: ensure unique overload signature
 	FunctionOverloads& overloads = functions[ std::string(name_) ];
