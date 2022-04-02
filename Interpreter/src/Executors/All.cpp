@@ -147,8 +147,6 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 	if (!body)
 		body = findElem<rigc::SingleBlockStatement>(stmt_, false);
 
-	// TODO: fix stack overflow
-
 	while (true)
 	{
 		ScopePusher scope(vm_, *body);
