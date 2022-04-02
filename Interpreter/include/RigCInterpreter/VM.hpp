@@ -38,7 +38,7 @@ struct Instance
 
 	void popScope();
 
-	Scope& univeralScope() {
+	Scope& universalScope() {
 		return *scopes[nullptr];
 	}
 

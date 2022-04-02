@@ -222,7 +222,7 @@ OptValue typeOf(Instance &vm_, rigc::ParserNode const& args)
 		if (optVal.has_value())
 		{
 			auto name = optVal.value().fullTypeName();
-			auto t = wrap<ArrayType>(vm_.univeralScope().types, vm_.findType("Char")->shared_from_this(), name.size());
+			auto t = wrap<ArrayType>(vm_.universalScope().types, vm_.findType("Char")->shared_from_this(), name.size());
 
 			return vm_.allocateOnStack( t, name.data(), name.size() );
 		}
@@ -447,9 +447,9 @@ OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 	replaceAll(s, "\\\\",	"\\");
 	replaceAll(s, "\\\"",	"\"");
 
-	auto type = wrap<ArrayType>(vm_.univeralScope().types, vm_.findType("Char")->shared_from_this(), s.size());
+	auto type = wrap<ArrayType>(vm_.universalScope().types, vm_.findType("Char")->shared_from_this(), s.size());
 
-	vm_.univeralScope().types.add(type);
+	vm_.universalScope().types.add(type);
 
 	return vm_.allocateOnStack( std::move(type), s.data(), s.size() );
 }
@@ -488,7 +488,7 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 	size_t numParams = 0;
 	params[numParams++] = {
 		"self",
-		wrap<RefType>(vm_.univeralScope().types, vm_.currentClass->shared_from_this())
+		wrap<RefType>(vm_.universalScope().types, vm_.currentClass->shared_from_this())
 	};
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);

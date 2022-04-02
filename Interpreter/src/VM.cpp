@@ -74,7 +74,7 @@ int Instance::run(rigc::ParserNode const& root_)
 		this->evaluate(*stmt);
 	}
 
-	auto mainFuncOv = this->univeralScope().findFunction("main");
+	auto mainFuncOv = this->universalScope().findFunction("main");
 
 	if (!mainFuncOv)
 		throw std::runtime_error("\"main\" function not found.");
@@ -90,7 +90,7 @@ Value Instance::allocateReference(Value const& toValue_)
 	auto stackPtr = stack.container.data();
 	auto stackPos = reinterpret_cast<char const*>(toValue_.data) - reinterpret_cast<char const*>(stackPtr);
 	// fmt::print("Allocating reference to {}, type: {}\n", stackPos, toValue_.type->name());
-	return this->allocateOnStack<void const*>(wrap<RefType>(univeralScope().types, toValue_.type), toValue_.blob());
+	return this->allocateOnStack<void const*>(wrap<RefType>(universalScope().types, toValue_.type), toValue_.blob());
 }
 
 //////////////////////////////////////////
@@ -193,7 +193,7 @@ OptValue Instance::tryConvert(Value value_, DeclType const& to_)
 	if (value_.type == to_)
 		return value_;
 
-	auto cvt = this->univeralScope().findConversion(value_.type, to_);
+	auto cvt = this->universalScope().findConversion(value_.type, to_);
 	if (!cvt)
 		return std::nullopt;
 

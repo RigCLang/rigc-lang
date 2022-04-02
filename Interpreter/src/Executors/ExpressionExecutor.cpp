@@ -230,7 +230,7 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 		types[typeIdx++] = lhs.getType();
 		types[typeIdx++] = rhs.getType();
 
-		if (auto overloads = vm.univeralScope().findOperator(op_, Operator::Infix))
+		if (auto overloads = vm.universalScope().findOperator(op_, Operator::Infix))
 		{
 			if (auto func = findOverload(*overloads, types, 2))
 			{
