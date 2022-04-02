@@ -14,7 +14,8 @@ class ClassType;
 
 struct Instance
 {
-	constexpr static size_t STACK_SIZE = 2 * 1024 * 1024; // 2MB
+	constexpr static auto StackSize			= std::size_t(2 * 1024 * 1024); // 2MB
+	constexpr static auto DefaultEntryPoint	= std::string_view("main");
 
 	int run(rigc::ParserNode const& root_);
 
@@ -74,6 +75,9 @@ struct Instance
 
 	/// Whether currently executed function has triggered a return statement.
 	bool				returnTriggered	= false;
+
+	/// Name of the function that is executed first when the script is run.
+	std::string			entryPoint = std::string(DefaultEntryPoint);
 
 	/// Maps memory address to a related scope.
 	/// Address might come from a parsed code (ParserNode)

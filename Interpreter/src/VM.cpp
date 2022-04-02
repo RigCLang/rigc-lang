@@ -29,7 +29,7 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 //////////////////////////////////////////
 int Instance::run(rigc::ParserNode const& root_)
 {
-	stack.container.resize(STACK_SIZE);
+	stack.container.resize(StackSize);
 	scopes[nullptr] = makeUniverseScope(*this);
 	Scope& scope = *scopes[nullptr];
 	this->pushScope(nullptr);
@@ -67,10 +67,13 @@ int Instance::run(rigc::ParserNode const& root_)
 		this->evaluate(*stmt);
 	}
 
-	auto mainFuncOv = this->universalScope().findFunction("main");
+	auto mainFuncOv = this->universalScope().findFunction(entryPoint);
 
 	if (!mainFuncOv)
-		throw std::runtime_error("\"main\" function not found.");
+		throw std::runtime_error(fmt::format("Cannot execute script. Function \"{}\" not found.", entryPoint));
+
+	if (mainFuncOv->size() > 1)
+		throw std::runtime_error(fmt::format("Entry point function \"{}\" cannot be overloaded.", entryPoint));
 
 	this->executeFunction(*(*mainFuncOv)[0]);
 
@@ -284,7 +287,7 @@ Value Instance::allocateOnStack(DeclType const& type_, void const* sourceBytes_,
 		toCopy = toAlloc;
 
 	size_t newSize = stack.size + toAlloc;
-	if (newSize > STACK_SIZE)
+	if (newSize > StackSize)
 		throw std::runtime_error("Stack overflow");
 
 	size_t prevSize = stack.size;
