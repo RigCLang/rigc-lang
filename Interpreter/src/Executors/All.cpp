@@ -72,9 +72,12 @@ OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 
 	for (auto const& childStmt : stmt_.children)
 	{
-		OptValue val = vm_.evaluate(*childStmt);
+		auto ret = vm_.evaluate(*childStmt);
 		if (vm_.returnTriggered)
-			return val;
+		{
+			vm_.popScope();
+			return ret;
+		}
 	}
 	vm_.popScope();
 
@@ -108,18 +111,20 @@ OptValue executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 
 	if (result.has_value() && result.value().view<bool>() == true)
 	{
-		vm_.evaluate(*body);
+		auto ret = vm_.evaluate(*body);
+		if (vm_.returnTriggered)
+			return ret;
 	}
 	else
 	{
 		if (auto elseStmt = findElem<rigc::ElseStatement>(stmt_, false))
 		{
 			if (auto ifStmt = findElem<rigc::IfStatement>(*elseStmt, false))
-				vm_.evaluate(*ifStmt);
+				return vm_.evaluate(*ifStmt);
 			else if (auto body = findElem<rigc::CodeBlock>(*elseStmt, false))
-				vm_.evaluate(*body);
+				return vm_.evaluate(*body);
 			else
-				vm_.evaluate(*findElem<rigc::SingleBlockStatement>(*elseStmt, false));
+				return vm_.evaluate(*findElem<rigc::SingleBlockStatement>(*elseStmt, false));
 		}
 	}
 
@@ -146,8 +151,10 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 
 		if (result.has_value() && result.value().view<bool>())
 		{
-			vm_.evaluate(*body);
+			auto ret = vm_.evaluate(*body);
 			vm_.popScope();
+			if (vm_.returnTriggered)
+				return ret;
 		}
 		else
 		{
@@ -254,7 +261,10 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 			{
 				numArgs = args->children.size();
 				for(size_t i = 0; i < numArgs; ++i)
+				{
+					fmt::print("Evaluating: {}\n", args->children[i]->string_view());
 					evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
+				}
 			}
 
 			FunctionParamTypes types;
@@ -305,6 +315,10 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 	Value value;
 	if (valueExpr) {
 		value = vm_.evaluate(*valueExpr).value();
+		if (auto ref = dynamic_cast<RefType*>(value.type.get()))
+		{
+			value = value.deref();
+		}
 	}
 	else if (deduceType) {
 		throw std::runtime_error(
