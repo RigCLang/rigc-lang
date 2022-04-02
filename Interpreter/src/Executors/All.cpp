@@ -40,10 +40,23 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 #undef MAKE_EXECUTOR
 
 
+struct ScopePusher
+{
+	ScopePusher(Instance& vm_, ParserNode const& stmt_)
+		: vm(vm_)
+	{
+		vm.pushScope(&stmt_);
+	}
+
+	~ScopePusher() { vm.popScope(); }
+
+	Instance& vm;
+};
+
 ////////////////////////////////////////
 OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 {
-	vm_.pushScope(&codeBlock_);
+	ScopePusher scope(vm_, codeBlock_);
 
 	auto stmts = findElem<rigc::Statements>(codeBlock_);
 
@@ -54,13 +67,10 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 			OptValue val = vm_.evaluate(*stmt);
 			if (vm_.returnTriggered)
 			{
-				vm_.popScope();
 				return val;
 			}
 		}
 	}
-
-	vm_.popScope();
 
 	return {};
 }
@@ -68,18 +78,14 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 ////////////////////////////////////////
 OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 {
-	vm_.pushScope(&stmt_);
+	ScopePusher scope(vm_, stmt_);
 
 	for (auto const& childStmt : stmt_.children)
 	{
 		auto ret = vm_.evaluate(*childStmt);
 		if (vm_.returnTriggered)
-		{
-			vm_.popScope();
 			return ret;
-		}
 	}
-	vm_.popScope();
 
 	return {};
 }
@@ -145,22 +151,18 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 
 	while (true)
 	{
-		vm_.pushScope(body);
+		ScopePusher scope(vm_, *body);
 
 		auto result = vm_.evaluate(expr);
 
 		if (result.has_value() && result.value().view<bool>())
 		{
 			auto ret = vm_.evaluate(*body);
-			vm_.popScope();
 			if (vm_.returnTriggered)
 				return ret;
 		}
 		else
-		{
-			vm_.popScope();
 			break;
-		}
 	}
 
 	return {};
