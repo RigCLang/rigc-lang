@@ -333,12 +333,10 @@ Scope& Instance::pushStackFrameOf(void const* addr_)
 //////////////////////////////////////////
 void Instance::popStackFrame()
 {
-	// 2 because of the universe scope stack frame
-	if (stack.frames.size() >= 2)
-	{
-		stack.popFrame();
-		currentScope = stack.frames.back().scope;
-	}
+	assert(stack.frames.size() > 1 && "Tried to pop a universe scope-related stack frame.");
+
+	stack.popFrame();
+	currentScope = stack.frames.back().scope;
 }
 
 

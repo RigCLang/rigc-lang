@@ -18,6 +18,7 @@
 #include <string_view>
 #include <cstring>
 #include <functional>
+#include <cassert>
 
 #include <fmt/format.h>
 #include <fmt/args.h>
