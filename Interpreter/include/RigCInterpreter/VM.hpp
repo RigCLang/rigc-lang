@@ -28,7 +28,6 @@ struct Instance
 	IType* findType(std::string_view name_);
 	FunctionOverloads const* findFunction(std::string_view name_);
 
-	Function const* findConversion(DeclType const& from_, DeclType const& to_);
 	OptValue tryConvert(Value value_, DeclType const& to_);
 
 	Value cloneValue(Value value_);

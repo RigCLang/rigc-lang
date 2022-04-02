@@ -188,18 +188,12 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 }
 
 //////////////////////////////////////////
-Function const* Instance::findConversion(DeclType const& from_, DeclType const& to_)
-{
-	return this->univeralScope().findConversion(from_, to_);
-}
-
-//////////////////////////////////////////
 OptValue Instance::tryConvert(Value value_, DeclType const& to_)
 {
 	if (value_.type == to_)
 		return value_;
 
-	auto cvt = this->findConversion(value_.type, to_);
+	auto cvt = this->univeralScope().findConversion(value_.type, to_);
 	if (!cvt)
 		return std::nullopt;
 
