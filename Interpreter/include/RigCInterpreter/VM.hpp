@@ -83,7 +83,6 @@ struct Instance
 	std::map<void const*, std::unique_ptr<Scope>>	scopes;
 private:
 
-	GlobalFunctions discoverGlobalFunctions(rigc::ParserNodePtr& root);
 };
 
 int runProgram(rigc::ParserNodePtr & root);

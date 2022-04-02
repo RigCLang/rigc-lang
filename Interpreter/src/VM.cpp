@@ -98,21 +98,6 @@ int Instance::run(rigc::ParserNodePtr& root)
 }
 
 //////////////////////////////////////////
-GlobalFunctions Instance::discoverGlobalFunctions(rigc::ParserNodePtr & root)
-{
-	GlobalFunctions result;
-	result.reserve(1024);
-
-	for (auto& elem : root->children)
-	{
-		if (elem->is_type<rigc::FunctionDefinition>())
-			result.push_back(elem.get());
-	}
-
-	return result;
-}
-
-//////////////////////////////////////////
 Value Instance::allocateReference(Value const& toValue_)
 {
 	auto stackPtr = stack.container.data();
