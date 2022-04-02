@@ -40,15 +40,15 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 #undef MAKE_EXECUTOR
 
 
-struct ScopePusher
+struct StackFramePusher
 {
-	ScopePusher(Instance& vm_, ParserNode const& stmt_)
+	StackFramePusher(Instance& vm_, ParserNode const& stmt_)
 		: vm(vm_)
 	{
-		vm.pushScope(&stmt_);
+		vm.pushStackFrameOf(&stmt_);
 	}
 
-	~ScopePusher() { vm.popScope(); }
+	~StackFramePusher() { vm.popStackFrame(); }
 
 	Instance& vm;
 };
@@ -56,7 +56,7 @@ struct ScopePusher
 ////////////////////////////////////////
 OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 {
-	ScopePusher scope(vm_, codeBlock_);
+	StackFramePusher scope(vm_, codeBlock_);
 
 	auto stmts = findElem<rigc::Statements>(codeBlock_);
 
@@ -78,7 +78,7 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 ////////////////////////////////////////
 OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 {
-	ScopePusher scope(vm_, stmt_);
+	StackFramePusher scope(vm_, stmt_);
 
 	for (auto const& childStmt : stmt_.children)
 	{
@@ -149,7 +149,7 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 
 	while (true)
 	{
-		ScopePusher scope(vm_, *body);
+		StackFramePusher scope(vm_, *body);
 
 		auto result = vm_.evaluate(expr);
 

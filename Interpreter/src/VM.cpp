@@ -32,7 +32,7 @@ int Instance::run(rigc::ParserNode const& root_)
 	stack.container.resize(StackSize);
 	scopes[nullptr] = makeUniverseScope(*this);
 	Scope& scope = *scopes[nullptr];
-	this->pushScope(nullptr);
+	this->pushStackFrameOf(nullptr);
 
 	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
 		addTypeConversion<FromCppType>(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
@@ -83,9 +83,6 @@ int Instance::run(rigc::ParserNode const& root_)
 //////////////////////////////////////////
 Value Instance::allocateReference(Value const& toValue_)
 {
-	auto stackPtr = stack.container.data();
-	auto stackPos = reinterpret_cast<char const*>(toValue_.data) - reinterpret_cast<char const*>(stackPtr);
-	// fmt::print("Allocating reference to {}, type: {}\n", stackPos, toValue_.type->name());
 	return this->allocateOnStack<void const*>(wrap<RefType>(universalScope().types, toValue_.type), toValue_.blob());
 }
 
@@ -118,7 +115,7 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 	}
 	else
 	{
-		Scope& fnScope = this->pushScope(func_.addr());
+		Scope& fnScope = this->pushStackFrameOf(func_.addr());
 		fnScope.func = true;
 
 		// Process parameters (conversions)
@@ -157,7 +154,7 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 			retVal = this->evaluate( *body );
 		}
 
-		this->popScope();
+		this->popStackFrame();
 	}
 	this->returnTriggered = false;
 
@@ -321,7 +318,7 @@ Scope& Instance::scopeOf(void const *addr_)
 }
 
 //////////////////////////////////////////
-Scope& Instance::pushScope(void const* addr_)
+Scope& Instance::pushStackFrameOf(void const* addr_)
 {
 	Scope& scope = scopeOf(addr_);
 	if (!scope.parent)
@@ -334,7 +331,7 @@ Scope& Instance::pushScope(void const* addr_)
 }
 
 //////////////////////////////////////////
-void Instance::popScope()
+void Instance::popStackFrame()
 {
 	// 2 because of the universe scope stack frame
 	if (stack.frames.size() >= 2)

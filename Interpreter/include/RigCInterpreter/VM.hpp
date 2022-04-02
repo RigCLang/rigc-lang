@@ -31,36 +31,48 @@ struct Instance
 
 	Value cloneValue(Value value_);
 
+	/// Returns the scope that is associated with the specified address.
+	/// Address is related to the code block memory obtained from a parser.
 	Scope& scopeOf(void const *addr_);
 
-	Scope& pushScope(void const* addr_);
+	/// Pushes the stack frame for specified address that is used to acquire a scope.
+	/// Address is related to the code block memory obtained from a parser.
+	Scope& pushStackFrameOf(void const* addr_);
 
-	void popScope();
+	/// Pops current stack frame
+	void popStackFrame();
 
+	/// Returns the Universe Scope (the parent to the global scope).
 	Scope& universalScope() {
 		return *scopes[nullptr];
 	}
 
-	FrameBasedValue reserveOnStack(DeclType const& type_, bool lookBack_ = false);
-
-	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0);
-
+	/// Allocates reference to a specified value.
+	/// Note: when `toValue_` is a reference itself, it will create a reference to a reference.
 	Value allocateReference(Value const& toValue_);
 
+	FrameBasedValue reserveOnStack(DeclType const& type_, bool lookBack_ = false);
+
+	/// Allocates stack space required for specified `type_`, initialized with value from `sourceBytes_`,
+	/// by copying `sourceBytes_`.
+	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0);
+
+	/// Allocates stack space required for specified `type_`, initialized with specified `value_`.
 	template <typename T>
-	Value allocateOnStack(DeclType const& type_, T const& value)
+	Value allocateOnStack(DeclType const& type_, T const& value_)
 	{
-		return this->allocateOnStack(type_, reinterpret_cast<void const*>(&value), sizeof(T));
+		return this->allocateOnStack(type_, reinterpret_cast<void const*>(&value_), sizeof(T));
 	}
 
+	/// Allocates stack space required for type specified by its `typeName_`, initialized with specified `value_`.
 	template <typename T>
-	Value allocateOnStack(std::string_view typeName_, T const& value)
+	Value allocateOnStack(std::string_view typeName_, T const& value_)
 	{
 		IType* type = this->findType(typeName_);
 		if (!type)
 			throw std::runtime_error("Unknown type " + std::string(typeName_));
 
-		return this->allocateOnStack<T>( type->shared_from_this(), value );
+		return this->allocateOnStack<T>( type->shared_from_this(), value_ );
 	}
 
 	/// Fixed-size memory pool used by emulated program to allocate
