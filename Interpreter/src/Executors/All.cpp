@@ -264,7 +264,7 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 				numArgs = args->children.size();
 				for(size_t i = 0; i < numArgs; ++i)
 				{
-					fmt::print("Evaluating: {}\n", args->children[i]->string_view());
+					// fmt::print("Evaluating: {}\n", args->children[i]->string_view());
 					evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
 				}
 			}
