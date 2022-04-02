@@ -13,6 +13,8 @@ struct Stack
 	DataContainer	container;
 	FrameContainer	frames;
 
+	// Do not use stack.size(), resize etc to
+	// be 100% sure that it won't reallocate
 	size_t		size = 0;
 
 	char* data() {

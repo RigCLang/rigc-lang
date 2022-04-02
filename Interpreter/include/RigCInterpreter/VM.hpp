@@ -72,9 +72,6 @@ struct Instance
 	ClassType*			currentClass	= nullptr;
 	bool				returnTriggered	= false;
 	Stack				stack;
-	// Do not use stack.size(), resize etc to
-	// be 100% sure that it won't reallocate
-	size_t				stackSize = 0;
 	Scope*				currentScope = nullptr;
 	TypeRegistry									typeRegistry;
 	std::map<void const*, std::unique_ptr<Scope>>	scopes;
