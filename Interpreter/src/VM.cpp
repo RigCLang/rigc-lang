@@ -9,18 +9,6 @@
 namespace rigc::vm
 {
 
-
-//////////////////////////////////////////
-std::string_view funcName(rigc::ParserNode & func_)
-{
-	auto name = findElem<rigc::Name>(func_, false);
-
-	if (name)
-		return name->string_view();
-	else
-		return {};
-}
-
 //////////////////////////////////////////
 int runProgram(rigc::ParserNode const& root_)
 {
