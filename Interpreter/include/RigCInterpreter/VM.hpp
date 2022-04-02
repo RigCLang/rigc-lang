@@ -10,8 +10,6 @@
 
 namespace rigc::vm
 {
-struct Instance;
-using GlobalFunctions = std::vector< rigc::ParserNode *>;
 class ClassType;
 
 struct Instance
@@ -83,8 +81,6 @@ struct Instance
 private:
 
 };
-
-int runProgram(rigc::ParserNode const & root_);
 
 /// <summary>
 /// Finds the first child of the node of the given type

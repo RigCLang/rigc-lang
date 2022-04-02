@@ -9,13 +9,6 @@
 namespace rigc::vm
 {
 
-//////////////////////////////////////////
-int runProgram(rigc::ParserNode const& root_)
-{
-	Instance instance;
-	return instance.run(root_);
-}
-
 #define DEFINE_BUILTIN_CONVERT_OP(ToCppType, ToRuntimeType)									\
 	template <typename FromType>															\
 	OptValue builtinConvertOperator_##ToRuntimeType(Instance &vm_, Value const& lhs_)		\
