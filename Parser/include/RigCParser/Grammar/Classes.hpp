@@ -7,14 +7,12 @@
 namespace rigc
 {
 
-struct Statements;
-
 struct ExplicitType
 	: p::seq<p::one<':'>, opt_ws, Type>
 {};
 
 struct DataMemberDef
-	: p::seq< Name, ws, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, Initialization>, opt_ws, p::one<';'> >
+	: p::seq< Name, opt_ws, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, Initialization>, opt_ws, p::one<';'> >
 {};
 
 struct MethodDef
