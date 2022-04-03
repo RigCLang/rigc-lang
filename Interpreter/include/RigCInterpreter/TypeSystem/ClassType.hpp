@@ -14,7 +14,7 @@ class ClassType
 	public IType
 {
 	std::string_view	_name;
-	std::size_t			_size = 1;
+	std::size_t			_size = 0;
 public:
 	rigc::ParserNode const* declaration = nullptr;
 

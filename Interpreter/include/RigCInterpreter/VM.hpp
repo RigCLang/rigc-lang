@@ -85,6 +85,9 @@ struct Instance
 	/// Currently parsed class type.
 	ClassType*			currentClass	= nullptr;
 
+	/// Currently executed method's class.
+	ClassType const*	classContext	= nullptr;
+
 	/// Whether currently executed function has triggered a return statement.
 	bool				returnTriggered	= false;
 

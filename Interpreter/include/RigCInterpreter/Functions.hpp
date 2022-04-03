@@ -8,6 +8,7 @@ namespace rigc::vm
 {
 
 struct Instance;
+class ClassType;
 
 struct FunctionParam
 {
@@ -31,10 +32,11 @@ struct Function
 			RawFn
 		>;
 
-	Impl		impl;
-	Params		params;
-	size_t		paramCount;
-	ReturnType	returnType;
+	Impl				impl;
+	Params				params;
+	size_t				paramCount;
+	ReturnType			returnType;
+	ClassType const*	outerClass = nullptr;
 
 	OptValue invoke(Instance& vm_, Args& args_, size_t argCount_) const;
 

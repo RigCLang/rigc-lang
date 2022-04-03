@@ -5,6 +5,7 @@
 #include <RigCInterpreter/Executors/All.hpp>
 #include <RigCInterpreter/Value.hpp>
 #include <RigCInterpreter/TypeSystem/ClassTemplate.hpp>
+#include <RigCInterpreter/TypeSystem/ClassType.hpp>
 
 namespace rigc::vm
 {
@@ -98,6 +99,10 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 {
 	OptValue retVal;
 
+	auto prevClassContext = classContext;
+
+	classContext = func_.outerClass;
+
 	// Raw function:
 	if (std::holds_alternative<Function::RawFn>(func_.impl))
 	{
@@ -158,6 +163,8 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 	}
 	this->returnTriggered = false;
 
+	classContext = prevClassContext;
+
 	if (retVal.has_value())
 	{
 		Value val = this->cloneValue(*retVal);
@@ -215,7 +222,24 @@ OptValue Instance::findVariableByName(std::string_view name_)
 		}
 
 		if (it->scope->func)
+		{
+			// If within class, search for a class data member
+			if (classContext)
+			{
+				auto& dataMembers = classContext->dataMembers;
+
+				auto dataMemberIt = rg::find(dataMembers, name_, &ClassType::DataMember::name);
+
+				if (dataMemberIt != dataMembers.end())
+				{
+					auto self = this->findVariableByName("self");
+					return self->deref().member(dataMemberIt->offset, dataMemberIt->type);
+				}
+			}
+
+			// Jump to the global scope
 			it = stack.frames.rend() - 1;
+		}
 		else
 			++it;
 	}

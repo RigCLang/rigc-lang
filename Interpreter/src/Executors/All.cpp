@@ -507,6 +507,7 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 
 	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 	vm_.currentClass->methods[name].push_back(&method);
+	method.outerClass = vm_.currentClass;
 
 	return {};
 }
