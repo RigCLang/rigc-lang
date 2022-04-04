@@ -1,3 +1,10 @@
+
+func main {
+	var vec = Vector2(2.f, 3.f).plus(1.f);
+
+	print("vec = ({:.2f}, {:.2f}), length = {:.3f}\n", vec.x, vec.y, vec.length());
+}
+
 class Vector2
 {
 	x: Float32;
@@ -33,88 +40,6 @@ class Vector2
 	}
 }
 
-
-func main {
-	var vec = Vector2(2.f, 3.f).plus(1.f);
-
-	print("vec = ({:.2f}, {:.2f}), length = {:.3f}\n", vec.x, vec.y, vec.length());
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-func min(a: Float32, b: Float32)
-{
-	if (a < b) { ret a; }
-	else { ret b; }
-}
-
-func max(a: Float32, b: Float32) {
-	if (a > b) {
-		ret a;
-	} else {
-		ret b;
-	}
-}
-
-func min(a: Float64, b: Float64) {
-	if (a < b) {
-		ret a;
-	} else {
-		ret b;
-	}
-}
-
-func max(a: Float64, b: Float64) {
-	if (a > b) {
-		ret a;
-	} else {
-		ret b;
-	}
-}
-
-
 func sqrt(n: Float32)
 {
 	var x = n;
@@ -127,67 +52,3 @@ func sqrt(n: Float32)
 	// print("sqrt({}) = {}\n", n, x);
 	ret x;
 }
-
-func sqrt(n: Float64)
-{
-	// print("Getting square root of {:.4f}\n", n);
-	var x = n;
-	var y = 1.;
-	var e = 0.000001;
-	while (x - y > e) {
-		x = (x + y) / 2.;
-		y = n / x;
-	}
-	ret x;
-}
-
-
-
-// class Array<T>
-// 	requires ContiguousRange<T>
-// {
-// 	pub concept Appendable<U> = AnyOf<U, T, Range<T>>;
-
-// 	data:	Ptr<T> = null;
-// 	cap:	Size = 0;
-// 	count:	Size = 0;
-
-// 	pub append(elem: T)
-// 	{
-// 		if (count == cap)
-// 			self.realloc(cap * 2);
-
-// 		data[count] = move(elem);
-// 	}
-
-// 	pub append(range: Range<T>)
-// 	{
-// 		if (count + range.count() > cap)
-// 			self.realloc(cap * 2 + range.count());
-
-// 		range.move_into(self.begin() + count);
-
-// 		count += range.count();
-// 	}
-// }
-
-// class String
-// 	requires ContiguousRange
-// {
-// 	alias Container = Array<Char>;
-
-// 	container : Container;
-
-// 	add(c : Container::Appendable) {
-// 		container.add(c);
-// 	}
-
-// 	erase(idx : Size) {
-// 		container.erase(idx);
-// 	}
-
-
-// 	substr(start : Size, end : Opt<Size>) {
-// 		ret String(container.slice(start, end));
-// 	}
-// }
