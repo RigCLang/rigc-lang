@@ -9,6 +9,8 @@
 namespace rigc::vm
 {
 
+struct DataMember;
+
 template <typename T>
 struct Ref
 {
@@ -79,25 +81,10 @@ struct Value
 		return data;
 	}
 
-	Value member(size_t offset_, DeclType type_) const
-	{
-		Value mem;
-		mem.type = std::move(type_);
-		mem.data = reinterpret_cast<char*>(data) + offset_;
-		return mem;
-	}
+	Value member(DataMember const& dm_) const;
 
-	Value deref() const
-	{
-		if (auto ref = dynamic_cast<RefType*>(type.get()))
-		{
-			Value val;
-			val.type = ref->inner;
-			val.data = this->view<void*>();
-			return val;
-		}
-		throw std::runtime_error("Cannot deref non-ref type");
-	}
+	Value member(size_t offset_, DeclType type_) const;
+	Value deref() const;
 };
 
 struct CompileTimeValue

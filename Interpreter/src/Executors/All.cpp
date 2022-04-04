@@ -250,32 +250,51 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 		}
 		else
 		{
-			auto overloads = vm_.findFunction(fnName->string_view());
+			auto type = vm_.findType(fnName->string_view());
 
-			if (!overloads)
-				throw std::runtime_error("Function " + fnName->string() + " not found");
-
-			Function::Args evaluatedArgs;
-			size_t numArgs = 0;
-			if (args)
+			if (type)
 			{
-				numArgs = args->children.size();
-				for(size_t i = 0; i < numArgs; ++i)
+				auto object = vm_.allocateOnStack(type->shared_from_this(), nullptr);
+				if (auto c = type->as<ClassType>())
 				{
-					// fmt::print("Evaluating: {}\n", args->children[i]->string_view());
-					evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
+					if (auto ctor = c->defaultConstructor())
+					{
+						Function::Args args;
+						args[0] = vm_.allocateReference(object);
+						ctor->invoke(vm_, args, 1);
+					}
 				}
+				return vm_.allocateReference(object); // TODO: check if this works!
 			}
-
-			FunctionParamTypes types;
-			for (size_t i = 0; i < numArgs; ++i)
-				types[i] = evaluatedArgs[i].getType();
-
-			auto func = findOverload(*overloads, types, numArgs);
-			if (func)
-				return func->invoke(vm_, evaluatedArgs, numArgs);
 			else
-				throw std::runtime_error("Function " + fnName->string() + " not found");
+			{
+				auto overloads = vm_.findFunction(fnName->string_view());
+
+				if (!overloads)
+					throw std::runtime_error("Function " + fnName->string() + " not found");
+
+				Function::Args evaluatedArgs;
+				size_t numArgs = 0;
+				if (args)
+				{
+					numArgs = args->children.size();
+					for(size_t i = 0; i < numArgs; ++i)
+					{
+						// fmt::print("Evaluating: {}\n", args->children[i]->string_view());
+						evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
+					}
+				}
+
+				FunctionParamTypes types;
+				for (size_t i = 0; i < numArgs; ++i)
+					types[i] = evaluatedArgs[i].getType();
+
+				auto func = findOverload(*overloads, types, numArgs);
+				if (func)
+					return func->invoke(vm_, evaluatedArgs, numArgs);
+				else
+					throw std::runtime_error("Function " + fnName->string() + " not found");
+			}
 		}
 	}
 

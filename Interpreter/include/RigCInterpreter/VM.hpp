@@ -23,6 +23,9 @@ struct Instance
 	OptValue executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0);
 	OptValue evaluate(rigc::ParserNode const& stmt_);
 
+	/// <summary>Returns the "self" reference in method context.</summary>
+	Value getSelf();
+
 	OptValue findVariableByName(std::string_view name_);
 	IType* findType(std::string_view name_);
 	FunctionOverloads const* findFunction(std::string_view name_);

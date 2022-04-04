@@ -196,7 +196,7 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 			if (!type)
 				throw std::runtime_error("Can't access member of non-class type.");
 
-			auto memberIt = rg::find(type->dataMembers, memberName, &ClassType::DataMember::name);
+			auto memberIt = rg::find(type->dataMembers, memberName, &DataMember::name);
 			if (memberIt == type->dataMembers.end())
 				throw std::runtime_error(fmt::format("Member {} not found in type {}.", memberName, lhs.type->name()));
 

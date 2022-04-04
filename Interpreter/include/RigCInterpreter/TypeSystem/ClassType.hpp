@@ -8,6 +8,12 @@
 namespace rigc::vm
 {
 
+struct DataMember {
+	std::string	name;
+	DeclType	type;
+	size_t		offset = 0;
+};
+
 class ClassType
 
 	:
@@ -32,11 +38,7 @@ public:
 		return const_cast<ClassType*>(this)->shared_from_this();
 	}
 
-	struct DataMember {
-		std::string	name;
-		DeclType	type;
-		size_t		offset = 0;
-	};
+
 
 	inline void add(DataMember mem)
 	{

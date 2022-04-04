@@ -203,6 +203,14 @@ OptValue Instance::tryConvert(Value value_, DeclType const& to_)
 }
 
 //////////////////////////////////////////
+Value Instance::getSelf()
+{
+	assert(classContext && "Cannot get self reference outside a method");
+
+	return *this->findVariableByName("self");
+}
+
+//////////////////////////////////////////
 OptValue Instance::findVariableByName(std::string_view name_)
 {
 	if (name_ == "stackSize")
@@ -228,12 +236,11 @@ OptValue Instance::findVariableByName(std::string_view name_)
 			{
 				auto& dataMembers = classContext->dataMembers;
 
-				auto dataMemberIt = rg::find(dataMembers, name_, &ClassType::DataMember::name);
+				auto dataMemberIt = rg::find(dataMembers, name_, &DataMember::name);
 
 				if (dataMemberIt != dataMembers.end())
 				{
-					auto self = this->findVariableByName("self");
-					return self->deref().member(dataMemberIt->offset, dataMemberIt->type);
+					return this->getSelf().deref().member(dataMemberIt->offset, dataMemberIt->type);
 				}
 			}
 
