@@ -152,6 +152,9 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 
 	if (op_ == ".")
 	{
+		if (!lhs.type->is<RefType>())
+			lhs = vm.allocateReference(lhs);
+
 		auto rhsExpr = rhs_.as<PendingAction>();
 
 		if (rhsExpr->is_type<rigc::FunctionCall>())

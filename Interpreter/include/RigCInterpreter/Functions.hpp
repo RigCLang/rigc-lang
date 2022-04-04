@@ -22,7 +22,7 @@ struct Function
 	using Params		= std::array<FunctionParam,	MAX_PARAMS>;
 	using Args			= std::array<Value,			MAX_PARAMS>;
 
-	using RuntimeFn		= rigc::ParserNode*;
+	using RuntimeFn		= rigc::ParserNode const*;
 	using RawFnSign		= OptValue(Instance&, Args&, size_t);
 	using RawFn			= std::function<RawFnSign>;
 	using ReturnType	= std::optional<DeclType>;

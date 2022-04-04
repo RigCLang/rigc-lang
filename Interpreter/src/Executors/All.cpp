@@ -48,7 +48,11 @@ struct StackFramePusher
 		vm.pushStackFrameOf(&stmt_);
 	}
 
-	~StackFramePusher() { vm.popStackFrame(); }
+	~StackFramePusher()
+	{
+		if (!vm.returnTriggered)
+			vm.popStackFrame();
+	}
 
 	Instance& vm;
 };
@@ -64,11 +68,14 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 	{
 		for (auto const& stmt : stmts->children)
 		{
+			// fmt::print("# Executing \"{}\"\n", stmt->type);
+			auto stackFramePos = vm_.stack.size;
 			OptValue val = vm_.evaluate(*stmt);
+			if (stmt->type == "struct rigc::Expression")
+				vm_.stack.size = stackFramePos;
+
 			if (vm_.returnTriggered)
-			{
 				return val;
-			}
 		}
 	}
 
@@ -181,7 +188,7 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 	auto fmtView = std::string_view(chars, format->getType()->size());
 
 	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
-
+	// fmt::print("[Line: {}] ", vm_.lineAt(args));
 	for (size_t c = 1; c < numArgs; ++c)
 	{
 		OptValue optVal = vm_.evaluate(*args.children[c]);
@@ -195,11 +202,11 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 			auto typeName = val.typeName();
 			if (typeName == "Int32")
 				store.push_back(val.view<int>());
-			if (typeName == "Float32")
+			else if (typeName == "Float32")
 				store.push_back(val.view<float>());
-			if (typeName == "Float64")
+			else if (typeName == "Float64")
 				store.push_back(val.view<double>());
-			if (typeName == "Bool")
+			else if (typeName == "Bool")
 				store.push_back((val.view<bool>() ? "true" : "false"));
 			else if (val.getType()->isArray() && typeName == "Char")
 			{
@@ -207,6 +214,8 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 
 				store.push_back(std::string(chars, type->size()));
 			}
+			else
+				store.push_back(dump(vm_, val));
 		}
 	}
 
@@ -384,7 +393,10 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 
 	if (!vm_.currentScope->variables.contains(varName))
 	{
-		vm_.currentScope->variables[std::string(varName)] = vm_.reserveOnStack(type, true);
+		auto varNameStr = std::string(varName);
+		auto& var = vm_.currentScope->variables[varNameStr];
+		var = vm_.reserveOnStack(type, true);
+		// fmt::print("### Reserving for var {} ({}) {} bytes at {} on stack\n", varNameStr, type->name(), type->size(), var.stackOffset + vm_.stack.frames.back().initialStackSize);
 	}
 
 	return value;

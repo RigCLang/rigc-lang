@@ -32,7 +32,7 @@ namespace rigc::vm
 	template <typename T>																	\
 	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_)	\
 	{																						\
-		T&			lhsData = *reinterpret_cast<T*>(lhs_.blob());							\
+		T&			lhsData =  lhs_.deref().view<T>();										\
 		T const&	rhsData = *reinterpret_cast<T const*>(rhs_.blob());						\
 																							\
 		lhsData Symbol rhsData;																\
@@ -76,12 +76,23 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 	infixParams[0] = { "lhs", t };
 	infixParams[1] = { "rhs", t };
 
+	Function::Params infixAssignParams;
+	infixAssignParams[0] = { "lhs", wrap<RefType>(universeScope_.types, t) };
+	infixAssignParams[1] = { "rhs", t };
+
 	#define MAKE_INFIX_OP(Name, Incantation) \
 		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
 			{ \
 				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
 			}; \
 		universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2));
+
+	#define MAKE_INFIX_ASSIGN_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
+			}; \
+		universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2));
 
 
 	if constexpr (!std::is_same_v<T, bool>)
@@ -95,14 +106,14 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 		if constexpr (!std::is_floating_point_v<T>)
 		{
 			MAKE_INFIX_OP(Mod,			"%");
-			MAKE_INFIX_OP(ModAssign,	"%=");
+			MAKE_INFIX_ASSIGN_OP(ModAssign,	"%=");
 		}
 
 		// Math (assignment)
-		MAKE_INFIX_OP(AddAssign,		"+=");
-		MAKE_INFIX_OP(SubAssign,		"-=");
-		MAKE_INFIX_OP(MultAssign,		"*=");
-		MAKE_INFIX_OP(DivAssign,		"/=");
+		MAKE_INFIX_ASSIGN_OP(AddAssign,		"+=");
+		MAKE_INFIX_ASSIGN_OP(SubAssign,		"-=");
+		MAKE_INFIX_ASSIGN_OP(MultAssign,	"*=");
+		MAKE_INFIX_ASSIGN_OP(DivAssign,		"/=");
 
 		// Relational
 		MAKE_INFIX_OP(LowerThan,		"<");
@@ -116,11 +127,12 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 	MAKE_INFIX_OP(NotEqual,	"!=");
 
 	// Assignment
-	MAKE_INFIX_OP(Assign,	"=");
+	MAKE_INFIX_ASSIGN_OP(Assign,	"=");
 
 	return t.get();
 
 	#undef MAKE_INFIX_OP
+	#undef MAKE_INFIX_ASSIGN_OP
 }
 
 template <typename T>

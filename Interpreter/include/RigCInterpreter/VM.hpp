@@ -34,7 +34,6 @@ struct Instance
 
 	Value cloneValue(Value value_);
 
-	/// Returns the scope that is associated with the specified address.
 	/// Address is related to the code block memory obtained from a parser.
 	Scope& scopeOf(void const *addr_);
 
@@ -85,6 +84,9 @@ struct Instance
 	/// Current execution scope, related to the current stack frame.
 	Scope*				currentScope	= nullptr;
 
+	/// Current execution scope, related to the current stack frame.
+	rigc::ParserNode const*	currentFunc	= nullptr;
+
 	/// Currently parsed class type.
 	ClassType*			currentClass	= nullptr;
 
@@ -100,8 +102,11 @@ struct Instance
 	/// Maps memory address to a related scope.
 	/// Address might come from a parsed code (ParserNode)
 	std::map<void const*, std::unique_ptr<Scope>>	scopes;
-private:
 
+	size_t lineAt(rigc::ParserNode const& node_) const;
+	size_t lastEvaluatedLine = 0;
+private:
+	rigc::ParserNode const* root = nullptr;
 };
 
 /// <summary>

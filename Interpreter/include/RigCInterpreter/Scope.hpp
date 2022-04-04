@@ -28,7 +28,6 @@ struct Scope
 {
 
 	using Impls				= std::vector<TypeImpl*>;
-	size_t baseFrameOffset = 0;
 
 	// Whether the scope belongs to a function
 	// (contains parameters and local variables)

@@ -9,6 +9,7 @@
 namespace rigc::vm
 {
 
+struct Instance;
 struct DataMember;
 
 template <typename T>
@@ -86,6 +87,8 @@ struct Value
 	Value member(size_t offset_, DeclType type_) const;
 	Value deref() const;
 };
+
+std::string dump(Instance const& vm_, Value const& value_);
 
 struct CompileTimeValue
 	: ValueBase

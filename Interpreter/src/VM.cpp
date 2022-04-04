@@ -30,6 +30,8 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 //////////////////////////////////////////
 int Instance::run(rigc::ParserNode const& root_)
 {
+	root = &root_;
+
 	stack.container.resize(StackSize);
 	scopes[nullptr] = makeUniverseScope(*this);
 	Scope& scope = *scopes[nullptr];
@@ -120,7 +122,9 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 	}
 	else
 	{
+		size_t prevStackFrames = stack.frames.size();
 		Scope& fnScope = this->pushStackFrameOf(func_.addr());
+		StackFrame& frame = stack.frames.back();
 		fnScope.func = true;
 
 		// Process parameters (conversions)
@@ -139,7 +143,10 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 
 			if (!fnScope.variables.contains(param.name))
 			{
-				fnScope.variables[std::string(param.name)] = this->reserveOnStack(param.type, true);
+				auto paramName = std::string(param.name);
+				auto& var = fnScope.variables[paramName];
+				var = this->reserveOnStack(param.type, true);
+				// fmt::print("### Reserving for param {} {} bytes at {}\n", param.name, param.type->size(), var.stackOffset + frame.initialStackSize);
 			}
 		}
 		// Runtime function:
@@ -159,7 +166,8 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 			retVal = this->evaluate( *body );
 		}
 
-		this->popStackFrame();
+		while (stack.frames.size() > prevStackFrames)
+			this->popStackFrame();
 	}
 	this->returnTriggered = false;
 
@@ -167,7 +175,13 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 
 	if (retVal.has_value())
 	{
-		Value val = this->cloneValue(*retVal);
+		Value val;
+		if (retVal->type->is<RefType>())
+			val = this->cloneValue(retVal->deref());
+		else
+			val = this->cloneValue(*retVal);
+
+		// fmt::print("### Returning {} at {}\n", val.type->name(), (const char*)val.blob() - stack.container.data());
 		return val; // extend lifetime
 	}
 
@@ -177,11 +191,16 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 //////////////////////////////////////////
 OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 {
-	constexpr std::string_view prefix = "struct rigc::";
+	lastEvaluatedLine = this->lineAt(stmt_);
 
+	constexpr std::string_view prefix = "struct rigc::";
+	auto view = stmt_.string_view().starts_with("self.lenSq");
 	auto it = Executors.find( stmt_.type.substr( prefix.size() ));
 	if (it != Executors.end())
-		return it->second(*this, stmt_);
+	{
+		auto val = it->second(*this, stmt_);
+		return val;
+	}
 
 	std::cout << "No executors for \"" << stmt_.type << "\": " << stmt_.string_view() << std::endl;
 	return {};
@@ -255,6 +274,12 @@ OptValue Instance::findVariableByName(std::string_view name_)
 }
 
 //////////////////////////////////////////
+size_t Instance::lineAt(rigc::ParserNode const& node_) const
+{
+	return node_.m_begin.line;
+}
+
+//////////////////////////////////////////
 IType* Instance::findType(std::string_view name_)
 {
 	auto scope = currentScope;
@@ -298,11 +323,11 @@ FrameBasedValue Instance::reserveOnStack(DeclType const& type_, bool lookBack_)
 
 	FrameBasedValue result;
 	result.type			= type_;
-	result.stackOffset	= currentScope->baseFrameOffset;
+	result.stackOffset	= stack.size - frame.initialStackSize;
 	if (lookBack_)
 		result.stackOffset -= type_->size();
 	else
-		currentScope->baseFrameOffset += type_->size();
+		stack.size += type_->size();
 
 	return result;
 }
@@ -320,8 +345,6 @@ Value Instance::allocateOnStack(DeclType const& type_, void const* sourceBytes_,
 
 	size_t prevSize = stack.size;
 	stack.size = newSize;
-
-	currentScope->baseFrameOffset += toAlloc;
 
 	char* bytes = stack.data() + prevSize;
 	if (sourceBytes_)
