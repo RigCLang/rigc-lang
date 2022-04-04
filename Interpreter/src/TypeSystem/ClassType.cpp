@@ -16,16 +16,26 @@ void ClassType::parse(rigc::ParserNode const& node_)
 }
 
 ///////////////////////////////////////////
-auto ClassType::defaultConstructor() const
-	 -> Function*
+auto ClassType::constructors() const
+	-> FunctionOverloads const*
 {
 	auto ctorsIt = methods.find("construct");
 	if (ctorsIt == methods.end())
 		return nullptr;
 
-	auto const& ctors = ctorsIt->second;
-	auto def = rg::find(ctors, 1, &Function::paramCount);
-	if (def == ctors.end())
+	return &ctorsIt->second;
+}
+
+///////////////////////////////////////////
+auto ClassType::defaultConstructor() const
+	 -> Function*
+{
+	auto ctors = constructors();
+	if (!ctors)
+		return nullptr;
+
+	auto def = rg::find(*ctors, 1, &Function::paramCount);
+	if (def == ctors->end())
 		return nullptr;
 
 	return *def;

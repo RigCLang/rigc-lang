@@ -65,7 +65,7 @@ std::string dump(Instance const& vm_, Value const& value_)
 			str += "{\n";
 			for (auto& dm : cl->dataMembers)
 			{
-				str += fmt::format("\t\"{}\": {}\n", dm.name, dump(vm_, value_.member(dm)));
+				str += fmt::format("    \"{}\": {}\n", dm.name, dump(vm_, value_.member(dm)));
 			}
 			str += "}";
 			return addr + str;

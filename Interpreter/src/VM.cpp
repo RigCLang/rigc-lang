@@ -194,7 +194,6 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 	lastEvaluatedLine = this->lineAt(stmt_);
 
 	constexpr std::string_view prefix = "struct rigc::";
-	auto view = stmt_.string_view().starts_with("self.lenSq");
 	auto it = Executors.find( stmt_.type.substr( prefix.size() ));
 	if (it != Executors.end())
 	{

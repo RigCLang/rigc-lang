@@ -260,37 +260,42 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 		else
 		{
 			auto type = vm_.findType(fnName->string_view());
+			FunctionOverloads const* overloads = nullptr;
+			Function::Args evaluatedArgs;
+			size_t numArgs = 0;
 
+			Value constructedRef;
 			if (type)
 			{
-				auto object = vm_.allocateOnStack(type->shared_from_this(), nullptr);
+				constructedRef = vm_.allocateReference(vm_.allocateOnStack(type->shared_from_this(), nullptr));
 				if (auto c = type->as<ClassType>())
 				{
-					if (auto ctor = c->defaultConstructor())
-					{
-						Function::Args args;
-						args[0] = vm_.allocateReference(object);
-						ctor->invoke(vm_, args, 1);
-					}
+					overloads = c->constructors();
+
+					// Push the `self` parameter
+					evaluatedArgs[numArgs++] = constructedRef;
 				}
-				return vm_.allocateReference(object); // TODO: check if this works!
+				else if (args)
+					throw std::runtime_error("No matching constructor for type " + type->name() + " found.");
+				else
+					return constructedRef;
 			}
 			else
 			{
-				auto overloads = vm_.findFunction(fnName->string_view());
-
+				overloads = vm_.findFunction(fnName->string_view());
 				if (!overloads)
 					throw std::runtime_error("Function " + fnName->string() + " not found");
+			}
 
-				Function::Args evaluatedArgs;
-				size_t numArgs = 0;
+			// TEMP: Might be null for type constructors.
+			if (overloads)
+			{
 				if (args)
 				{
-					numArgs = args->children.size();
-					for(size_t i = 0; i < numArgs; ++i)
+					for(size_t i = 0; i < args->children.size(); ++i)
 					{
 						// fmt::print("Evaluating: {}\n", args->children[i]->string_view());
-						evaluatedArgs[i] = vm_.evaluate(*args->children[i]).value();
+						evaluatedArgs[numArgs++] = vm_.evaluate(*args->children[i]).value();
 					}
 				}
 
@@ -300,10 +305,16 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 
 				auto func = findOverload(*overloads, types, numArgs);
 				if (func)
-					return func->invoke(vm_, evaluatedArgs, numArgs);
+				{
+					auto result = func->invoke(vm_, evaluatedArgs, numArgs);
+					if (!type)
+						return result;
+				}
 				else
 					throw std::runtime_error("Function " + fnName->string() + " not found");
 			}
+
+			return constructedRef;
 		}
 	}
 
