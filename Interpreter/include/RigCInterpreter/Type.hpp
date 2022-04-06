@@ -6,8 +6,6 @@
 #include <RigCInterpreter/TypeSystem/IType.hpp>
 #include <RigCInterpreter/TypeSystem/CoreType.hpp>
 #include <RigCInterpreter/TypeSystem/TypeRegistry.hpp>
-#include <RigCInterpreter/TypeSystem/WrapperType.hpp>
-#include <RigCInterpreter/TypeSystem/RefType.hpp>
 
 
 namespace rigc::vm
@@ -16,6 +14,8 @@ namespace rigc::vm
 // // Forward declarations:
 struct Function;
 struct ArrayType;
+struct WrapperType;
+struct RefType;
 
 struct Operator
 {

@@ -3,6 +3,8 @@
 #include <RigCInterpreter/Scope.hpp>
 #include <RigCInterpreter/VM.hpp>
 
+#include <RigCInterpreter/TypeSystem/RefType.hpp>
+
 namespace rigc::vm
 {
 
@@ -12,7 +14,7 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 #define MAKE_BUILTIN_TYPE(CppName, RigCName) \
 	CreateCoreType<CppName>(vm_, *scope, #RigCName)
 
-	auto scope = std::make_unique<Scope>();
+	auto scope = std::make_unique<Scope>(vm_);
 
 	MAKE_BUILTIN_TYPE(bool,		Bool);
 	MAKE_BUILTIN_TYPE(char,		Char);
@@ -147,6 +149,13 @@ IType& Scope::registerType(Instance& vm_, std::string_view name_, IType& type_)
 	return type_;
 }
 
+
+///////////////////////////////////////////////////////////////
+void Scope::addType(DeclType type_)
+{
+	types.add(type_);
+	type_->postInitialize(*vm);
+}
 
 ///////////////////////////////////////////////////////////////
 Function& Scope::registerFunction(Instance& vm_, std::string_view name_, Function func_)

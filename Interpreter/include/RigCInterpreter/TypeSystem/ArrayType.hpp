@@ -39,6 +39,8 @@ struct ArrayType
 	{
 		return std::hash<std::string>{}(fmt::format("Array<{}, {}>", inner_->name(), count_));
 	}
+
+	void postInitialize(Instance& vm_) override;
 };
 
 

@@ -83,6 +83,11 @@ struct IType
 	T const* as() {
 		return dynamic_cast<T*>(this);
 	}
+
+	void addMethod(std::string_view name_, Function* func_);
+
+
+	virtual void postInitialize(Instance& vm_) {}
 };
 
 template <typename T>

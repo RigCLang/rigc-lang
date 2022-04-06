@@ -6,6 +6,8 @@
 #include <RigCInterpreter/Value.hpp>
 #include <RigCInterpreter/TypeSystem/ClassTemplate.hpp>
 #include <RigCInterpreter/TypeSystem/ClassType.hpp>
+#include <RigCInterpreter/TypeSystem/RefType.hpp>
+#include <RigCInterpreter/TypeSystem/ArrayType.hpp>
 
 namespace rigc::vm
 {
@@ -86,7 +88,14 @@ int Instance::run(rigc::ParserNode const& root_)
 //////////////////////////////////////////
 Value Instance::allocateReference(Value const& toValue_)
 {
-	return this->allocateOnStack<void const*>(wrap<RefType>(universalScope().types, toValue_.type), toValue_.blob());
+	return this->allocateOnStack<void const*>(wrap<RefType>(universalScope(), toValue_.type), toValue_.blob());
+}
+
+//////////////////////////////////////////
+Value Instance::allocatePointer(Value const& toRef_)
+{
+	auto deref = toRef_.removeRef();
+	return this->allocateOnStack<void const*>(wrap<AddrType>(universalScope(), deref.type), deref.blob());
 }
 
 //////////////////////////////////////////
@@ -105,8 +114,9 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 
 	classContext = func_.outerClass;
 
+	bool rawFn = std::holds_alternative<Function::RawFn>(func_.impl);
 	// Raw function:
-	if (std::holds_alternative<Function::RawFn>(func_.impl))
+	if (rawFn)
 	{
 		// Process parameters (conversions)
 		for (size_t i = 0; i < func_.paramCount; ++i)
@@ -114,7 +124,7 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 			auto& param = func_.params[i];
 			// TODO: allow conversions, not only refs
 			if (param.type != args_[i].type)
-				args_[i] = args_[i].deref();
+				args_[i] = args_[i].removeRef();
 		}
 
 		auto const& fn = std::get<Function::RawFn>(func_.impl);
@@ -136,7 +146,7 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 			if (param.type != args_[i].type)
 			{
 				// fmt::print("Converting {} to {}\n", args_[i].type->name(), param.type->name());
-				this->cloneValue(args_[i].deref());
+				this->cloneValue(args_[i].removeRef());
 			}
 			else
 				this->cloneValue(args_[i]);
@@ -176,8 +186,8 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 	if (retVal.has_value())
 	{
 		Value val;
-		if (retVal->type->is<RefType>())
-			val = this->cloneValue(retVal->deref());
+		if (!func_.returnsRef && retVal->type->is<RefType>())
+			val = this->cloneValue(retVal->removeRef());
 		else
 			val = this->cloneValue(*retVal);
 
@@ -258,7 +268,7 @@ OptValue Instance::findVariableByName(std::string_view name_)
 
 				if (dataMemberIt != dataMembers.end())
 				{
-					return this->getSelf().deref().member(dataMemberIt->offset, dataMemberIt->type);
+					return this->getSelf().removeRef().member(dataMemberIt->offset, dataMemberIt->type);
 				}
 			}
 
@@ -361,7 +371,7 @@ Scope& Instance::scopeOf(void const *addr_)
 	auto it = scopes.find(addr_);
 	if (it == scopes.end())
 	{
-		auto scope = std::make_unique<Scope>();
+		auto scope = std::make_unique<Scope>(*this);
 		auto& scopeRef = *scope;
 		scopes[addr_] = std::move(scope);
 		return scopeRef;

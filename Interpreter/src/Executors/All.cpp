@@ -5,6 +5,7 @@
 #include <RigCInterpreter/VM.hpp>
 
 #include <RigCInterpreter/TypeSystem/ArrayType.hpp>
+#include <RigCInterpreter/TypeSystem/RefType.hpp>
 #include <RigCInterpreter/TypeSystem/ClassType.hpp>
 
 namespace rigc::vm
@@ -196,7 +197,7 @@ void print(Instance &vm_, rigc::ParserNode const& args)
 		{
 			Value& val = optVal.value();
 			if (auto ref = dynamic_cast<RefType*>(val.type.get()))
-				val = val.deref();
+				val = val.removeRef();
 			DeclType const& type = val.getType();
 
 			auto typeName = val.typeName();
@@ -231,9 +232,26 @@ OptValue typeOf(Instance &vm_, rigc::ParserNode const& args)
 		if (optVal.has_value())
 		{
 			auto name = optVal.value().fullTypeName();
-			auto t = wrap<ArrayType>(vm_.universalScope().types, vm_.findType("Char")->shared_from_this(), name.size());
+			auto t = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
 
 			return vm_.allocateOnStack( t, name.data(), name.size() );
+		}
+	}
+	return std::nullopt;
+}
+
+////////////////////////////////////////
+OptValue addrOf(Instance &vm_, rigc::ParserNode const& args)
+{
+	for (auto const& c : args.children)
+	{
+		OptValue optVal = vm_.evaluate(*c);
+		if (optVal.has_value())
+		{
+			if (optVal->type->is<RefType>())
+				return vm_.allocatePointer(*optVal);
+			else
+				throw std::runtime_error("Cannot take address of non-reference type");
 		}
 	}
 	return std::nullopt;
@@ -256,6 +274,10 @@ OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
 		else if (fnName->string_view() == "typeOf")
 		{
 			return typeOf(vm_, *args);
+		}
+		else if (fnName->string_view() == "addr")
+		{
+			return addrOf(vm_, *args);
 		}
 		else
 		{
@@ -356,7 +378,7 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 		value = vm_.evaluate(*valueExpr).value();
 		if (auto ref = dynamic_cast<RefType*>(value.type.get()))
 		{
-			value = value.deref();
+			value = value.removeRef();
 		}
 	}
 	else if (deduceType) {
@@ -414,18 +436,56 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 }
 
 ////////////////////////////////////////
+DeclType evaluateType(Instance& vm_, rigc::ParserNode const& typeNode_)
+{
+	DeclType evaluatedType;
+	auto typeName		= findElem<rigc::Name>(typeNode_)->string_view();
+	auto templateParams = findElem<rigc::TemplateParams>(typeNode_);
+
+	if (templateParams)
+	{
+		if (typeName == "Ref")
+		{
+			auto inner = findElem<rigc::TemplateParam>(*templateParams);
+			return wrap<RefType>(
+					vm_.universalScope(),
+					evaluateType(vm_, *findElem<rigc::Type>(*inner))
+				);
+		}
+		else if (typeName == "Addr")
+		{
+			auto inner = findElem<rigc::TemplateParam>(*templateParams);
+			return wrap<AddrType>(
+					vm_.universalScope(),
+					evaluateType(vm_, *findElem<rigc::Type>(*inner))
+				);
+		}
+		else if (typeName == "StaticArray")
+		{
+			// ensure 2 template params
+			if (templateParams->children.size() != 2)
+				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, Int32 N>");
+
+			auto inner	= evaluateType(vm_, *findElem<rigc::Type>(*templateParams->children[0]));
+			// TEMP:
+			auto size	= std::stoi(templateParams->children[1]->string());
+
+			return wrap<ArrayType>(vm_.universalScope(), inner, size);
+		}
+	}
+
+	return vm_.findType(typeName)->shared_from_this();
+}
+
+////////////////////////////////////////
 void evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_)
 {
 	for (auto const& param : paramsNode_.children)
 	{
 		auto paramName	= findElem<rigc::Name>(*param)->string_view();
-		auto declType	= findElem<rigc::Type>(*param);
-		auto typeName	= declType ? declType->string_view() : "Int32";
+		auto type		= findElem<rigc::Type>(*param);
 
-		params_[numParams_++] = {
-			paramName,
-			vm_.findType(typeName)->shared_from_this()
-		};
+		params_[numParams_++] = { paramName, evaluateType(vm_, *type) };
 	}
 }
 
@@ -499,7 +559,7 @@ OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 	replaceAll(s, "\\\\",	"\\");
 	replaceAll(s, "\\\"",	"\"");
 
-	auto type = wrap<ArrayType>(vm_.universalScope().types, vm_.findType("Char")->shared_from_this(), s.size());
+	auto type = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), s.size());
 
 	vm_.universalScope().types.add(type);
 
@@ -540,7 +600,7 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 	size_t numParams = 0;
 	params[numParams++] = {
 		"self",
-		wrap<RefType>(vm_.universalScope().types, vm_.currentClass->shared_from_this())
+		wrap<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
 	};
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);

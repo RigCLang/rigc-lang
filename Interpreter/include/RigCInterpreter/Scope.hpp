@@ -26,6 +26,12 @@ Function const* findOverload(
 
 struct Scope
 {
+	Scope(Instance& vm_)
+		: vm(&vm_)
+	{
+	}
+
+	Instance* vm = nullptr;
 
 	using Impls				= std::vector<TypeImpl*>;
 
@@ -41,6 +47,8 @@ struct Scope
 	std::map<std::string, FrameBasedValue, std::less<> >		variables;
 	std::map<std::string, IType*, std::less<> >					typeAliases;
 	TypeRegistry												types;
+
+	void addType(DeclType type_);
 
 	static StaticString<char, 512> formatOperatorName(std::string_view opName_, Operator::Type type_);
 

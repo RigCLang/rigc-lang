@@ -2,8 +2,9 @@
 
 #include <RigCInterpreter/Value.hpp>
 
-#include <RigCInterpreter/TypeSystem/ClassType.hpp>
 #include <RigCInterpreter/VM.hpp>
+#include <RigCInterpreter/TypeSystem/ClassType.hpp>
+#include <RigCInterpreter/TypeSystem/RefType.hpp>
 
 namespace rigc::vm
 {
@@ -24,7 +25,33 @@ Value Value::member(size_t offset_, DeclType type_) const
 }
 
 /////////////////////////////////////
-Value Value::deref() const
+Value Value::safeRemoveRef() const
+{
+	if (auto ref = dynamic_cast<RefType*>(type.get()))
+	{
+		Value val;
+		val.type = ref->inner;
+		val.data = this->view<void*>();
+		return val;
+	}
+	return *this;
+}
+
+/////////////////////////////////////
+Value Value::safeRemovePtr() const
+{
+	if (auto ptr = dynamic_cast<AddrType*>(type.get()))
+	{
+		Value val;
+		val.type = ptr->inner;
+		val.data = this->view<void*>();
+		return val;
+	}
+	return *this;
+}
+
+/////////////////////////////////////
+Value Value::removeRef() const
 {
 	if (auto ref = dynamic_cast<RefType*>(type.get()))
 	{
@@ -37,14 +64,31 @@ Value Value::deref() const
 }
 
 /////////////////////////////////////
-std::string dump(Instance const& vm_, Value const& value_)
+Value Value::removePtr() const
+{
+	if (auto ptr = dynamic_cast<AddrType*>(type.get()))
+	{
+		Value val;
+		val.type = ptr->inner;
+		val.data = this->view<void*>();
+		return val;
+	}
+	throw std::runtime_error("Cannot deptr non-ptr type");
+}
+
+/////////////////////////////////////
+std::string dump(Instance& vm_, Value const& value_)
 {
 	auto offset = reinterpret_cast<char const*>(value_.data) - vm_.stack.container.data();
 
 	auto& type = *value_.type.get();
-	if (auto deref = type.is<RefType>())
+	if (type.is<RefType>())
 	{
-		return fmt::format("ref to ({}) => {}", offset, dump(vm_, value_.deref()));
+		return fmt::format("ref to ({}) => {}", offset, dump(vm_, value_.removeRef()));
+	}
+	else if (type.is<AddrType>())
+	{
+		return fmt::format("addr of ({}) => {}", offset, dump(vm_, value_.removePtr()));
 	}
 	else
 	{

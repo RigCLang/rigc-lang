@@ -5,6 +5,8 @@
 #include <RigCInterpreter/Scope.hpp>
 #include <RigCInterpreter/VM.hpp>
 
+#include <RigCInterpreter/TypeSystem/RefType.hpp>
+
 namespace rigc::vm
 {
 
@@ -32,7 +34,7 @@ namespace rigc::vm
 	template <typename T>																	\
 	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_)	\
 	{																						\
-		T&			lhsData =  lhs_.deref().view<T>();										\
+		T&			lhsData =  lhs_.removeRef().view<T>();										\
 		T const&	rhsData = *reinterpret_cast<T const*>(rhs_.blob());						\
 																							\
 		lhsData Symbol rhsData;																\
@@ -77,7 +79,7 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 	infixParams[1] = { "rhs", t };
 
 	Function::Params infixAssignParams;
-	infixAssignParams[0] = { "lhs", wrap<RefType>(universeScope_.types, t) };
+	infixAssignParams[0] = { "lhs", wrap<RefType>(universeScope_, t) };
 	infixAssignParams[1] = { "rhs", t };
 
 	#define MAKE_INFIX_OP(Name, Incantation) \
@@ -92,7 +94,10 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 			{ \
 				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
 			}; \
-		universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2));
+		{ \
+			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2)); \
+			op.returnsRef = true; \
+		}
 
 
 	if constexpr (!std::is_same_v<T, bool>)

@@ -3,7 +3,6 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/Type.hpp>
-#include <RigCInterpreter/TypeSystem/RefType.hpp>
 #include <RigCInterpreter/Stack.hpp>
 
 namespace rigc::vm
@@ -11,35 +10,6 @@ namespace rigc::vm
 
 struct Instance;
 struct DataMember;
-
-template <typename T>
-struct Ref
-{
-	Ref() = default;
-
-	Ref(T* ptr_)
-		: ptr(ptr_)
-	{}
-
-	T* ptr;
-
-	T&			operator*()			{ return *ptr; }
-	T const&	operator*()	const	{ return *ptr; }
-
-	bool		operator!() const	{ return ptr == nullptr; }
-
-	explicit operator bool() const {
-		return static_cast<bool>(ptr);
-	}
-
-	operator T*() const {
-		return ptr;
-	}
-
-	operator T const*() const {
-		return ptr;
-	}
-};
 
 template <typename T>
 using Ptr = T*;
@@ -85,10 +55,14 @@ struct Value
 	Value member(DataMember const& dm_) const;
 
 	Value member(size_t offset_, DeclType type_) const;
-	Value deref() const;
+
+	Value safeRemoveRef() const;
+	Value safeRemovePtr() const;
+	Value removeRef() const;
+	Value removePtr() const;
 };
 
-std::string dump(Instance const& vm_, Value const& value_);
+std::string dump(Instance& vm_, Value const& value_);
 
 struct CompileTimeValue
 	: ValueBase

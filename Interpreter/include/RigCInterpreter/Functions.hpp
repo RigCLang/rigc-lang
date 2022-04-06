@@ -38,6 +38,11 @@ struct Function
 	ReturnType			returnType;
 	ClassType const*	outerClass = nullptr;
 
+	// TODO: workaround, remove this
+	// once we have a proper explicit return type deduction for
+	// func name -> Ref
+	bool				returnsRef = false;
+
 	OptValue invoke(Instance& vm_, Args& args_, size_t argCount_) const;
 
 	Function(Impl impl_, Params params_, size_t paramCount_)

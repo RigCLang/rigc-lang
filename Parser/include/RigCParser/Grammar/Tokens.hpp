@@ -26,7 +26,7 @@ struct Type;
 
 struct TemplateParam
 	:
-	p::seq<Type>
+	p::sor<Type, IntegerLiteral, Float64Literal, Float32Literal>
 {
 };
 
@@ -49,7 +49,7 @@ struct TemplateParams
 
 struct Type
 	:
-	p::sor< IntegerLiteral, p::seq< Name, p::opt<opt_ws, TemplateParams> > >
+	p::seq< Name, p::opt<opt_ws, TemplateParams> >
 {};
 
 struct DeclType

@@ -53,6 +53,10 @@ struct Instance
 	/// Note: when `toValue_` is a reference itself, it will create a reference to a reference.
 	Value allocateReference(Value const& toValue_);
 
+	/// Allocates pointer to a specified value.
+	/// Note: `toRef_` must be a reference.
+	Value allocatePointer(Value const& toRef_);
+
 	FrameBasedValue reserveOnStack(DeclType const& type_, bool lookBack_ = false);
 
 	/// Allocates stack space required for specified `type_`, initialized with value from `sourceBytes_`,

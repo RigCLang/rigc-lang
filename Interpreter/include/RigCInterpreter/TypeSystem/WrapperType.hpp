@@ -3,7 +3,7 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/TypeSystem/IType.hpp>
-#include <RigCInterpreter/TypeSystem/TypeRegistry.hpp>
+#include <RigCInterpreter/Scope.hpp>
 
 namespace rigc::vm
 {
@@ -21,16 +21,16 @@ struct WrapperType
 	}
 };
 
-template <typename Wrapper, typename... CtorTypes>
-inline DeclType wrap(TypeRegistry& reg_, DeclType decl, CtorTypes&&... ctorArgs)
+template <std::derived_from<WrapperType> Wrapper, typename... CtorTypes>
+inline DeclType wrap(Scope& ownerScope_, DeclType decl, CtorTypes&&... ctorArgs)
 {
 	auto hash = Wrapper::hashWrapped(decl, std::as_const(ctorArgs)...);
 
-	if (auto type = reg_.find(hash))
+	if (auto type = ownerScope_.types.find(hash))
 		return type;
 
 	auto wrapper = std::make_shared<Wrapper>(std::move(decl), std::forward<CtorTypes>(ctorArgs)...);
-	reg_.add(wrapper);
+	ownerScope_.addType(wrapper);
 	return wrapper;
 }
 

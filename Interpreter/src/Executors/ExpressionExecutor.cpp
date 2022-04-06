@@ -2,7 +2,9 @@
 
 #include <RigCInterpreter/VM.hpp>
 #include <RigCInterpreter/Executors/ExpressionExecutor.hpp>
+
 #include <RigCInterpreter/TypeSystem/ClassType.hpp>
+#include <RigCInterpreter/TypeSystem/RefType.hpp>
 
 namespace rigc::vm
 {
@@ -175,7 +177,7 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 				paramTypes[numParams++]	= evaluatedArgs[i + 1].type;
 			}
 
-			auto deref = lhs.deref();
+			auto deref = lhs.removeRef();
 
 			auto overloadsIt = deref.type->methods.find(methodName->string());
 			if (overloadsIt == deref.type->methods.end())
@@ -188,11 +190,11 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 			}
 
 			// fmt::print("Calling method {} on {}\n", methodName->string_view(), lhs_.as<PendingAction>()->string_view());
-			return fn->invoke(vm, evaluatedArgs, numParams);
+			return vm.executeFunction(*fn, evaluatedArgs, numParams);
 		}
 		else if (rhsExpr->is_type<rigc::Name>())
 		{
-			lhs = lhs.deref();
+			lhs = lhs.removeRef();
 
 			auto memberName = rhsExpr->string_view();
 			auto type = dynamic_cast<ClassType*>(lhs.type.get());
@@ -240,7 +242,7 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 				Function::Args args;
 				args[0] = lhs;
 				args[1] = rhs;
-				return func->invoke(vm, args, 2).value();
+				return vm.executeFunction(*func, args, 2).value();
 			}
 		}
 
@@ -254,6 +256,18 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 ////////////////////////////////////////
 Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 {
+	auto rhs = *this->evalSingleAction(rhs_);
+
+	if (op_ == "*")
+	{
+		return vm.allocateReference(rhs.safeRemoveRef().removePtr());
+	}
+	else if (op_ == "&")
+		return vm.allocatePointer(rhs);
+	else
+		throw std::runtime_error("Invalid prefix operator: " + std::string(op_));
+
+
 	return {};
 }
 
