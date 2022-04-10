@@ -80,7 +80,7 @@ struct IType
 	}
 
 	template <std::derived_from<IType> T>
-	T const* as() {
+	T* as() {
 		return dynamic_cast<T*>(this);
 	}
 

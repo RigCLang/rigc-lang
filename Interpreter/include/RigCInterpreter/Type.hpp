@@ -17,6 +17,14 @@ struct ArrayType;
 struct WrapperType;
 struct RefType;
 
+namespace BuiltinTypes
+{
+
+constexpr std::string_view OverloadedFunction = "<ovf>";
+constexpr std::string_view OverloadedMethod = "<ovm>";
+
+}
+
 struct Operator
 {
 	enum Type {

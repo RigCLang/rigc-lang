@@ -20,11 +20,11 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 	MAKE_EXECUTOR(ReturnStatement,		executeReturnStatement),
 	MAKE_EXECUTOR(SingleBlockStatement,	executeSingleStatement),
 	MAKE_EXECUTOR(Expression,			evaluateExpression),
-	MAKE_EXECUTOR(FunctionCall,			evaluateFunctionCall),
 	MAKE_EXECUTOR(Name,					evaluateName),
 	MAKE_EXECUTOR(IntegerLiteral,		evaluateIntegerLiteral),
 	MAKE_EXECUTOR(BoolLiteral,			evaluateBoolLiteral),
 	MAKE_EXECUTOR(StringLiteral,		evaluateStringLiteral),
+	MAKE_EXECUTOR(CharLiteral,			evaluateCharLiteral),
 	MAKE_EXECUTOR(Float32Literal,		evaluateFloat32Literal),
 	MAKE_EXECUTOR(Float64Literal,		evaluateFloat64Literal),
 	// MAKE_EXECUTOR(ArrayLiteral,			evaluateArrayLiteral),
@@ -69,7 +69,6 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 	{
 		for (auto const& stmt : stmts->children)
 		{
-			// fmt::print("# Executing \"{}\"\n", stmt->type);
 			auto stackFramePos = vm_.stack.size;
 			OptValue val = vm_.evaluate(*stmt);
 			if (stmt->type == "struct rigc::Expression")
@@ -175,55 +174,6 @@ OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 }
 
 ////////////////////////////////////////
-void print(Instance &vm_, rigc::ParserNode const& args)
-{
-	size_t numArgs = args.children.size();
-	if (numArgs == 0)
-		return;
-
-	OptValue format = vm_.evaluate(*args.children[0]);
-	if (!format.has_value() || !format->getType()->isArray() && format->typeName() != "Char")
-		return;
-
-	auto chars = &format->view<char const>();
-	auto fmtView = std::string_view(chars, format->getType()->size());
-
-	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
-	// fmt::print("[Line: {}] ", vm_.lineAt(args));
-	for (size_t c = 1; c < numArgs; ++c)
-	{
-		OptValue optVal = vm_.evaluate(*args.children[c]);
-		if (optVal.has_value())
-		{
-			Value& val = optVal.value();
-			if (auto ref = dynamic_cast<RefType*>(val.type.get()))
-				val = val.removeRef();
-			DeclType const& type = val.getType();
-
-			auto typeName = val.typeName();
-			if (typeName == "Int32")
-				store.push_back(val.view<int>());
-			else if (typeName == "Float32")
-				store.push_back(val.view<float>());
-			else if (typeName == "Float64")
-				store.push_back(val.view<double>());
-			else if (typeName == "Bool")
-				store.push_back((val.view<bool>() ? "true" : "false"));
-			else if (val.getType()->isArray() && typeName == "Char")
-			{
-				auto chars = &val.view<char const>();
-
-				store.push_back(std::string(chars, type->size()));
-			}
-			else
-				store.push_back(dump(vm_, val));
-		}
-	}
-
-	fmt::vprint(fmtView, store);
-}
-
-////////////////////////////////////////
 OptValue typeOf(Instance &vm_, rigc::ParserNode const& args)
 {
 	for (auto const& c : args.children)
@@ -241,109 +191,6 @@ OptValue typeOf(Instance &vm_, rigc::ParserNode const& args)
 }
 
 ////////////////////////////////////////
-OptValue addrOf(Instance &vm_, rigc::ParserNode const& args)
-{
-	for (auto const& c : args.children)
-	{
-		OptValue optVal = vm_.evaluate(*c);
-		if (optVal.has_value())
-		{
-			if (optVal->type->is<RefType>())
-				return vm_.allocatePointer(*optVal);
-			else
-				throw std::runtime_error("Cannot take address of non-reference type");
-		}
-	}
-	return std::nullopt;
-}
-
-////////////////////////////////////////
-OptValue evaluateFunctionCall(Instance &vm_, rigc::ParserNode const& stmt_)
-{
-	// std::cout << "Calling function " << stmt_.string_view() << std::endl;
-
-	auto fnName = findElem<rigc::Name>(stmt_, false);
-
-	if (fnName)
-	{
-		auto args = findElem<rigc::ListOfFunctionArguments>(stmt_, false);
-		if (fnName->string_view() == "print")
-		{
-			print(vm_, *args);
-		}
-		else if (fnName->string_view() == "typeOf")
-		{
-			return typeOf(vm_, *args);
-		}
-		else if (fnName->string_view() == "addr")
-		{
-			return addrOf(vm_, *args);
-		}
-		else
-		{
-			auto type = vm_.findType(fnName->string_view());
-			FunctionOverloads const* overloads = nullptr;
-			Function::Args evaluatedArgs;
-			size_t numArgs = 0;
-
-			Value constructedRef;
-			if (type)
-			{
-				constructedRef = vm_.allocateReference(vm_.allocateOnStack(type->shared_from_this(), nullptr));
-				if (auto c = type->as<ClassType>())
-				{
-					overloads = c->constructors();
-
-					// Push the `self` parameter
-					evaluatedArgs[numArgs++] = constructedRef;
-				}
-				else if (args)
-					throw std::runtime_error("No matching constructor for type " + type->name() + " found.");
-				else
-					return constructedRef;
-			}
-			else
-			{
-				overloads = vm_.findFunction(fnName->string_view());
-				if (!overloads)
-					throw std::runtime_error("Function " + fnName->string() + " not found");
-			}
-
-			// TEMP: Might be null for type constructors.
-			if (overloads)
-			{
-				if (args)
-				{
-					for(size_t i = 0; i < args->children.size(); ++i)
-					{
-						// fmt::print("Evaluating: {}\n", args->children[i]->string_view());
-						evaluatedArgs[numArgs++] = vm_.evaluate(*args->children[i]).value();
-					}
-				}
-
-				FunctionParamTypes types;
-				for (size_t i = 0; i < numArgs; ++i)
-					types[i] = evaluatedArgs[i].getType();
-
-				auto func = findOverload(*overloads, types, numArgs);
-				if (func)
-				{
-					auto result = func->invoke(vm_, evaluatedArgs, numArgs);
-					if (!type)
-						return result;
-				}
-				else
-					throw std::runtime_error("Function " + fnName->string() + " not found");
-			}
-
-			return constructedRef;
-		}
-	}
-
-	return {};
-}
-
-////////////////////////////////////////
 OptValue evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_)
 {
 	return ExpressionExecutor{vm_, expr_}.evaluate();
@@ -352,16 +199,20 @@ OptValue evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_)
 ////////////////////////////////////////
 OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
 {
-	auto optValue = vm_.findVariableByName(expr_.string_view());
+	auto opt = vm_.findVariableByName(expr_.string_view());
 
-	if (!optValue) {
-		throw std::runtime_error("No variable with name \"" + expr_.string() + "\"");
+	if (!opt) {
+		opt = vm_.findFunctionExpr(expr_.string_view());
 	}
 
-	if (auto ref = dynamic_cast<RefType*>(optValue->type.get()))
-		return optValue;
+	if (!opt) {
+		throw std::runtime_error("Unrecognized identifier with name \"" + expr_.string() + "\"");
+	}
 
-	return vm_.allocateReference(optValue.value());
+	if (auto ref = dynamic_cast<RefType*>(opt->type.get()))
+		return opt;
+
+	return vm_.allocateReference(opt.value());
 }
 
 ////////////////////////////////////////
@@ -429,7 +280,6 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 		auto varNameStr = std::string(varName);
 		auto& var = vm_.currentScope->variables[varNameStr];
 		var = vm_.reserveOnStack(type, true);
-		// fmt::print("### Reserving for var {} ({}) {} bytes at {} on stack\n", varNameStr, type->name(), type->size(), var.stackOffset + vm_.stack.frames.back().initialStackSize);
 	}
 
 	return value;
@@ -567,6 +417,24 @@ OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 }
 
 ////////////////////////////////////////
+OptValue evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+{
+	auto sv = expr_.string_view();
+
+	std::string s(sv, 1, sv.length() - 2);
+	replaceAll(s, "\\n",	"\n");
+	replaceAll(s, "\\t",	"\t");
+	replaceAll(s, "\\r",	"\r");
+	replaceAll(s, "\\a",	"\a");
+	replaceAll(s, "\\v",	"\v");
+	replaceAll(s, "\\\\",	"\\");
+	replaceAll(s, "\\\"",	"\"");
+	char c = s[0];
+
+	return vm_.allocateOnStack( vm_.findType("Char")->shared_from_this(), c );
+}
+
+////////////////////////////////////////
 OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
 	auto type = std::make_shared<ClassType>();
@@ -609,7 +477,7 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 
 	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 	vm_.currentClass->methods[name].push_back(&method);
-	method.outerClass = vm_.currentClass;
+	method.outerType = vm_.currentClass;
 
 	return {};
 }

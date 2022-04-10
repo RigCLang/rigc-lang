@@ -29,6 +29,7 @@ struct Instance
 	OptValue findVariableByName(std::string_view name_);
 	IType* findType(std::string_view name_);
 	FunctionOverloads const* findFunction(std::string_view name_);
+	Value findFunctionExpr(std::string_view name_);
 
 	OptValue tryConvert(Value value_, DeclType const& to_);
 
@@ -57,17 +58,17 @@ struct Instance
 	/// Note: `toRef_` must be a reference.
 	Value allocatePointer(Value const& toRef_);
 
-	FrameBasedValue reserveOnStack(DeclType const& type_, bool lookBack_ = false);
+	FrameBasedValue reserveOnStack(DeclType type_, bool lookBack_ = false);
 
 	/// Allocates stack space required for specified `type_`, initialized with value from `sourceBytes_`,
 	/// by copying `sourceBytes_`.
-	Value allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy = 0);
+	Value allocateOnStack(DeclType type_, void const* sourceBytes_, size_t toCopy = 0);
 
 	/// Allocates stack space required for specified `type_`, initialized with specified `value_`.
 	template <typename T>
-	Value allocateOnStack(DeclType const& type_, T const& value_)
+	Value allocateOnStack(DeclType type_, T const& value_)
 	{
-		return this->allocateOnStack(type_, reinterpret_cast<void const*>(&value_), sizeof(T));
+		return this->allocateOnStack(std::move(type_), reinterpret_cast<void const*>(&value_), sizeof(T));
 	}
 
 	/// Allocates stack space required for type specified by its `typeName_`, initialized with specified `value_`.

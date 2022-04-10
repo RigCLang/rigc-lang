@@ -50,7 +50,7 @@ struct StringLiteralContents
 	:
 	p::sor<
 		EscapeSequence,
-		p::not_one<'\n', '\"'>
+		p::not_one<'\n', '"'>
 	>
 {
 };
@@ -61,5 +61,33 @@ struct StringLiteral
 {
 };
 
+struct CharLiteralContents
+	:
+	p::sor<
+		EscapeSequence,
+		p::not_one<'\n', '\''>
+	>
+{
+};
+
+struct CharLiteral
+	:
+	p::if_must< p::one<'\''>, p::star<CharLiteralContents>, p::one<'\''> >
+{
+};
+
+
+struct AnyLiteral
+	:
+	p::sor<
+		Float32Literal,
+		Float64Literal,
+		IntegerLiteral,
+		BoolLiteral,
+		StringLiteral,
+		CharLiteral
+	>
+{
+};
 
 }

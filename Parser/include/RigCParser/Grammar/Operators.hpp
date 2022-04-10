@@ -9,7 +9,7 @@ struct Expression;
 struct InfixOperator;
 struct PrefixOperator;
 struct PostfixOperator;
-
+struct ListOfFunctionArguments;
 
 // Pointer and reference operators
 //// Prefix
@@ -31,6 +31,9 @@ struct DotOp			: p::string	<'.'> {};
 // Subscript operator
 //// Postfix
 struct SubscriptOp		: p::seq	< p::one<'['>, opt_ws, Expression, opt_ws, p::one<']'> > {};
+
+//// Postfix
+struct FunctionCallOp	: p::seq	< p::one<'('>, opt_ws, ListOfFunctionArguments, opt_ws, p::one<')'> > {};
 
 // Math operators
 //// Prefix
@@ -172,6 +175,7 @@ struct InfixOperatorNoComma	: InfixOperatorBase<> {};
 struct PostfixOperator
 	: p::sor<
 		SubscriptOp,
+		FunctionCallOp,
 		PostincrementOp,
 		PostdecrementOp
 	>

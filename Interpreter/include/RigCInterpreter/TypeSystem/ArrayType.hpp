@@ -24,10 +24,10 @@ struct ArrayType
 	std::vector<TemplateParameter> templateParams;
 
 	std::string name() const override {
-		return fmt::format("Array<{}, {}>", inner->name(), count);
+		return fmt::format("StaticArray<{}, {}>", inner->name(), count);
 	}
 	std::string symbolName() const override {
-		return "Array";
+		return "StaticArray";
 	}
 	std::size_t size() const override {
 		return inner->size() * count;
@@ -37,7 +37,7 @@ struct ArrayType
 	}
 	static std::size_t hashWrapped(InnerType const& inner_, size_t count_)
 	{
-		return std::hash<std::string>{}(fmt::format("Array<{}, {}>", inner_->name(), count_));
+		return std::hash<std::string>{}(fmt::format("StaticArray<{}, {}>", inner_->name(), count_));
 	}
 
 	void postInitialize(Instance& vm_) override;

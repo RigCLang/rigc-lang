@@ -35,7 +35,7 @@ struct ValueBase
 struct Value
 	: ValueBase
 {
-	void* data;
+	void* data = nullptr;
 
 	template <typename T>
 	T& view() {

@@ -56,7 +56,7 @@ private:
 
 	OptValue evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_);
 	Value evalPrefixOperator(std::string_view op_, Action& rhs_);
-	Value evalPostfixOperator(std::string_view op_, Action& lhs_);
+	OptValue evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_);
 
 	std::vector<Action> actions;
 };

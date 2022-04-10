@@ -24,10 +24,9 @@ struct AtomicExprPart
 			IntegerLiteral,
 			BoolLiteral,
 			Operators...,
-			ArrayLiteral,
 			StringLiteral,
+			CharLiteral,
 			struct ClosureDefinition,
-			struct FunctionCall,
 			Name
 		>,
 		opt_ws
@@ -35,42 +34,42 @@ struct AtomicExprPart
 {
 };
 
-struct AtomicExprPartFirst		: AtomicExprPart<> {};
+struct AtomicExprPartFirst		: AtomicExprPart<ArrayLiteral> {};
 struct AtomicExprPartMid		: AtomicExprPart<InfixOperator> {};
 struct AtomicExprPartMidNoComma	: AtomicExprPart<InfixOperatorNoComma> {};
 
-template <typename AtomicsMid>
+struct SingleExpressionFragment
+	:
+	p::seq<
+		p::star<PrefixOperator>,opt_ws,
+		p::sor<AnyLiteral, Name, ExprInParen>,opt_ws,
+		p::star<PostfixOperator>
+	>
+{
+};
+
+template <typename TInfixOperator = InfixOperator>
 struct ExpressionBase
 	:
 	p::seq<
-		p::sor<
-				p::plus<PrefixOperator>,
-				AtomicExprPartFirst,
-				ExprInParen
-			>,
+		SingleExpressionFragment,
 		p::star<
-			p::sor<
-				AtomicsMid,
-				ExprInParen
-			>
-		>,
-		p::star<
-			PostfixOperator
+			p::seq<opt_ws, TInfixOperator, opt_ws, SingleExpressionFragment>
 		>
 	>
 {
 };
 
 struct Expression
-	: ExpressionBase<AtomicExprPartMid>
+	: ExpressionBase<InfixOperator>
 {};
 
 struct ExprWithoutComma
-	: ExpressionBase<AtomicExprPartMidNoComma>
+	: ExpressionBase<InfixOperatorNoComma>
 {};
 
 struct ExprInParen
-	: p::seq<p::one<'('>, opt_ws, Expression, opt_ws, p::one<')'> >
+	: p::if_must<p::one<'('>, opt_ws, Expression, opt_ws, p::one<')'> >
 {
 };
 
@@ -95,14 +94,5 @@ struct ListOfExpressions
 
 struct ListOfArrayElements		: ListOfExpressions<ArrayElement> {};
 struct ListOfFunctionArguments	: ListOfExpressions<FunctionArg> {};
-
-struct FunctionCall
-	:
-	p::seq<
-		p::sor<Name, ExprInParen>,
-		opt_ws, p::one<'('>, opt_ws, p::opt< ListOfFunctionArguments >, opt_ws, p::one<')'>
-	>
-{
-};
 
 }

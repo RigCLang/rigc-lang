@@ -24,7 +24,6 @@ DECLARE_EXECUTOR(executeWhileStatement);
 DECLARE_EXECUTOR(executeReturnStatement);
 
 DECLARE_EXECUTOR(evaluateFunctionDefinition);
-DECLARE_EXECUTOR(evaluateFunctionCall);
 DECLARE_EXECUTOR(evaluateExpression);
 
 DECLARE_EXECUTOR(evaluateName);
@@ -33,6 +32,7 @@ DECLARE_EXECUTOR(evaluateBoolLiteral);
 DECLARE_EXECUTOR(evaluateFloat32Literal);
 DECLARE_EXECUTOR(evaluateFloat64Literal);
 DECLARE_EXECUTOR(evaluateStringLiteral);
+DECLARE_EXECUTOR(evaluateCharLiteral);
 DECLARE_EXECUTOR(evaluateArrayLiteral);
 DECLARE_EXECUTOR(evaluateArrayElement);
 

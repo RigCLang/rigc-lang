@@ -4,6 +4,9 @@
 #include <RigCInterpreter/VM.hpp>
 
 #include <RigCInterpreter/TypeSystem/RefType.hpp>
+#include <RigCInterpreter/TypeSystem/FuncType.hpp>
+
+#include <RigCInterpreter/Builtin/Functions.hpp>
 
 namespace rigc::vm
 {
@@ -30,6 +33,17 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 	MAKE_BUILTIN_TYPE(uint64_t,	Uint64);
 	MAKE_BUILTIN_TYPE(float,	Float32);
 	MAKE_BUILTIN_TYPE(double,	Float64);
+
+	scope->types.add(std::make_unique<FuncType>());
+	scope->types.add(std::make_unique<MethodType>());
+
+	// "print" builtin function
+	{
+		auto func = Function{ &builtin::print, {}, 0 };
+		func.variadic = true;
+
+		scope->registerFunction(vm_, "print", std::move(func));
+	}
 
 	return scope;
 #undef ADD_BUILTIN_TYPE
@@ -108,6 +122,11 @@ Function const* findOverload(
 		Function::ReturnType		returnType_
 	)
 {
+	if (funcs_.size() == 1 && funcs_[0]->variadic && funcs_[0]->isRaw())
+	{
+		return funcs_[0];
+	}
+
 	for (size_t i = 0; i < funcs_.size(); ++i)
 	{
 		if (testFunctionOverload(*funcs_[i], paramTypes_, numArgs_))

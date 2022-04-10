@@ -8,6 +8,7 @@
 #include <RigCInterpreter/TypeSystem/ClassType.hpp>
 #include <RigCInterpreter/TypeSystem/RefType.hpp>
 #include <RigCInterpreter/TypeSystem/ArrayType.hpp>
+#include <RigCInterpreter/TypeSystem/FuncType.hpp>
 
 namespace rigc::vm
 {
@@ -112,7 +113,8 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 
 	auto prevClassContext = classContext;
 
-	classContext = func_.outerClass;
+	if (func_.outerType && func_.outerType->is<ClassType>())
+		classContext = func_.outerType->as<ClassType>();
 
 	bool rawFn = std::holds_alternative<Function::RawFn>(func_.impl);
 	// Raw function:
@@ -145,7 +147,6 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 			// TODO: allow conversions, not only refs
 			if (param.type != args_[i].type)
 			{
-				// fmt::print("Converting {} to {}\n", args_[i].type->name(), param.type->name());
 				this->cloneValue(args_[i].removeRef());
 			}
 			else
@@ -156,7 +157,6 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 				auto paramName = std::string(param.name);
 				auto& var = fnScope.variables[paramName];
 				var = this->reserveOnStack(param.type, true);
-				// fmt::print("### Reserving for param {} {} bytes at {}\n", param.name, param.type->size(), var.stackOffset + frame.initialStackSize);
 			}
 		}
 		// Runtime function:
@@ -191,7 +191,6 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 		else
 			val = this->cloneValue(*retVal);
 
-		// fmt::print("### Returning {} at {}\n", val.type->name(), (const char*)val.blob() - stack.container.data());
 		return val; // extend lifetime
 	}
 
@@ -320,29 +319,52 @@ FunctionOverloads const* Instance::findFunction(std::string_view name_)
 }
 
 //////////////////////////////////////////
+Value Instance::findFunctionExpr(std::string_view name_)
+{
+	FunctionOverloads const* overloads = nullptr;
+	IType* type = nullptr;
+
+	if (auto constructed = this->findType(name_))
+	{
+		if (auto c = constructed->as<ClassType>())
+		{
+			overloads	= c->constructors();
+			return allocateMethodOverloads(*this, {}, overloads);
+		}
+	}
+
+	overloads	= this->findFunction(name_);
+	type		= this->findType(BuiltinTypes::OverloadedFunction);
+
+	return this->allocateOnStack<void const*>(type->shared_from_this(), overloads);
+}
+
+//////////////////////////////////////////
 Value Instance::cloneValue(Value value_)
 {
 	return this->allocateOnStack( value_.getType(), reinterpret_cast<void*>(value_.blob()), value_.getType()->size() );
 }
 
 //////////////////////////////////////////
-FrameBasedValue Instance::reserveOnStack(DeclType const& type_, bool lookBack_)
+FrameBasedValue Instance::reserveOnStack(DeclType type_, bool lookBack_)
 {
 	auto& frame = stack.frames.back();
 
+	auto size = type_->size();
+
 	FrameBasedValue result;
-	result.type			= type_;
+	result.type			= std::move(type_);
 	result.stackOffset	= stack.size - frame.initialStackSize;
 	if (lookBack_)
-		result.stackOffset -= type_->size();
+		result.stackOffset -= size;
 	else
-		stack.size += type_->size();
+		stack.size += size;
 
 	return result;
 }
 
 //////////////////////////////////////////
-Value Instance::allocateOnStack(DeclType const& type_, void const* sourceBytes_, size_t toCopy)
+Value Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t toCopy)
 {
 	size_t toAlloc = type_->size();
 	if (toCopy == 0)
@@ -360,7 +382,7 @@ Value Instance::allocateOnStack(DeclType const& type_, void const* sourceBytes_,
 		std::memcpy(bytes, sourceBytes_, toCopy);
 
 	Value val;
-	val.type = type_;
+	val.type = std::move(type_);
 	val.data = bytes;
 	return val;
 }

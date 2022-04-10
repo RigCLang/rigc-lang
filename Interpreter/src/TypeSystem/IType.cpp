@@ -12,8 +12,7 @@ void IType::addMethod(std::string_view name_, Function* func_)
 {
 	this->methods[name_].push_back(func_);
 
-	if (auto c = this->as<ClassType>())
-		func_->outerClass = c;
-	}
+	func_->outerType = this;
+}
 
 }

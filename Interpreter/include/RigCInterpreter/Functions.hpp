@@ -36,7 +36,8 @@ struct Function
 	Params				params;
 	size_t				paramCount;
 	ReturnType			returnType;
-	ClassType const*	outerClass = nullptr;
+	bool				variadic = false;
+	IType*				outerType = nullptr;
 
 	// TODO: workaround, remove this
 	// once we have a proper explicit return type deduction for
@@ -67,6 +68,14 @@ struct Function
 		} else {
 			return rawImpl().target<RawFnSign*>();
 		}
+	}
+
+	bool isRuntime() const {
+		return std::holds_alternative<RuntimeFn>(impl);
+	}
+
+	bool isRaw() const {
+		return std::holds_alternative<RawFn>(impl);
 	}
 };
 

@@ -5,6 +5,7 @@
 
 #include <RigCInterpreter/TypeSystem/ClassType.hpp>
 #include <RigCInterpreter/TypeSystem/RefType.hpp>
+#include <RigCInterpreter/TypeSystem/FuncType.hpp>
 
 namespace rigc::vm
 {
@@ -38,7 +39,7 @@ int operatorPriority(rigc::ParserNode const& node_)
 	if (op == "+" || op == "-") return 7;
 	if (op == "*" || op == "/" || op == "%") return 6;
 
-	if (op == "++" || op == "--") return 2;
+	if (op == "++" || op == "--" || op[0] == '(' || op[0] == '[' || op == ".") return 2;
 
 
 	return 1;
@@ -108,7 +109,6 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 				actions[actionIndex_ - 1],
 				actions[actionIndex_ + 1]
 			);
-		// fmt::print("Infix operator: {} resulted in type {}\n", oper.string_view(), action_.as<ProcessedAction>()->type->name());
 		actions.erase(actions.begin() + actionIndex_ + 1);
 		actions.erase(actions.begin() + actionIndex_ - 1);
 	}
@@ -130,7 +130,7 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 			throw std::runtime_error("Invalid postfix operator position: " + std::to_string(actionIndex_));
 
 		action_ = this->evalPostfixOperator(
-				oper.string_view(),
+				oper,
 				actions[actionIndex_ - 1]
 			);
 
@@ -159,75 +159,35 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 
 		auto rhsExpr = rhs_.as<PendingAction>();
 
-		if (rhsExpr->is_type<rigc::FunctionCall>())
-		{
-			auto methodName = findElem<rigc::Name>(*rhsExpr);
-			FunctionParamTypes paramTypes;
-			size_t numParams = 0;
-			paramTypes[numParams++] = lhs.type;
-
-			auto args = findElem<rigc::ListOfFunctionArguments>(*rhsExpr, false);
-
-			Function::Args evaluatedArgs;
-			evaluatedArgs[0] = lhs;
-
-			for(size_t i = 0; i < args->children.size(); ++i)
-			{
-				evaluatedArgs[i + 1]	= vm.evaluate(*args->children[i]).value();
-				paramTypes[numParams++]	= evaluatedArgs[i + 1].type;
-			}
-
-			auto deref = lhs.removeRef();
-
-			auto overloadsIt = deref.type->methods.find(methodName->string());
-			if (overloadsIt == deref.type->methods.end())
-				throw std::runtime_error(fmt::format("Method {} not found in type {}.", methodName->string_view(), lhs.type->name()));
-
-			auto fn = findOverload(overloadsIt->second, paramTypes, numParams);
-
-			if (!fn) {
-				throw std::runtime_error(fmt::format("Not matching method {} to call with params: {}.", methodName->string_view(), lhs.type->name()));
-			}
-
-			// fmt::print("Calling method {} on {}\n", methodName->string_view(), lhs_.as<PendingAction>()->string_view());
-			return vm.executeFunction(*fn, evaluatedArgs, numParams);
-		}
-		else if (rhsExpr->is_type<rigc::Name>())
+		if (rhsExpr->is_type<rigc::Name>())
 		{
 			lhs = lhs.removeRef();
 
 			auto memberName = rhsExpr->string_view();
-			auto type = dynamic_cast<ClassType*>(lhs.type.get());
-			if (!type)
-				throw std::runtime_error("Can't access member of non-class type.");
 
-			auto memberIt = rg::find(type->dataMembers, memberName, &DataMember::name);
-			if (memberIt == type->dataMembers.end())
+			auto classType = dynamic_cast<ClassType*>(lhs.type.get());
+
+			if (classType)
+			{
+				auto dmIt = rg::find(classType->dataMembers, memberName, &DataMember::name);
+				if (dmIt != classType->dataMembers.end())
+				{
+					return vm.allocateReference(lhs.member(dmIt->offset, dmIt->type));
+				}
+			}
+
+			auto overloadsIt = lhs.type->methods.find(memberName);
+			if (overloadsIt == lhs.type->methods.end())
 				throw std::runtime_error(fmt::format("Member {} not found in type {}.", memberName, lhs.type->name()));
 
-			return vm.allocateReference(lhs.member(memberIt->offset, memberIt->type));
+			return allocateMethodOverloads(vm, lhs, &overloadsIt->second);
 		}
 		else
 			throw std::runtime_error("Invalid expression.");
-
-		return vm.allocateOnStack("Int32", 1);
-
-		// auto overloads = lhs.getType().methods;
-
-		// if (auto func = findOverload(*overloads, types, 2))
-		// {
-		// 	Function::Args args;
-		// 	args[0] = lhs;
-		// 	args[1] = rhs;
-		// 	return func->invoke(vm, args, 2).value();
-		// }
 	}
 	else
 	{
 		Value rhs	= *this->evalSingleAction(rhs_);
-
-		// if (lhs.valueTypeIndex() != rhs.valueTypeIndex())
-		// 	throw std::runtime_error("Incompatible operands for \"" + std::string(op_) + "\" operator.");
 
 		FunctionParamTypes types;
 
@@ -259,9 +219,7 @@ Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 	auto rhs = *this->evalSingleAction(rhs_);
 
 	if (op_ == "*")
-	{
 		return vm.allocateReference(rhs.safeRemoveRef().removePtr());
-	}
 	else if (op_ == "&")
 		return vm.allocatePointer(rhs);
 	else
@@ -272,8 +230,86 @@ Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 }
 
 ////////////////////////////////////////
-Value ExpressionExecutor::evalPostfixOperator(std::string_view op_, Action& lhs_)
+OptValue ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_)
 {
+	auto lhs = *this->evalSingleAction(lhs_);
+
+	auto op = op_.string_view();
+	if (op[0] == '[') // array access
+	{
+		auto& expr = *findElem<rigc::Expression>(op_, false);
+		auto data = lhs.safeRemoveRef();
+
+		auto index		= vm.evaluate(expr)->safeRemoveRef();
+		auto elemType	= data.type->decay();
+
+		Value elem;
+		elem.data = (char*)data.data + index.view<int>() * elemType->size();
+		elem.type = elemType;
+
+		return vm.allocateReference(elem);
+	}
+	else if (op[0] == '(') // function call
+	{
+		auto funcVal = lhs.safeRemoveRef();
+
+		FunctionParamTypes paramTypes;
+		size_t numParams = 0;
+
+		Function::Args evaluatedArgs;
+
+		FunctionOverloads const* overloads;
+
+		Value self;
+		bool constructor = false;
+		if (funcVal.type->is<FuncType>())
+		{
+			overloads = funcVal.view<FunctionOverloads const*>();
+			if (!overloads)
+				throw std::runtime_error("Can't call non-function type.");
+		}
+		else // Method type
+		{
+			overloads = funcVal.view<FunctionOverloads const*>();
+			if (!overloads)
+				throw std::runtime_error("Can't call non-function type.");
+
+			self.data = *((void**)funcVal.data + 1);
+			self.type = (*overloads)[0]->outerType->shared_from_this();
+			if (!self.data) // this is a constructor
+			{
+				constructor = true;
+				self = vm.allocateOnStack(self.type, nullptr);
+			}
+
+			evaluatedArgs[numParams]	= vm.allocateReference(self);
+			paramTypes[numParams]		= evaluatedArgs[numParams].type;
+			numParams++;
+		}
+
+
+		auto args = findElem<rigc::ListOfFunctionArguments>(op_, false);
+
+		for(size_t i = 0; i < args->children.size(); ++i)
+		{
+			evaluatedArgs[numParams]	= vm.evaluate(*args->children[i]).value();
+			paramTypes[numParams]		= evaluatedArgs[numParams].type;
+			numParams++;
+		}
+
+
+		auto fn = findOverload(*overloads, paramTypes, numParams);
+
+		if (!fn) {
+			throw std::runtime_error(fmt::format("Not matching function to call with params: {}.", lhs.type->name()));
+		}
+
+		auto result = vm.executeFunction(*fn, evaluatedArgs, numParams);
+		if (constructor)
+			return evaluatedArgs[0];
+		return result;
+	}
+
 	return {};
 }
 
