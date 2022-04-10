@@ -78,7 +78,7 @@ Function const* Scope::findConversion(DeclType const& from_, DeclType const& to_
 	if (!overloads)
 		return nullptr;
 
-	return findOverload(*overloads, { from_ }, 1, to_);
+	return findOverload(*overloads, { from_ }, 1, false, to_);
 }
 
 // TODO: add support for second-pass functions
@@ -119,6 +119,7 @@ FunctionOverloads const* Scope::findFunction(std::string_view funcName_) const
 Function const* findOverload(
 		FunctionOverloads const&	funcs_,
 		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
+		bool						method,
 		Function::ReturnType		returnType_
 	)
 {
@@ -129,6 +130,9 @@ Function const* findOverload(
 
 	for (size_t i = 0; i < funcs_.size(); ++i)
 	{
+		if (method && funcs_[i]->params[0].name != "self")
+			continue;
+
 		if (testFunctionOverload(*funcs_[i], paramTypes_, numArgs_))
 		{
 			if (!returnType_ || funcs_[i]->returnType == returnType_)

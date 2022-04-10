@@ -176,11 +176,21 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 				}
 			}
 
-			auto overloadsIt = lhs.type->methods.find(memberName);
-			if (overloadsIt == lhs.type->methods.end())
-				throw std::runtime_error(fmt::format("Member {} not found in type {}.", memberName, lhs.type->name()));
+			FunctionOverloads const* overloads;
 
-			return allocateMethodOverloads(vm, lhs, &overloadsIt->second);
+			auto methodsIt = lhs.type->methods.find(memberName);
+			if (methodsIt != lhs.type->methods.end())
+				overloads = &methodsIt->second;
+			else
+			{
+				if (!(overloads = vm.findFunction(memberName)))
+				{
+					throw std::runtime_error(fmt::format("Member {} not found in type {}.", memberName, lhs.type->name()));
+				}
+			}
+
+
+			return allocateMethodOverloads(vm, lhs, overloads);
 		}
 		else
 			throw std::runtime_error("Invalid expression.");
@@ -261,7 +271,8 @@ OptValue ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Ac
 		FunctionOverloads const* overloads;
 
 		Value self;
-		bool constructor = false;
+		bool constructor	= false;
+		bool method			= false;
 		if (funcVal.type->is<FuncType>())
 		{
 			overloads = funcVal.view<FunctionOverloads const*>();
@@ -270,12 +281,14 @@ OptValue ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Ac
 		}
 		else // Method type
 		{
+			method = true;
+
 			overloads = funcVal.view<FunctionOverloads const*>();
 			if (!overloads)
 				throw std::runtime_error("Can't call non-function type.");
 
 			self.data = *((void**)funcVal.data + 1);
-			self.type = (*overloads)[0]->outerType->shared_from_this();
+			self.type = (*overloads)[0]->params[0].type->as<RefType>()->inner;
 			if (!self.data) // this is a constructor
 			{
 				constructor = true;
@@ -298,7 +311,7 @@ OptValue ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Ac
 		}
 
 
-		auto fn = findOverload(*overloads, paramTypes, numParams);
+		auto fn = findOverload(*overloads, paramTypes, numParams, method);
 
 		if (!fn) {
 			throw std::runtime_error(fmt::format("Not matching function to call with params: {}.", lhs.type->name()));

@@ -21,6 +21,7 @@ Function const* findOverload(
 		FunctionOverloads const&	funcs_,
 		FunctionParamTypes const&	paramTypes_,
 		size_t						numArgs_,
+		bool						method = false,
 		Function::ReturnType		returnType_ = std::nullopt
 	);
 

@@ -460,7 +460,7 @@ OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 ////////////////////////////////////////
 OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
-	auto& scope = *vm_.currentScope;
+	auto& scope = vm_.scopeOf(vm_.currentClass->declaration);
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
 
