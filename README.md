@@ -98,4 +98,30 @@ func main {
 }
 ```
 
+#### Extension methods
+
+First parameter must be:
+- of name `self` (keyword)
+- a reference type
+
+```rust
+template <T: IndexedRange>
+func indexOf(self: Ref<T>, elem: Char)
+{
+	var i = 0;
+	while (i < self.size())
+	{
+		if (self[i] == elem)
+			ret i;
+		i += 1;
+	}
+	ret -1;
+}
+
+// usage:
+func main {
+	print("Found 'b' at index {} in text \"abc\"\n", "abc".indexOf('b'));
+}
+```
+
 // TBD
