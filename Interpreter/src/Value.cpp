@@ -5,6 +5,7 @@
 #include <RigCInterpreter/VM.hpp>
 #include <RigCInterpreter/TypeSystem/ClassType.hpp>
 #include <RigCInterpreter/TypeSystem/RefType.hpp>
+#include <RigCInterpreter/TypeSystem/FuncType.hpp>
 
 namespace rigc::vm
 {
@@ -90,6 +91,14 @@ std::string dump(Instance& vm_, Value const& value_)
 	{
 		return fmt::format("addr of ({}) => {}", offset, dump(vm_, value_.removePtr()));
 	}
+	else if (type.is<FuncType>())
+	{
+		return fmt::format("{} => {}", type.name(), value_.data);
+	}
+	else if (type.is<MethodType>())
+	{
+		return fmt::format("{} => {}", type.name(), value_.data);
+	}
 	else
 	{
 		auto addr = fmt::format("(addr: {}) ", offset);
@@ -101,6 +110,8 @@ std::string dump(Instance& vm_, Value const& value_)
 		else if (type.name() == "Float64")
 			return addr + fmt::format("{:.4f}", value_.view<double>());
 		else if (type.name() == "Bool")
+			return addr + fmt::format("{}", value_.view<bool>() ? "true" : "false");
+		else if (type.name() == "Func")
 			return addr + fmt::format("{}", value_.view<bool>() ? "true" : "false");
 		else if (auto cl = type.as<ClassType>())
 		{
