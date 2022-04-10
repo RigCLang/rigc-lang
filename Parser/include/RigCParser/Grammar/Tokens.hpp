@@ -14,7 +14,11 @@ struct PackageImportNames
 };
 
 struct PackageImportFullName
-	: p::must< PackageImportNames >
+	:
+	p::sor<
+		StringLiteral,
+		PackageImportNames
+	>
 {
 };
 

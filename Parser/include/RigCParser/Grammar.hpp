@@ -29,6 +29,7 @@ template< typename Rule >
 using Selector = p::parse_tree::selector< Rule,
 	p::parse_tree::store_content::on<
 			ImportStatement,
+			PackageImportFullName,
 			ClassDefinition,
 			ClassCodeBlock,
 			MethodDef,
@@ -67,6 +68,7 @@ using Selector = p::parse_tree::selector< Rule,
 			StringLiteral,
 			CharLiteral,
 			ArrayLiteral,
+			ExportKeyword,
 			ListOfFunctionArguments
 		>
 	>;

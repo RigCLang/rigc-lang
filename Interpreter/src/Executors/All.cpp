@@ -14,6 +14,7 @@ namespace rigc::vm
 #define MAKE_EXECUTOR(ClassName, Executor) { #ClassName, Executor }
 
 std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
+	MAKE_EXECUTOR(ImportStatement,		executeImportStatement),
 	MAKE_EXECUTOR(CodeBlock,			executeCodeBlock),
 	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
 	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
@@ -57,6 +58,14 @@ struct StackFramePusher
 
 	Instance& vm;
 };
+
+////////////////////////////////////////
+OptValue executeImportStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+{
+	fmt::print("Importing module {}...\n\n", findElem<rigc::PackageImportFullName>(stmt_)->string_view());
+	// TODO: import the module.
+	return {};
+}
 
 ////////////////////////////////////////
 OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)

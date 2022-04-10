@@ -17,6 +17,7 @@ extern std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors;
 #define DECLARE_EXECUTOR(Name) \
 	OptValue Name(Instance &vm_, rigc::ParserNode const& stmt_)
 
+DECLARE_EXECUTOR(executeImportStatement);
 DECLARE_EXECUTOR(executeCodeBlock);
 DECLARE_EXECUTOR(executeSingleStatement);
 DECLARE_EXECUTOR(executeIfStatement);

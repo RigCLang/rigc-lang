@@ -33,7 +33,7 @@ struct ClassCodeBlock
 };
 
 struct ClassDefinition
-	: p::if_must< ClassKeyword, ws, Name, opt_ws, ClassCodeBlock >
+	: p::seq< p::opt<ExportKeyword, ws>, p::if_must< ClassKeyword, ws, Name, opt_ws, ClassCodeBlock > >
 {
 };
 

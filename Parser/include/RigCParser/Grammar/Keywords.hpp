@@ -12,6 +12,7 @@ namespace rigc
 
 DEFINE_KEYWORD(From,		'f','r','o','m');
 DEFINE_KEYWORD(Import,		'i','m','p','o', 'r', 't');
+DEFINE_KEYWORD(Export,		'e','x','p','o','r', 't');
 DEFINE_KEYWORD(Func,		'f','u','n','c');
 DEFINE_KEYWORD(Var,			'v','a','r');
 DEFINE_KEYWORD(Const,		'c','o','n','s','t');

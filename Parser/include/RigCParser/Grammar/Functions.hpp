@@ -40,7 +40,7 @@ struct FunctionParams
 };
 
 struct FunctionDefinition
-	: p::if_must< FuncKeyword, ws, Name, opt_ws, p::opt<FunctionParams>, opt_ws, CodeBlock >
+	: p::seq< p::opt<ExportKeyword, ws>, p::if_must< FuncKeyword, ws, Name, opt_ws, p::opt<FunctionParams>, opt_ws, CodeBlock > >
 {
 };
 
