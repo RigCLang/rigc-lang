@@ -13,31 +13,6 @@ namespace rigc
 struct Expression;
 struct ExprInParen;
 
-template <typename... Operators>
-struct AtomicExprPart
-	:
-	p::seq<
-		opt_ws,
-		p::sor<
-			Float32Literal,
-			Float64Literal,
-			IntegerLiteral,
-			BoolLiteral,
-			Operators...,
-			StringLiteral,
-			CharLiteral,
-			struct ClosureDefinition,
-			Name
-		>,
-		opt_ws
-	>
-{
-};
-
-struct AtomicExprPartFirst		: AtomicExprPart<ArrayLiteral> {};
-struct AtomicExprPartMid		: AtomicExprPart<InfixOperator> {};
-struct AtomicExprPartMidNoComma	: AtomicExprPart<InfixOperatorNoComma> {};
-
 struct SingleExpressionFragment
 	:
 	p::seq<
