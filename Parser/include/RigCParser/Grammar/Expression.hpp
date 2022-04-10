@@ -29,7 +29,7 @@ struct ExpressionBase
 	p::seq<
 		SingleExpressionFragment,
 		p::star<
-			p::seq<opt_ws, TInfixOperator, opt_ws, SingleExpressionFragment>
+			opt_ws, p::if_must<TInfixOperator, opt_ws, SingleExpressionFragment>
 		>
 	>
 {

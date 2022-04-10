@@ -108,7 +108,7 @@ struct PrefixOperator
 		ReferenceOp,
 		PreincrementOp,
 		PredecrementOp,
-		NumericNegateOp,
+		// NumericNegateOp,
 		BitNegate,
 		LogicalNegateOp
 	>
@@ -117,7 +117,7 @@ struct PrefixOperator
 
 template <typename... Optionals>
 struct InfixOperatorBase
-	: p::seq<
+	:
 		p::sor<
 			AddEqOp,
 			SubEqOp,
@@ -161,9 +161,7 @@ struct InfixOperatorBase
 			DotOp,
 
 			Optionals...
-		>,
-		p::not_at<opt_ws, InfixOperatorBase<Optionals...> >
-	>
+		>
 {
 };
 
@@ -180,54 +178,6 @@ struct PostfixOperator
 		PostdecrementOp
 	>
 {};
-
-// //////////////////////////////////////////////
-// struct TwoArgOper
-// 	: p::sor<
-// 		p::string< '+' >,
-// 		p::string< '-' >,
-// 		p::string< '*' >,
-// 		p::string< '/' >,
-// 		p::string< '%' >,
-// 		p::string< '=','=' >,
-// 		p::string< '!','=' >,
-// 		p::string< '>','>' >,
-// 		p::string< '<','<' >,
-// 		p::string< '>' >,
-// 		p::string< '<' >,
-// 		p::string< '>','=' >,
-// 		p::string< '<','=' >,
-// 		p::string< '&' >,
-// 		p::string< '|' >,
-// 		p::string< '^' >
-// 	>
-// {
-// };
-
-// struct ModOper2S
-// 	: p::sor<
-// 		p::string< '+','=' >,
-// 		p::string< '-','=' >,
-// 		p::string< '*','=' >,
-// 		p::string< '/','=' >,
-// 		p::string< '%','=' >,
-// 		p::string< '>','>','=' >,
-// 		p::string< '<','<','=' >,
-// 		p::string< '&','=' >,
-// 		p::string< '|','=' >,
-// 		p::string< '^','=' >
-// 	>
-// {
-// };
-
-// struct ModOper1S
-// 	: p::sor<
-// 		p::string< '+','+' >,
-// 		p::string< '-','-' >
-// 	>
-// {
-// };
-
 
 
 }

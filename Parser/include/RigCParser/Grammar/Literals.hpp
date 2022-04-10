@@ -15,7 +15,7 @@ struct Digits
 };
 
 struct IntegerLiteral
-	: Digits
+	: p::seq<p::opt<p::one<'-'>>, Digits>
 {
 };
 
