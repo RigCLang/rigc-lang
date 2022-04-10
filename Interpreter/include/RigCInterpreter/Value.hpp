@@ -23,7 +23,8 @@ struct ValueBase
 	}
 
 	std::string typeName() const {
-		return type->decay()->name();
+		auto decayed = type->decay();
+		return (decayed ? decayed.get() : type.get())->name();
 	}
 
 	std::string fullTypeName() const
