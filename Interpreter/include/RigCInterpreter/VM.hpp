@@ -3,21 +3,34 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/Value.hpp>
+#include <RigCInterpreter/Module.hpp>
 #include <RigCInterpreter/Scope.hpp>
 #include <RigCInterpreter/Stack.hpp>
 
 #include <RigCInterpreter/Functions.hpp>
 
+
 namespace rigc::vm
 {
 class ClassType;
 
+struct EntryPoint
+{
+	constexpr static auto DefaultFunctionName = std::string_view("main");
+
+	/// Module that contains the entry point.
+	Module* module_ = nullptr;
+
+	/// Name of the function that is executed first when the script is run.
+	std::string functionName = std::string(DefaultFunctionName);
+};
+
 struct Instance
 {
 	constexpr static auto StackSize			= std::size_t(2 * 1024 * 1024); // 2MB
-	constexpr static auto DefaultEntryPoint	= std::string_view("main");
 
-	int run(rigc::ParserNode const& root_);
+
+	int run(std::string_view moduleName_);
 
 	OptValue executeFunction(Function const& func);
 	OptValue executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0);
@@ -82,6 +95,16 @@ struct Instance
 		return this->allocateOnStack<T>( type->shared_from_this(), value_ );
 	}
 
+	Module* parseModule(std::string_view name_);
+
+	void evaluateModule(Module& module_);
+	fs::path findModulePath(std::string_view name_) const;
+
+	std::set<fs::path>						loadedModules;
+	std::vector< std::shared_ptr<Module> >	modules;
+
+	EntryPoint			entryPoint;
+
 	/// Fixed-size memory pool used by emulated program to allocate
 	/// temporary values.
 	Stack				stack;
@@ -101,8 +124,7 @@ struct Instance
 	/// Whether currently executed function has triggered a return statement.
 	bool				returnTriggered	= false;
 
-	/// Name of the function that is executed first when the script is run.
-	std::string			entryPoint = std::string(DefaultEntryPoint);
+
 
 	/// Maps memory address to a related scope.
 	/// Address might come from a parsed code (ParserNode)

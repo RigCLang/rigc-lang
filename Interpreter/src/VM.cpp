@@ -31,9 +31,61 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 #undef DEFINE_BUILTIN_CONVERT_OP
 
 //////////////////////////////////////////
-int Instance::run(rigc::ParserNode const& root_)
+fs::path Instance::findModulePath(std::string_view name_) const
 {
-	root = &root_;
+	fs::path path = std::string(name_);
+
+	if (!path.has_extension())
+	{
+		path += ".rigc";
+		if (!fs::exists(path))
+		{
+			path = std::string(name_) + ".rigcz";
+			if (!fs::exists(path))
+				return fs::path{};
+		}
+	}
+
+	return fs::absolute(path);
+}
+
+//////////////////////////////////////////
+Module* Instance::parseModule(std::string_view name_)
+{
+	auto path = this->findModulePath(name_);
+
+	loadedModules.insert(path);
+
+	auto mod		= std::make_unique<Module>(*this);
+	mod->fileInput	= std::make_unique<pegtl::file_input<>>(path);
+	mod->root		= rigc::parse( *mod->fileInput );
+
+	if (!mod->root)
+		return nullptr;
+
+	mod->absolutePath = path;
+
+	modules.emplace_back(std::move(mod));
+	return modules.back().get();
+}
+
+//////////////////////////////////////////
+void Instance::evaluateModule(Module& module_)
+{
+	for (auto const& stmt : module_.root->children)
+	{
+		this->evaluate(*stmt);
+	}
+}
+
+//////////////////////////////////////////
+int Instance::run(std::string_view moduleName_)
+{
+	entryPoint.module_ = this->parseModule(moduleName_);
+	if (!entryPoint.module_)
+	{
+		throw std::runtime_error(fmt::format("Failed to run module \"{}\"", moduleName_));
+	}
 
 	stack.container.resize(StackSize);
 	scopes[nullptr] = makeUniverseScope(*this);
@@ -68,18 +120,15 @@ int Instance::run(rigc::ParserNode const& root_)
 
 	#undef ADD_CONVERSION
 
-	for (auto const& stmt : root_.children)
-	{
-		this->evaluate(*stmt);
-	}
+	this->evaluateModule(*entryPoint.module_);
 
-	auto mainFuncOv = this->universalScope().findFunction(entryPoint);
+	auto mainFuncOv = this->universalScope().findFunction(entryPoint.functionName);
 
 	if (!mainFuncOv)
-		throw std::runtime_error(fmt::format("Cannot execute script. Function \"{}\" not found.", entryPoint));
+		throw std::runtime_error(fmt::format("Cannot execute script. Function \"{}\" not found.", entryPoint.functionName));
 
 	if (mainFuncOv->size() > 1)
-		throw std::runtime_error(fmt::format("Entry point function \"{}\" cannot be overloaded.", entryPoint));
+		throw std::runtime_error(fmt::format("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName));
 
 	this->executeFunction(*(*mainFuncOv)[0]);
 
@@ -210,7 +259,7 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 		return val;
 	}
 
-	std::cout << "No executors for \"" << stmt_.type << "\": " << stmt_.string_view() << std::endl;
+	fmt::print("No executors for \"{}\": {}\n", stmt_.type, stmt_.string_view());
 	return {};
 }
 

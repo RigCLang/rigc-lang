@@ -8,6 +8,7 @@
 #include <memory>
 #include <algorithm>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <optional>
 #include <variant>
@@ -19,11 +20,13 @@
 #include <cstring>
 #include <functional>
 #include <cassert>
+#include <filesystem>
 
 #include <fmt/format.h>
 #include <fmt/args.h>
 
 namespace rg = std::ranges;
+namespace fs = std::filesystem;
 
 template <typename T>
 using Opt = std::optional<T>;

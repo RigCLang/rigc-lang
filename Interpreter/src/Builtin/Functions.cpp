@@ -22,7 +22,6 @@ OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
 	auto fmtView = std::string_view(chars, format.getType()->size());
 
 	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
-	// fmt::print("[Line: {}] ", vm_.lineAt(args));
 	for (size_t c = 1; c < argCount_; ++c)
 	{
 		Value val = args_[c];

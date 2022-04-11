@@ -2,8 +2,6 @@
 
 #include <RigCInterpreter/VM.hpp>
 
-int runVM(rigc::ParserNode const & root_);
-
 int main(int argc, char* argv[])
 {
 	namespace pt = pegtl::parse_tree;
@@ -13,22 +11,12 @@ int main(int argc, char* argv[])
 
 	// try
 	// {
-		pegtl::file_input in(argv[1]);
 
-		auto root = rigc::parse( in );
-		if (root) {
-			return runVM(*root);
-		}
+		rigc::vm::Instance instance;
+		return instance.run(argv[1]);
 	// }
 	// catch (const std::exception &e)
 	// {
 		// std::cerr << e.what() << std::endl;
 	// }
-}
-
-
-int runVM(rigc::ParserNode const & root_)
-{
-	rigc::vm::Instance instance;
-	return instance.run(root_);
 }
