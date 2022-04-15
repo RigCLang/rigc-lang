@@ -34,8 +34,8 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 	MAKE_BUILTIN_TYPE(float,	Float32);
 	MAKE_BUILTIN_TYPE(double,	Float64);
 
-	scope->types.add(std::make_unique<FuncType>());
-	scope->types.add(std::make_unique<MethodType>());
+	scope->addType(std::make_unique<FuncType>());
+	scope->addType(std::make_unique<MethodType>());
 
 	// "print" builtin function
 	{

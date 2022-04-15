@@ -435,7 +435,7 @@ OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 
 	auto type = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), s.size());
 
-	vm_.universalScope().types.add(type);
+	vm_.universalScope().addType(type);
 
 	return vm_.allocateOnStack( std::move(type), s.data(), s.size() );
 }
@@ -463,7 +463,7 @@ OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
 	auto type = std::make_shared<ClassType>();
 	type->parse(expr_);
-	vm_.currentScope->types.add(type);
+	vm_.currentScope->addType(type);
 
 	auto prevClass = vm_.currentClass;
 	vm_.currentClass = type.get();

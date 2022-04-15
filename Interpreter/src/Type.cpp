@@ -73,7 +73,7 @@ template <typename T>
 IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_)
 {
 	auto t = std::make_shared<CoreType>(CoreType::fromCppType<T>());
-	universeScope_.types.add(t);
+	universeScope_.addType(t);
 	Function::Params infixParams;
 	infixParams[0] = { "lhs", t };
 	infixParams[1] = { "rhs", t };
