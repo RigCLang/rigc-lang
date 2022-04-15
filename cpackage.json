@@ -32,18 +32,18 @@
 			"dependencies": [ "self:Parser" ]
 		},
 		{
-			"name": "Interpreter",
+			"name": "VM",
 			"language": "C++20",
 			"type": "app",
-			"includeFolders": "Interpreter/include",
+			"includeFolders": "VM/include",
 			"files": [
-				"Interpreter/include/RigCInterpreter/**.hpp",
-				"Interpreter/src/**.cpp"
+				"VM/include/RigCVM/**.hpp",
+				"VM/src/**.cpp"
 			],
 			"pch": {
-				"header": "Interpreter/include/RigCInterpreter/RigCInterpreterPCH.hpp",
-				"source": "Interpreter/src/RigCInterpreterPCH.cpp",
-				"definition": "RIGCINTERPRETER_PCH"
+				"header": "VM/include/RigCVM/RigCVMPCH.hpp",
+				"source": "VM/src/RigCVMPCH.cpp",
+				"definition": "RIGCVM_PCH"
 			},
 			"dependencies": [ "self:Parser", "fmt@8.0.1" ]
 		}
