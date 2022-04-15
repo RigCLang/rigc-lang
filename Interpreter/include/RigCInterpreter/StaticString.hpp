@@ -1,5 +1,7 @@
 #pragma once
 
+#include RIGCINTERPRETER_PCH
+
 namespace rigc::vm
 {
 

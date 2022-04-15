@@ -5,7 +5,7 @@
 #include <RigCInterpreter/Value.hpp>
 #include <RigCInterpreter/Type.hpp>
 #include <RigCInterpreter/Functions.hpp>
-#include <RigCInterpreter/InlineString.hpp>
+#include <RigCInterpreter/StaticString.hpp>
 #include <RigCInterpreter/StackFrame.hpp>
 #include <RigCInterpreter/TypeSystem/TypeRegistry.hpp>
 
