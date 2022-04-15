@@ -165,9 +165,7 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 
 			auto memberName = rhsExpr->string_view();
 
-			auto classType = dynamic_cast<ClassType*>(lhs.type.get());
-
-			if (classType)
+			if (auto classType = lhs.type->as<ClassType>())
 			{
 				auto dmIt = rg::find(classType->dataMembers, memberName, &DataMember::name);
 				if (dmIt != classType->dataMembers.end())

@@ -131,7 +131,7 @@ OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
 		throw std::runtime_error("Unrecognized identifier with name \"" + expr_.string() + "\"");
 	}
 
-	if (auto ref = dynamic_cast<RefType*>(opt->type.get()))
+	if (auto ref = opt->type->as<RefType>())
 		return opt;
 
 	return vm_.allocateReference(opt.value());
@@ -149,7 +149,7 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 	Value value;
 	if (valueExpr) {
 		value = vm_.evaluate(*valueExpr).value();
-		if (auto ref = dynamic_cast<RefType*>(value.type.get()))
+		if (auto ref = value.type->as<RefType>())
 		{
 			value = value.removeRef();
 		}

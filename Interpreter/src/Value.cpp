@@ -28,7 +28,7 @@ Value Value::member(size_t offset_, DeclType type_) const
 /////////////////////////////////////
 Value Value::safeRemoveRef() const
 {
-	if (auto ref = dynamic_cast<RefType*>(type.get()))
+	if (auto ref = type->as<RefType>())
 	{
 		Value val;
 		val.type = ref->inner;
@@ -41,7 +41,7 @@ Value Value::safeRemoveRef() const
 /////////////////////////////////////
 Value Value::safeRemovePtr() const
 {
-	if (auto ptr = dynamic_cast<AddrType*>(type.get()))
+	if (auto ptr = type->as<AddrType>())
 	{
 		Value val;
 		val.type = ptr->inner;
@@ -54,7 +54,7 @@ Value Value::safeRemovePtr() const
 /////////////////////////////////////
 Value Value::removeRef() const
 {
-	if (auto ref = dynamic_cast<RefType*>(type.get()))
+	if (auto ref = type->as<RefType>())
 	{
 		Value val;
 		val.type = ref->inner;
@@ -67,7 +67,7 @@ Value Value::removeRef() const
 /////////////////////////////////////
 Value Value::removePtr() const
 {
-	if (auto ptr = dynamic_cast<AddrType*>(type.get()))
+	if (auto ptr = type->as<AddrType>())
 	{
 		Value val;
 		val.type = ptr->inner;

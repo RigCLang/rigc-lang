@@ -24,9 +24,8 @@ OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
 	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
 	for (size_t c = 1; c < argCount_; ++c)
 	{
-		Value val = args_[c];
-		if (auto ref = dynamic_cast<RefType*>(val.type.get()))
-			val = val.removeRef();
+		Value val = args_[c].safeRemoveRef();
+
 		DeclType const& type = val.getType();
 
 		auto typeName = val.typeName();
