@@ -3,6 +3,7 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/Value.hpp>
+#include <RigCInterpreter/ExtendedVariant.hpp>
 
 namespace rigc::vm
 {
@@ -14,29 +15,7 @@ class ExpressionExecutor
 public:
 	using PendingAction		= rigc::ParserNode*;
 	using ProcessedAction	= OptValue;
-
-	using ActionVariant		= std::variant<PendingAction, ProcessedAction>;
-
-	struct Action
-		: ActionVariant
-	{
-		using ActionVariant::ActionVariant;
-
-		template <typename T>
-		bool is() const {
-			return std::holds_alternative<T>(*this);
-		}
-
-		template <typename T>
-		T& as() {
-			return std::get<T>(*this);
-		}
-
-		template <typename T>
-		T const& as() const {
-			return std::get<T>(*this);
-		}
-	};
+	using Action			= ExtendedVariant<PendingAction, ProcessedAction>;
 
 	ExpressionExecutor(Instance& vm_, rigc::ParserNode const& ctx_)
 		: vm(vm_), ctx(ctx_)
