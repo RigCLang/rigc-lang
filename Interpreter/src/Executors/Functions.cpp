@@ -1,10 +1,8 @@
 #include RIGCINTERPRETER_PCH
 
 #include <RigCInterpreter/Executors/All.hpp>
-#include <RigCInterpreter/Executors/ExpressionExecutor.hpp>
 #include <RigCInterpreter/VM.hpp>
 
-#include <RigCInterpreter/TypeSystem/ArrayType.hpp>
 #include <RigCInterpreter/TypeSystem/RefType.hpp>
 #include <RigCInterpreter/TypeSystem/ClassType.hpp>
 
