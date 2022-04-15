@@ -95,7 +95,7 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 		{
 			auto stackFramePos = vm_.stack.size;
 			OptValue val = vm_.evaluate(*stmt);
-			if (stmt->type == "struct rigc::Expression")
+			if (stmt->is_type<rigc::Expression>())
 				vm_.stack.size = stackFramePos;
 
 			if (vm_.returnTriggered)
