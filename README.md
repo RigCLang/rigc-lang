@@ -1,6 +1,6 @@
 # RigC programming language
 
-**Note: this language is in a <u>very</u> early stage of the development and some features might be missing. This README contains overview of our goals.**
+**⚠ Note: this language is in a <u>very</u> early stage of the development and some features will be missing. This README contains overview of our goals.**
 
 A prototype of **RigC** programming language - the better and simpler C++ language.
 
