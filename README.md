@@ -1,127 +1,78 @@
 # RigC programming language
 
+**Note: this language is in a <u>very</u> early stage of the development and some features might be missing. This README contains overview of our goals.**
+
 A prototype of **RigC** programming language - the better and simpler C++ language.
 
-<small>I know that this probably will never happen. Anyway...</small>
+## 👋 Hello, World!
 
+![Hello World Demo](res/example-imgs/hello-world.png)
 
-## Examples
+## 🚀 Getting started
 
-### 👋 Hello, World!
+This language is pre-alpha version. You can download the source code and compile it using [pacc](https://github.com/PoetaKodu/pacc) package manager with:
 
-```rust
-import std.io print;
-
-func main {
-	print("Hello, world!\n");
-}
+```bash
+pacc build
 ```
 
-### Variables
+See pacc documentation [here](https://github.com/PoetaKodu/pacc).
 
-```rust
-func main {
-	var x = 1; // deduced Int32
-	var y = 2.f; // deduced Float32
+## Running RigC code
 
-	var z = func(x, y);
-	var w = MyClass(); // w is instance of MyClass
-}
+Right now the code can only be run using our virtual machine using:
+
+```bash
+vm <script file>
 ```
 
-### Control flow
+The `vm` command will be located in the `bin/<platform>` directory after you build it.
 
-#### if and else
+## ⚽ Goals
 
-```rust
-func main {
-	var x = 1;
-	if (x < 10)
-		print("x < 10\n");
-	else
-		print("x >= 10\n");
+1. To create an easier alternative to C++ offering similar features.
+2. Abandon C compatibility.
+3. Use [module-based](#modules) code splitting from the beginning.
+4. Use [concept-based](#metaprogramming) metaprogramming from the beginning.
+5. Simplify the syntax
+6. Use unified tooling for all platforms.
 
-	if (x < 10 or x > 20)
-		print("x < 10 or x > 20\n");
-}
-```
+This goals feel unreachable but sky is the limit so lets see what we can achieve.
 
-#### Loops
+### Platforms
 
-```rust
-func main {
-	var i = 0;
-	while (i < 10) {
-		print("i = {}\n", i);
-		i = i + 1;
-	}
-}
-```
+Right now RigC can only be run by our virtual machine (`VM/` folder). Plans for future
+include:
+
+- writing JIT compiler for our VM
+- using LLVM IR as an intermediate language to compile to a native code
+
+## 🧱 Resources
+
+You might want to install [Visual Studio Code extension](https://github.com/PoetaKodu/vscode-rigc).
+
+## ⭐ Features overview
+
+### `if` and `else`
+
+![Hello World Demo](res/example-imgs/flow-control.png)
+
+### `while` loop
+
+![Hello World Demo](res/example-imgs/while-loop.png)
+
 
 ### Classes
 
-```rust
-class Vector2
-{
-	x: Float32;
-	y: Float32;
+![Hello World Demo](res/example-imgs/classes-and-funcs.png)
 
-	construct {
-		x = 0.f;
-		y = 0.f;
-	}
+### Modules
 
-	construct(x: Float32, y: Float32) {
-		self.x = x;
-		self.y = y;
-	}
+![Hello World Demo](res/example-imgs/classes-modules.png)
 
-	length {
-		ret sqrt(x*x + y*y);
-	}
+### Metaprogramming
 
-	normalized {
-		var copy = self;
-		var len = copy.length();
-		copy.x /= len;
-		copy.y /= len;
-		ret copy;
-	}
+![Hello World Demo](res/example-imgs/metaprogramming.png)
 
-	plus(x: Float32, y: Float32) {
-		ret Vector2(self.x + x, self.y + y);
-	}
-}
-
-func main {
-	var vec = Vector2(1.f, 2.f);
-}
-```
-
-#### Extension methods
-
-First parameter must be:
-- of name `self` (keyword)
-- a reference type
-
-```rust
-template <T: IndexedRange>
-func indexOf(self: Ref<T>, elem: Char)
-{
-	var i = 0;
-	while (i < self.size())
-	{
-		if (self[i] == elem)
-			ret i;
-		i += 1;
-	}
-	ret -1;
-}
-
-// usage:
-func main {
-	print("Found 'b' at index {} in text \"abc\"\n", "abc".indexOf('b'));
-}
-```
 
 // TBD
