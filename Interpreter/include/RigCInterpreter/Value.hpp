@@ -26,11 +26,6 @@ struct ValueBase
 		auto decayed = type->decay();
 		return (decayed ? decayed.get() : type.get())->name();
 	}
-
-	std::string fullTypeName() const
-	{
-		return type->name();
-	}
 };
 
 struct Value

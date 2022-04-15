@@ -103,7 +103,7 @@ OptValue typeOf(Instance &vm_, rigc::ParserNode const& args)
 		OptValue optVal = vm_.evaluate(*c);
 		if (optVal.has_value())
 		{
-			auto name = optVal.value().fullTypeName();
+			auto name = optVal->type->name();
 			auto t = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
 
 			return vm_.allocateOnStack( t, name.data(), name.size() );
@@ -188,7 +188,7 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 		{
 			auto converted = vm_.tryConvert(value, type);
 			if (!converted)
-				throw std::runtime_error(fmt::format("Cannot convert {} to {}", value.typeName(), type->name()));
+				throw std::runtime_error(fmt::format("Cannot convert {} to {}", value.type->name(), type->name()));
 
 			value = converted.value();
 		}

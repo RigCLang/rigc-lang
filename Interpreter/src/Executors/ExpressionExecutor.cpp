@@ -216,7 +216,7 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 
 		throw std::runtime_error(
 				"No matching operator \"" + std::string(op_) + "\" for argument types: ( " +
-				lhs.fullTypeName() + ", " + rhs.fullTypeName() + " )"
+				lhs.type->name() + ", " + rhs.type->name() + " )"
 			);
 	}
 }
