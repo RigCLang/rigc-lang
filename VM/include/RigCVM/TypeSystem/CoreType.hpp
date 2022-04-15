@@ -7,18 +7,42 @@
 namespace rigc::vm
 {
 
-struct CoreType
-	: IType
+class CoreType
+	: public IType
 {
+public:
 	enum Kind : uint8_t
 	{
-		Int8,		Int16,		Int32,		Int64,
-		Uint8,		Uint16,		Uint32,		Uint64,
-		Float32,
-		Float64,
+		Int16,		Int32,		Int64,
+		Uint16,		Uint32,		Uint64,
+		Float32,	Float64,
 		Char,		Char16,		Char32,
 		Bool,
+		MAX
 	};
+
+private:
+
+	static constexpr auto Num = static_cast<size_t>(Kind::MAX);
+
+	static constexpr auto Sizes = std::to_array({
+			sizeof(int16_t),	sizeof(int32_t),	sizeof(int64_t),
+			sizeof(uint16_t),	sizeof(uint32_t),	sizeof(uint64_t),
+			sizeof(float),		sizeof(double),
+			sizeof(char),		sizeof(char16_t),	sizeof(char32_t),
+			sizeof(bool)
+		});
+
+	static constexpr auto Names = std::to_array<std::string_view>({
+			"Int16",	"Int32",	"Int64",
+			"Uint16",	"Uint32",	"Uint64",
+			"Float32",	"Float64",
+			"Char",		"Char16",	"Char32",
+			"Bool"
+		});
+public:
+
+
 
 	template <typename T>
 	static Kind fromCppType()
@@ -26,11 +50,9 @@ struct CoreType
 		#define HANDLE_TYPE(CppName, EnumValue) if constexpr (std::is_same_v<T, CppName>) return EnumValue;
 		#define ELSE_HANDLE_TYPE(CppName, EnumValue) else if constexpr (std::is_same_v<T, CppName>) return EnumValue;
 
-		HANDLE_TYPE(int8_t, 		Int8)
-		ELSE_HANDLE_TYPE(int16_t,	Int16)
+		HANDLE_TYPE		(int16_t,	Int16)
 		ELSE_HANDLE_TYPE(int32_t,	Int32)
 		ELSE_HANDLE_TYPE(int64_t,	Int64)
-		ELSE_HANDLE_TYPE(uint8_t,	Uint8)
 		ELSE_HANDLE_TYPE(uint16_t,	Uint16)
 		ELSE_HANDLE_TYPE(uint32_t,	Uint32)
 		ELSE_HANDLE_TYPE(uint64_t,	Uint64)
@@ -48,44 +70,12 @@ struct CoreType
 
 	std::string_view toString() const
 	{
-		switch (kind)
-		{
-		case Int8:		return "Int8";
-		case Int16:		return "Int16";
-		case Int32:		return "Int32";
-		case Int64:		return "Int64";
-		case Uint8:		return "Uint8";
-		case Uint16:	return "Uint16";
-		case Uint32:	return "Uint32";
-		case Uint64:	return "Uint64";
-		case Float32:	return "Float32";
-		case Float64:	return "Float64";
-		case Char:		return "Char";
-		case Char16:	return "Char16";
-		case Char32:	return "Char32";
-		case Bool:		return "Bool";
-		default:		return "<unknown>";
-		}
+		return Names[static_cast<int>(kind)];
 	}
 
 	std::size_t size() const override
 	{
-		switch (kind)
-		{
-		case Int16: 	return sizeof(int16_t);
-		case Int32: 	return sizeof(int32_t);
-		case Int64: 	return sizeof(int64_t);
-		case Uint16: 	return sizeof(uint16_t);
-		case Uint32: 	return sizeof(uint32_t);
-		case Uint64: 	return sizeof(uint64_t);
-		case Float32: 	return sizeof(float);
-		case Float64: 	return sizeof(double);
-		case Char: 		return sizeof(char);
-		case Char16: 	return sizeof(char16_t);
-		case Char32: 	return sizeof(char32_t);
-		case Bool: 		return sizeof(bool);
-		default:		return 0;
-		}
+		return Sizes[static_cast<int>(kind)];
 	}
 
 	std::string name() const override
