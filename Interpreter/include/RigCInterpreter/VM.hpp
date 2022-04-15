@@ -39,6 +39,8 @@ struct Instance
 	/// <summary>Returns the "self" reference in method context.</summary>
 	Value getSelf();
 
+	DeclType evaluateType(rigc::ParserNode const& typeNode_);
+
 	OptValue findVariableByName(std::string_view name_);
 	IType* findType(std::string_view name_);
 	FunctionOverloads const* findFunction(std::string_view name_);

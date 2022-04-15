@@ -337,6 +337,49 @@ size_t Instance::lineAt(rigc::ParserNode const& node_) const
 }
 
 //////////////////////////////////////////
+DeclType Instance::evaluateType(rigc::ParserNode const& typeNode_)
+{
+	DeclType evaluatedType;
+	auto typeName		= findElem<rigc::Name>(typeNode_)->string_view();
+	auto templateParams = findElem<rigc::TemplateParams>(typeNode_);
+
+	if (templateParams)
+	{
+		if (typeName == "Ref")
+		{
+			auto inner = findElem<rigc::TemplateParam>(*templateParams);
+			return wrap<RefType>(
+					this->universalScope(),
+					this->evaluateType(*findElem<rigc::Type>(*inner))
+				);
+		}
+		else if (typeName == "Addr")
+		{
+			auto inner = findElem<rigc::TemplateParam>(*templateParams);
+			return wrap<AddrType>(
+					this->universalScope(),
+					this->evaluateType(*findElem<rigc::Type>(*inner))
+				);
+		}
+		else if (typeName == "StaticArray")
+		{
+			// ensure 2 template params
+			if (templateParams->children.size() != 2)
+				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, Int32 N>");
+
+			auto inner	= this->evaluateType(*findElem<rigc::Type>(*templateParams->children[0]));
+			// TEMP:
+			auto size	= std::stoi(templateParams->children[1]->string());
+
+			return wrap<ArrayType>(this->universalScope(), inner, size);
+		}
+	}
+
+	return this->findType(typeName)->shared_from_this();
+}
+
+
+//////////////////////////////////////////
 IType* Instance::findType(std::string_view name_)
 {
 	auto scope = currentScope;

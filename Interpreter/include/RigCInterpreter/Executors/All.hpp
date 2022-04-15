@@ -14,6 +14,14 @@ using ExecutorFunction	= OptValue(Instance&, rigc::ParserNode const&);
 
 extern std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors;
 
+struct StackFramePusher
+{
+	StackFramePusher(Instance& vm_, ParserNode const& stmt_);
+	~StackFramePusher();
+
+	Instance& vm;
+};
+
 #define DECLARE_EXECUTOR(Name) \
 	OptValue Name(Instance &vm_, rigc::ParserNode const& stmt_)
 

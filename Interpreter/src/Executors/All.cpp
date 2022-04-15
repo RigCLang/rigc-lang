@@ -41,46 +41,20 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 
 #undef MAKE_EXECUTOR
 
-
-struct StackFramePusher
+////////////////////////////////////////
+StackFramePusher::StackFramePusher(Instance& vm_, ParserNode const& stmt_)
+	: vm(vm_)
 {
-	StackFramePusher(Instance& vm_, ParserNode const& stmt_)
-		: vm(vm_)
-	{
-		vm.pushStackFrameOf(&stmt_);
-	}
-
-	~StackFramePusher()
-	{
-		if (!vm.returnTriggered)
-			vm.popStackFrame();
-	}
-
-	Instance& vm;
-};
+	vm.pushStackFrameOf(&stmt_);
+}
 
 ////////////////////////////////////////
-OptValue executeImportStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+StackFramePusher::~StackFramePusher()
 {
-	auto moduleName = findElem<rigc::PackageImportFullName>(stmt_)->string_view();
-	moduleName = moduleName.substr(1, moduleName.size() - 2);
-
-	// fmt::print("Importing module {}...\n\n", moduleName);
-
-	auto path = vm_.findModulePath(moduleName);
-	if (vm_.loadedModules.contains(path))
-	{
-		// fmt::print("Module {} already loaded.\n\n", moduleName);
-		return {};
-	}
-
-	if (auto mod = vm_.parseModule(moduleName))
-	{
-		vm_.evaluateModule(*mod);
-		return {};
-	}
-	throw std::runtime_error(fmt::format("Module {} not found", moduleName));
+	if (!vm.returnTriggered)
+		vm.popStackFrame();
 }
+
 
 ////////////////////////////////////////
 OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
@@ -116,82 +90,6 @@ OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 		auto ret = vm_.evaluate(*childStmt);
 		if (vm_.returnTriggered)
 			return ret;
-	}
-
-	return {};
-}
-
-////////////////////////////////////////
-OptValue executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_)
-{
-	auto expr = findElem<rigc::Expression>(stmt_);
-
-	OptValue retVal;
-	if (expr)
-		retVal = vm_.evaluate(*expr);
-
-	vm_.returnTriggered = true;
-	return retVal;
-}
-
-////////////////////////////////////////
-OptValue executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_)
-{
-	auto& cond = *findElem<rigc::Condition>(stmt_, false);
-	auto& expr = *findElem<rigc::Expression>(cond, false);
-
-	auto body = findElem<rigc::CodeBlock>(stmt_, false);
-	if (!body)
-		body = findElem<rigc::SingleBlockStatement>(stmt_, false);
-
-	auto result = vm_.evaluate(expr);
-
-	if (result.has_value() && result.value().view<bool>() == true)
-	{
-		auto ret = vm_.evaluate(*body);
-		if (vm_.returnTriggered)
-			return ret;
-	}
-	else
-	{
-		if (auto elseStmt = findElem<rigc::ElseStatement>(stmt_, false))
-		{
-			if (auto ifStmt = findElem<rigc::IfStatement>(*elseStmt, false))
-				return vm_.evaluate(*ifStmt);
-			else if (auto body = findElem<rigc::CodeBlock>(*elseStmt, false))
-				return vm_.evaluate(*body);
-			else
-				return vm_.evaluate(*findElem<rigc::SingleBlockStatement>(*elseStmt, false));
-		}
-	}
-
-	return {};
-}
-
-////////////////////////////////////////
-OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
-{
-	auto& cond = *findElem<rigc::Condition>(stmt_, false);
-	auto& expr = *findElem<rigc::Expression>(cond, false);
-
-	auto body = findElem<rigc::CodeBlock>(stmt_, false);
-	if (!body)
-		body = findElem<rigc::SingleBlockStatement>(stmt_, false);
-
-	while (true)
-	{
-		StackFramePusher scope(vm_, *body);
-
-		auto result = vm_.evaluate(expr);
-
-		if (result.has_value() && result.value().view<bool>())
-		{
-			auto ret = vm_.evaluate(*body);
-			if (vm_.returnTriggered)
-				return ret;
-		}
-		else
-			break;
 	}
 
 	return {};
@@ -310,155 +208,6 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 }
 
 ////////////////////////////////////////
-DeclType evaluateType(Instance& vm_, rigc::ParserNode const& typeNode_)
-{
-	DeclType evaluatedType;
-	auto typeName		= findElem<rigc::Name>(typeNode_)->string_view();
-	auto templateParams = findElem<rigc::TemplateParams>(typeNode_);
-
-	if (templateParams)
-	{
-		if (typeName == "Ref")
-		{
-			auto inner = findElem<rigc::TemplateParam>(*templateParams);
-			return wrap<RefType>(
-					vm_.universalScope(),
-					evaluateType(vm_, *findElem<rigc::Type>(*inner))
-				);
-		}
-		else if (typeName == "Addr")
-		{
-			auto inner = findElem<rigc::TemplateParam>(*templateParams);
-			return wrap<AddrType>(
-					vm_.universalScope(),
-					evaluateType(vm_, *findElem<rigc::Type>(*inner))
-				);
-		}
-		else if (typeName == "StaticArray")
-		{
-			// ensure 2 template params
-			if (templateParams->children.size() != 2)
-				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, Int32 N>");
-
-			auto inner	= evaluateType(vm_, *findElem<rigc::Type>(*templateParams->children[0]));
-			// TEMP:
-			auto size	= std::stoi(templateParams->children[1]->string());
-
-			return wrap<ArrayType>(vm_.universalScope(), inner, size);
-		}
-	}
-
-	return vm_.findType(typeName)->shared_from_this();
-}
-
-////////////////////////////////////////
-void evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_)
-{
-	for (auto const& param : paramsNode_.children)
-	{
-		auto paramName	= findElem<rigc::Name>(*param)->string_view();
-		auto type		= findElem<rigc::Type>(*param);
-
-		params_[numParams_++] = { paramName, evaluateType(vm_, *type) };
-	}
-}
-
-
-////////////////////////////////////////
-OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	auto& scope = *vm_.currentScope;
-
-	auto name = findElem<rigc::Name>(expr_, false)->string_view();
-
-	Function::Params params;
-	size_t numParams = 0;
-
-	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
-	if (paramList)
-		evaluateFunctionParams(vm_, *paramList, params, numParams);
-
-	scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
-
-	return {};
-}
-
-////////////////////////////////////////
-OptValue evaluateIntegerLiteral(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	return vm_.allocateOnStack<int>( "Int32", std::stoi(expr_.string()) );
-}
-
-////////////////////////////////////////
-OptValue evaluateFloat32Literal(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	auto n = expr_.string();
-	return vm_.allocateOnStack<float>( "Float32", std::stof( n.substr(0, n.size() - 1) ) );
-}
-
-////////////////////////////////////////
-OptValue evaluateFloat64Literal(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	return vm_.allocateOnStack<double>( "Float64", std::stod(expr_.string()) );
-}
-
-////////////////////////////////////////
-OptValue evaluateBoolLiteral(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	return vm_.allocateOnStack<bool>( "Bool", expr_.string_view()[0] == 't' ? true : false);
-}
-
-////////////////////////////////////////
-void replaceAll(std::string& s, std::string_view from, std::string_view to)
-{
-	size_t startPos = 0;
-	while((startPos = s.find(from, startPos)) != std::string::npos) {
-		s.replace(startPos, from.length(), to);
-		startPos += to.length();
-	}
-}
-
-////////////////////////////////////////
-OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	auto sv = expr_.string_view();
-
-	std::string s(sv, 1, sv.length() - 2);
-	s.reserve(s.size() * 2);
-	replaceAll(s, "\\n",	"\n");
-	replaceAll(s, "\\t",	"\t");
-	replaceAll(s, "\\r",	"\r");
-	replaceAll(s, "\\a",	"\a");
-	replaceAll(s, "\\v",	"\v");
-	replaceAll(s, "\\\\",	"\\");
-	replaceAll(s, "\\\"",	"\"");
-
-	auto type = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), s.size());
-
-	vm_.universalScope().addType(type);
-
-	return vm_.allocateOnStack( std::move(type), s.data(), s.size() );
-}
-
-////////////////////////////////////////
-OptValue evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	auto sv = expr_.string_view();
-
-	std::string s(sv, 1, sv.length() - 2);
-	replaceAll(s, "\\n",	"\n");
-	replaceAll(s, "\\t",	"\t");
-	replaceAll(s, "\\r",	"\r");
-	replaceAll(s, "\\a",	"\a");
-	replaceAll(s, "\\v",	"\v");
-	replaceAll(s, "\\\\",	"\\");
-	replaceAll(s, "\\\"",	"\"");
-	char c = s[0];
-
-	return vm_.allocateOnStack( vm_.findType("Char")->shared_from_this(), c );
-}
-
-////////////////////////////////////////
 OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
 	auto type = std::make_shared<ClassType>();
@@ -481,30 +230,6 @@ OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 }
 
 
-////////////////////////////////////////
-OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
-{
-	auto& scope = vm_.scopeOf(vm_.currentClass->declaration);
-
-	auto name = findElem<rigc::Name>(expr_, false)->string_view();
-
-	Function::Params params;
-	size_t numParams = 0;
-	params[numParams++] = {
-		"self",
-		wrap<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
-	};
-
-	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
-	if (paramList)
-		evaluateFunctionParams(vm_, *paramList, params, numParams);
-
-	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
-	vm_.currentClass->methods[name].push_back(&method);
-	method.outerType = vm_.currentClass;
-
-	return {};
-}
 
 ////////////////////////////////////////
 OptValue evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_)
@@ -557,32 +282,5 @@ OptValue evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& exp
 
 	return {};
 }
-
-// ////////////////////////////////////////
-// OptValue evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_)
-// {
-// 	std::vector<Value> arr;
-// 	arr.reserve(expr_.children.size());
-
-// 	for (auto const& c : expr_.children)
-// 	{
-// 		arr.push_back( vm_.evaluate(*c).value() );
-// 	}
-
-// 	Value v( std::move(arr) );
-
-// 	// vm_.stack.push( v );
-// 	return v;
-// }
-
-// ////////////////////////////////////////
-// OptValue evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_)
-// {
-// 	Value v( vm_.evaluate(*expr_.children[0]).value() );
-
-// 	// vm_.stack.push( v );
-// 	return v;
-// }
-
 
 }
