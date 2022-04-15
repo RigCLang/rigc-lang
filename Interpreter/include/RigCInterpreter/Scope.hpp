@@ -42,28 +42,64 @@ struct Scope
 
 	Scope* parent = nullptr;
 
+	// Currently unused
 	std::map<IType*, Impls*>									impls;
+	std::map<std::string, IType*, std::less<> >					typeAliases;
+
 	std::vector< std::unique_ptr<Function> >					functionStorage;
 	std::map<std::string, FunctionOverloads, std::less<> >		functions;
 	std::map<std::string, FrameBasedValue, std::less<> >		variables;
-	std::map<std::string, IType*, std::less<> >					typeAliases;
 	TypeRegistry												types;
+
+
+	/// <summary>
+	/// Formats the name of an operator to get an unique name used to search for it.
+	/// </summary>
+	static auto formatOperatorName(std::string_view opName_, Operator::Type type_) -> StaticString<char, 512>;
 
 	void addType(DeclType type_);
 
-	static StaticString<char, 512> formatOperatorName(std::string_view opName_, Operator::Type type_);
+	/// <summary>
+	/// Returns a function converting type `from_` to type `to_`,
+	/// or `nullptr` if no such conversion exist within this scope.
+	/// </summary>
+	auto findConversion(DeclType const& from_, DeclType const& to_) const -> Function const*;
 
-	Function const* findConversion(DeclType const& from_, DeclType const& to_) const;
+	/// <summary>
+	/// Returns all function overloads with name `funcName_`,
+	/// or `nullptr` if no such function exist within this scope.
+	/// </summary>
+	auto findFunction(std::string_view funcName_) const -> FunctionOverloads const*;
 
-	FunctionOverloads const* findFunction(std::string_view funcName_) const;
+	/// <summary>
+	/// Returns type with name `typeName_`,
+	/// or `nullptr` if no such type exist within this scope.
+	/// </summary>
+	auto findType(std::string_view typeName_) const -> IType const*;
 
-	IType const* findType(std::string_view typeName_) const;
+	/// <summary>
+	/// Returns operator overload with name `opName_` and type `type_`,
+	/// or `nullptr` if no such operator exist within this scope.
+	/// </summary>
+	/// <remarks>
+	/// `formatOperatorName` is used within this function to get the correct name of an operator.
+	/// </remarks>
+	auto findOperator(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const*;
 
-	FunctionOverloads const* findOperator(std::string_view opName_, Operator::Type type_) const;
+	/// <summary>
+	/// Registers a type alias within this scope.
+	/// </summary>
+	auto registerType(Instance& vm_, std::string_view name_, IType& type_) -> IType&;
 
-	IType& registerType(Instance& vm_, std::string_view name_, IType& type_);
-	Function& registerFunction(Instance& vm_, std::string_view name_, Function func_);
-	Function& registerOperator(Instance& vm_, std::string_view name_, Operator::Type type_, Function func_);
+	/// <summary>
+	/// Registers a function within this scope.
+	/// </summary>
+	auto registerFunction(Instance& vm_, std::string_view name_, Function func_) -> Function&;
+
+	/// <summary>
+	/// Registers an operator within this scope.
+	/// </summary>
+	auto registerOperator(Instance& vm_, std::string_view name_, Operator::Type type_, Function func_) -> Function&;
 };
 
 std::unique_ptr<Scope> makeUniverseScope(Instance &vm_);
