@@ -28,7 +28,8 @@ OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
 
 		DeclType const& type = val.getType();
 
-		auto typeName = val.typeName();
+		auto typeName = val.type->name();
+		auto decayedTypeName = val.typeName();
 		if (typeName == "Int32")
 			store.push_back(val.view<int>());
 		else if (typeName == "Float32")
@@ -37,14 +38,14 @@ OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
 			store.push_back(val.view<double>());
 		else if (typeName == "Bool")
 			store.push_back((val.view<bool>() ? "true" : "false"));
-		else if (val.getType()->isArray() && typeName == "Char")
+		else if (val.getType()->isArray() && decayedTypeName == "Char")
 		{
 			auto chars = &val.view<char const>();
 
 			store.push_back(std::string(chars, type->size()));
 		}
-		else if (typeName == "Char")
-			store.push_back(val.view<char>());
+		// else if (typeName == "Char")
+		// 	store.push_back(val.view<char>());
 		else
 			store.push_back(dump(vm_, val));
 	}

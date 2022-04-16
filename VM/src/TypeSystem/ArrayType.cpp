@@ -17,11 +17,10 @@ void ArrayType::postInitialize(Instance& vm_)
 			Function{
 				[](Instance& vm_, Function::Args& args_, size_t argCount_) -> OptValue
 				{
-					Value ptr = args_[0].removeRef();
-					ptr.data = &ptr.data;
-					ptr.type = wrap<AddrType>(vm_.universalScope(), ptr.type->decay());
+					Value firstElem = args_[0].removeRef();
+					firstElem.type = args_[0].type->decay();
 
-					return ptr;
+					return vm_.allocatePointer(firstElem);
 				},
 				{ { "self", wrap<RefType>(vm_.universalScope(), this->shared_from_this()) } },
 				1

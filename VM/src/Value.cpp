@@ -105,6 +105,8 @@ std::string dump(Instance& vm_, Value const& value_)
 
 		if (type.name() == "Int32")
 			return addr + fmt::format("{}", value_.view<int32_t>());
+		if (type.name() == "Char")
+			return addr + fmt::format("{}", value_.view<char>());
 		else if (type.name() == "Float32")
 			return addr + fmt::format("{:.4f}", value_.view<float>());
 		else if (type.name() == "Float64")

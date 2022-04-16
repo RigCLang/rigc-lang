@@ -227,7 +227,13 @@ Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 	auto rhs = *this->evalSingleAction(rhs_);
 
 	if (op_ == "*")
-		return vm.allocateReference(rhs.safeRemoveRef().removePtr());
+	{
+		auto noRef = rhs.safeRemoveRef();
+		auto noPtr = noRef.removePtr();
+		auto ref = vm.allocateReference(noPtr);
+		return ref;
+		// return vm.allocateReference(rhs.safeRemoveRef().removePtr());
+	}
 	else if (op_ == "&")
 		return vm.allocatePointer(rhs);
 	else

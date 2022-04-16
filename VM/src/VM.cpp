@@ -144,7 +144,7 @@ Value Instance::allocateReference(Value const& toValue_)
 //////////////////////////////////////////
 Value Instance::allocatePointer(Value const& toRef_)
 {
-	auto deref = toRef_.removeRef();
+	auto deref = toRef_.safeRemoveRef();
 	return this->allocateOnStack<void const*>(wrap<AddrType>(universalScope(), deref.type), deref.blob());
 }
 
