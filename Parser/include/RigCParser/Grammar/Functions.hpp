@@ -19,6 +19,15 @@ struct ReturnStatement
 	p::if_must< RetKeyword, opt_ws, Expression >
 {};
 
+struct ExplicitReturnTypeArrow
+	: p::string<'-','>'>
+{};
+
+struct ExplicitReturnType
+	:
+	p::if_must< ExplicitReturnTypeArrow, opt_ws, Type >
+{};
+
 struct Parameter
 	: p::seq<
 		Name,
@@ -40,7 +49,12 @@ struct FunctionParams
 };
 
 struct FunctionDefinition
-	: p::seq< p::opt<ExportKeyword, ws>, p::if_must< FuncKeyword, ws, Name, opt_ws, p::opt<FunctionParams>, opt_ws, CodeBlock > >
+	: p::seq<
+			p::opt<ExportKeyword, ws>,
+			p::if_must<
+					FuncKeyword, ws, Name, opt_ws, p::opt<FunctionParams>, p::opt<opt_ws, ExplicitReturnType>, opt_ws, CodeBlock
+				>
+		>
 {
 };
 

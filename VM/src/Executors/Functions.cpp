@@ -29,6 +29,14 @@ OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
 
+	bool returnsRef = false;
+	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
+	{
+		auto type = findElem<rigc::Type>(*explicitReturnType)->string_view();
+		if (type == "Ref")
+			returnsRef = true;
+	}
+
 	Function::Params params;
 	size_t numParams = 0;
 
@@ -36,7 +44,8 @@ OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_
 	if (paramList)
 		evaluateFunctionParams(vm_, *paramList, params, numParams);
 
-	scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+	auto& func = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+	func.returnsRef = returnsRef;
 
 	return {};
 }
@@ -48,6 +57,14 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 	auto& scope = vm_.scopeOf(vm_.currentClass->declaration);
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
+
+	bool returnsRef = false;
+	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
+	{
+		auto type = findElem<rigc::Type>(*explicitReturnType)->string_view();
+		if (type == "Ref")
+			returnsRef = true;
+	}
 
 	Function::Params params;
 	size_t numParams = 0;
@@ -61,6 +78,7 @@ OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 		evaluateFunctionParams(vm_, *paramList, params, numParams);
 
 	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+	method.returnsRef = returnsRef;
 	vm_.currentClass->methods[name].push_back(&method);
 	method.outerType = vm_.currentClass;
 
