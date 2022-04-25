@@ -10,7 +10,7 @@
 				"Parser/src/**.cpp"
 			],
 			"includeFolders": { "public": "Parser/include" },
-			"dependencies": { "public": [ "pegtl" ] },
+			"dependencies": { "public": [ "pegtl@3.2.5" ] },
 			"defines": {
 				"interface": "RIGCPARSER_PCH=<RigCParser/RigCParserPCH.hpp>"
 			},
