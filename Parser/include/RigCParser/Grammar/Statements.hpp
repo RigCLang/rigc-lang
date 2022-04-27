@@ -30,7 +30,8 @@ struct ComplexStatement
 	:
 	p::sor<
 		IfStatement,
-		WhileStatement
+		WhileStatement,
+		ForStatement
 	>
 {
 };

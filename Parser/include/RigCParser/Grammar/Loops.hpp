@@ -1,8 +1,9 @@
 #pragma once
-
 #include RIGCPARSER_PCH
 
 #include <RigCParser/Grammar/Parts.hpp>
+#include <RigCParser/Grammar/Variables.hpp>
+#include <RigCParser/Grammar/Characters.hpp>
 
 namespace rigc
 {
@@ -23,5 +24,34 @@ struct WhileStatement
 {
 };
 
+template<typename... GrammarElems>
+struct WsWrapped 
+	:
+	p::seq<
+		opt_ws,
+		GrammarElems...,
+		opt_ws
+	>
+{
+};
+
+struct ForStatement
+	:
+	p::seq<
+		ForKeyword, 
+		WsWrapped<
+			p::one<'('>,
+				WsWrapped<VariableDefinition>, p::one<';'>,
+				WsWrapped<Expression>, p::one<';'>,
+				WsWrapped<Expression>,
+			p::one<')'>
+		>,
+		p::sor<
+			SingleBlockStatement,
+			CodeBlock
+		>
+	>
+{
+};
 
 }
