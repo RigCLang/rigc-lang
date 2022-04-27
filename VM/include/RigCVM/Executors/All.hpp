@@ -30,6 +30,7 @@ DECLARE_EXECUTOR(executeCodeBlock);
 DECLARE_EXECUTOR(executeSingleStatement);
 DECLARE_EXECUTOR(executeIfStatement);
 DECLARE_EXECUTOR(executeWhileStatement);
+DECLARE_EXECUTOR(executeForStatement);
 DECLARE_EXECUTOR(executeReturnStatement);
 
 DECLARE_EXECUTOR(evaluateFunctionDefinition);

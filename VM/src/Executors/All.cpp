@@ -18,6 +18,7 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
 	MAKE_EXECUTOR(CodeBlock,			executeCodeBlock),
 	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
 	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
+	MAKE_EXECUTOR(ForStatement,		executeForStatement),
 	MAKE_EXECUTOR(ReturnStatement,		executeReturnStatement),
 	MAKE_EXECUTOR(SingleBlockStatement,	executeSingleStatement),
 	MAKE_EXECUTOR(Expression,			evaluateExpression),
@@ -95,22 +96,6 @@ OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 	return {};
 }
 
-////////////////////////////////////////
-OptValue typeOf(Instance &vm_, rigc::ParserNode const& args)
-{
-	for (auto const& c : args.children)
-	{
-		OptValue optVal = vm_.evaluate(*c);
-		if (optVal.has_value())
-		{
-			auto name = optVal->type->name();
-			auto t = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
-
-			return vm_.allocateOnStack( t, name.data(), name.size() );
-		}
-	}
-	return std::nullopt;
-}
 
 ////////////////////////////////////////
 OptValue evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_)
