@@ -251,7 +251,13 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 {
 	lastEvaluatedLine = this->lineAt(stmt_);
 
+// FIXME: a quickfix
+#ifdef _MSVC_VER
 	constexpr std::string_view prefix = "struct rigc::";
+#elif defined(__GNUC__) || defined(__clang__)
+	constexpr std::string_view prefix = "rigc::";
+#endif
+
 	auto it = Executors.find( stmt_.type.substr( prefix.size() ));
 	if (it != Executors.end())
 	{
