@@ -20,12 +20,12 @@ struct InitializerValue
 };
 
 struct Assignment
-	: p::seq< opt_ws, p::one<'='>, opt_ws, AssignmentValue >
+	: p::seq< OptWs, p::one<'='>, OptWs, AssignmentValue >
 {
 };
 
 struct Initialization
-	: p::seq< opt_ws, p::if_must< p::one<'='>, opt_ws, InitializerValue > >
+	: p::seq< OptWs, p::if_must< p::one<'='>, OptWs, InitializerValue > >
 {
 };
 

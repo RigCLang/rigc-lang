@@ -38,7 +38,7 @@ struct BoolLiteral
 };
 
 struct ArrayLiteral
-	: p::seq< p::one<'['>, opt_ws, ListOfArrayElements, opt_ws, p::one<']'> >
+	: p::seq< p::one<'['>, OptWs, ListOfArrayElements, OptWs, p::one<']'> >
 {
 };
 

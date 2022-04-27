@@ -21,7 +21,7 @@ struct GlobalNS
 };
 
 struct Grammar
-	: p::must<GlobalNS, opt_ws, p::eof>
+	: p::must<GlobalNS, OptWs, p::eof>
 {
 };
 

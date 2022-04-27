@@ -8,15 +8,15 @@ namespace rigc
 {
 
 struct ExplicitType
-	: p::seq<p::one<':'>, opt_ws, Type>
+	: p::seq<p::one<':'>, OptWs, Type>
 {};
 
 struct DataMemberDef
-	: p::seq< Name, opt_ws, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, Initialization>, opt_ws, p::one<';'> >
+	: p::seq< Name, OptWs, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, Initialization>, OptWs, p::one<';'> >
 {};
 
 struct MethodDef
-	: p::seq< p::opt< OverrideKeyword, ws >, Name, opt_ws, p::opt<FunctionParams>, p::opt<opt_ws, ExplicitReturnType>, opt_ws, CodeBlock >
+	: p::seq< p::opt< OverrideKeyword, ws >, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
 {};
 
 struct MemberDef
@@ -28,12 +28,12 @@ struct MemberDef
 };
 
 struct ClassCodeBlock
-	: p::seq< p::one<'{'>, opt_ws, p::star<MemberDef, opt_ws>, p::one<'}'> >
+	: p::seq< p::one<'{'>, OptWs, p::star<MemberDef, OptWs>, p::one<'}'> >
 {
 };
 
 struct ClassDefinition
-	: p::seq< p::opt<ExportKeyword, ws>, p::if_must< ClassKeyword, ws, Name, opt_ws, ClassCodeBlock > >
+	: p::seq< p::opt<ExportKeyword, ws>, p::if_must< ClassKeyword, ws, Name, OptWs, ClassCodeBlock > >
 {
 };
 

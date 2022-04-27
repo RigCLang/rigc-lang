@@ -51,12 +51,12 @@ struct SingleBlockStatement
 };
 
 struct Statements
-	: p::star< p::seq<opt_ws, Statement > >
+	: p::star< p::seq<OptWs, Statement > >
 {
 };
 
 struct ImportStatement
-	: p::if_must< ImportKeyword, ws, PackageImportFullName, opt_ws, Semicolon>
+	: p::if_must< ImportKeyword, ws, PackageImportFullName, OptWs, Semicolon>
 {
 };
 

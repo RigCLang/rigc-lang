@@ -39,8 +39,8 @@ struct TemplateParamsInner
 	:
 	p::seq<
 		TemplateParam,
-		p::opt< opt_ws,
-			p::opt<  p::seq< p::one<','>, opt_ws, TemplateParam>  >
+		p::opt< OptWs,
+			p::opt<  p::seq< p::one<','>, OptWs, TemplateParam>  >
 		>
 	>
 {
@@ -48,13 +48,13 @@ struct TemplateParamsInner
 
 struct TemplateParams
 	:
-	p::if_must< p::one<'<'>, opt_ws, TemplateParamsInner, opt_ws, p::one<'>'> >
+	p::if_must< p::one<'<'>, OptWs, TemplateParamsInner, OptWs, p::one<'>'> >
 {
 };
 
 struct Type
 	:
-	p::seq< Name, p::opt<opt_ws, TemplateParams> >
+	p::seq< Name, p::opt<OptWs, TemplateParams> >
 {};
 
 struct DeclType

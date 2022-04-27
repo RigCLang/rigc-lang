@@ -16,8 +16,8 @@ struct ExprInParen;
 struct SingleExpressionFragment
 	:
 	p::seq<
-		p::star<PrefixOperator>,opt_ws,
-		p::sor<AnyLiteral, Name, ExprInParen>,opt_ws,
+		p::star<PrefixOperator>,OptWs,
+		p::sor<AnyLiteral, Name, ExprInParen>,OptWs,
 		p::star<PostfixOperator>
 	>
 {
@@ -29,7 +29,7 @@ struct ExpressionBase
 	p::seq<
 		SingleExpressionFragment,
 		p::star<
-			opt_ws, p::if_must<TInfixOperator, opt_ws, SingleExpressionFragment>
+			OptWs, p::if_must<TInfixOperator, OptWs, SingleExpressionFragment>
 		>
 	>
 {
@@ -44,7 +44,7 @@ struct ExprWithoutComma
 {};
 
 struct ExprInParen
-	: p::if_must<p::one<'('>, opt_ws, Expression, opt_ws, p::one<')'> >
+	: p::if_must<p::one<'('>, OptWs, Expression, OptWs, p::one<')'> >
 {
 };
 
@@ -54,14 +54,14 @@ struct FunctionArg	: ExprWithoutComma {};
 template <typename ElementType>
 struct ListOfExpressions
 	: p::opt<
-		ElementType, opt_ws,
+		ElementType, OptWs,
 		p::star<
 			p::seq<
-				CommaOp, opt_ws,
+				CommaOp, OptWs,
 				ElementType
 			>
 		>,
-		opt_ws,
+		OptWs,
 		p::opt<CommaOp>
 	>
 {

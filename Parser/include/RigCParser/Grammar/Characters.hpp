@@ -28,7 +28,11 @@ struct ws
 
 // using ws = whitespace;
 
-using opt_ws = p::star<ws>;
+using OptWs = p::star<ws>;
+
+template<typename... GrammarElems>
+using WsWrapped = p::seq< OptWs, GrammarElems..., OptWs >;
+
 
 ///////////////////////////////////////////////
 struct char_semicolon

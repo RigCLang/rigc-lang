@@ -10,13 +10,13 @@ namespace rigc
 struct Statements;
 
 struct CodeBlock
-	: p::seq< p::one<'{'>, opt_ws, Statements, opt_ws, p::one<'}'> >
+	: p::seq< p::one<'{'>, OptWs, Statements, OptWs, p::one<'}'> >
 {
 };
 
 struct ReturnStatement
 	:
-	p::if_must< RetKeyword, opt_ws, Expression >
+	p::if_must< RetKeyword, OptWs, Expression >
 {};
 
 struct ExplicitReturnTypeArrow
@@ -25,13 +25,13 @@ struct ExplicitReturnTypeArrow
 
 struct ExplicitReturnType
 	:
-	p::if_must< ExplicitReturnTypeArrow, opt_ws, Type >
+	p::if_must< ExplicitReturnTypeArrow, OptWs, Type >
 {};
 
 struct Parameter
 	: p::seq<
 		Name,
-		p::opt< opt_ws, p::one<':'>, opt_ws, Type >,
+		p::opt< OptWs, p::one<':'>, OptWs, Type >,
 		p::opt< Assignment >
 	>
 {
@@ -39,12 +39,12 @@ struct Parameter
 
 struct Params
 	:
-	p::seq< Parameter, opt_ws, p::star< p::one<','>, opt_ws, Parameter > >
+	p::seq< Parameter, OptWs, p::star< p::one<','>, OptWs, Parameter > >
 {
 };
 
 struct FunctionParams
-	: p::seq< p::one<'('>, opt_ws, p::opt<Params>, opt_ws, p::one<')'> >
+	: p::seq< p::one<'('>, OptWs, p::opt<Params>, OptWs, p::one<')'> >
 {
 };
 
@@ -52,7 +52,7 @@ struct FunctionDefinition
 	: p::seq<
 			p::opt<ExportKeyword, ws>,
 			p::if_must<
-					FuncKeyword, ws, Name, opt_ws, p::opt<FunctionParams>, p::opt<opt_ws, ExplicitReturnType>, opt_ws, CodeBlock
+					FuncKeyword, ws, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock
 				>
 		>
 {
@@ -64,10 +64,10 @@ struct ClosureDefinition
 			Name,
 			FunctionParams
 		>,
-		opt_ws,
+		OptWs,
 		p::if_must<
 			p::string<'=','>'>,
-			opt_ws,
+			OptWs,
 			p::sor<
 				Expression,
 				CodeBlock

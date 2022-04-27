@@ -30,10 +30,10 @@ struct DotOp			: p::string	<'.'> {};
 
 // Subscript operator
 //// Postfix
-struct SubscriptOp		: p::seq	< p::one<'['>, opt_ws, Expression, opt_ws, p::one<']'> > {};
+struct SubscriptOp		: p::seq	< p::one<'['>, OptWs, Expression, OptWs, p::one<']'> > {};
 
 //// Postfix
-struct FunctionCallOp	: p::seq	< p::one<'('>, opt_ws, ListOfFunctionArguments, opt_ws, p::one<')'> > {};
+struct FunctionCallOp	: p::seq	< p::one<'('>, OptWs, ListOfFunctionArguments, OptWs, p::one<')'> > {};
 
 // Math operators
 //// Prefix

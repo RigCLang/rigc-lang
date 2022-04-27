@@ -15,7 +15,7 @@ struct Condition;
 
 struct WhileStatement
 	:
-	p::seq< WhileKeyword, opt_ws, Condition, opt_ws,
+	p::seq< WhileKeyword, OptWs, Condition, OptWs,
 		p::sor<
 			SingleBlockStatement,
 			CodeBlock
@@ -24,16 +24,6 @@ struct WhileStatement
 {
 };
 
-template<typename... GrammarElems>
-struct WsWrapped 
-	:
-	p::seq<
-		opt_ws,
-		GrammarElems...,
-		opt_ws
-	>
-{
-};
 
 struct ForStatement
 	:
