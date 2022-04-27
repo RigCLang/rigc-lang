@@ -33,6 +33,11 @@
 		},
 		{
 			"name": "VM",
+			"filters": {
+        "system:windows":     { "defines": [ "PACC_SYSTEM_WINDOWS" ] },
+        "system:linux":     { "defines": [ "PACC_SYSTEM_LINUX" ] },
+        "system:macosx":     { "defines": [ "PACC_SYSTEM_MACOSX" ] }
+			},
 			"language": "C++20",
 			"type": "app",
 			"includeFolders": "VM/include",
