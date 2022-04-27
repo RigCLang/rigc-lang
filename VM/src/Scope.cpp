@@ -42,6 +42,13 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 
 		scope->registerFunction(vm_, "print", std::move(func));
 	}
+	// "typeof" builtin function
+	{
+		auto func = Function{ &builtin::typeOf, {}, 0 };
+		func.variadic = true;
+
+		scope->registerFunction(vm_, "typeOf", std::move(func));
+	}
 
 	return scope;
 #undef ADD_BUILTIN_TYPE

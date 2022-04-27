@@ -3,6 +3,8 @@
 #include <RigCVM/Builtin/Functions.hpp>
 
 #include <RigCVM/TypeSystem/RefType.hpp>
+#include <RigCVM/TypeSystem/WrapperType.hpp>
+#include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/VM.hpp>
 
 namespace rigc::vm::builtin
@@ -53,6 +55,16 @@ OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
 	fmt::vprint(fmtView, store);
 
 	return {};
+}
+
+////////////////////////////////////////
+
+OptValue typeOf(Instance &vm_, Function::Args& args_, size_t argCount_)
+{
+	auto name = args_[0].type->name();
+	auto t = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
+
+	return vm_.allocateOnStack( t, name.data(), name.size() );
 }
 
 }
