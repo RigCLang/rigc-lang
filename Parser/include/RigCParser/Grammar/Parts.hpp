@@ -5,6 +5,7 @@
 #include <RigCParser/Grammar/Keywords.hpp>
 #include <RigCParser/Grammar/Tokens.hpp>
 #include <RigCParser/Grammar/Expression.hpp>
+#include <RigCParser/Grammar/Characters.hpp>
 
 namespace rigc
 {
