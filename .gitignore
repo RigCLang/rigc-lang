@@ -3,6 +3,7 @@ build/
 bin/
 .xmake/
 .vscode/
+.cache/
 res/installer
 testbed/
 deps/*
