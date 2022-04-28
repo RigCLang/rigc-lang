@@ -38,8 +38,13 @@ int operatorPriority(rigc::ParserNode const& node_)
 	if (op == "<<" || op == ">>") return 8;
 	if (op == "+" || op == "-") return 7;
 	if (op == "*" || op == "/" || op == "%") return 6;
-
-	if (op == "++" || op == "--" || op[0] == '(' || op[0] == '[' || op == ".") return 2;
+	
+	if (op == "++" || op == "--") 
+	{
+		if(node_.is_type<PrefixOperator>()) return 3;
+		else return 2;
+	}
+	if (op[0] == '(' || op[0] == '[' || op == ".") return 2;
 
 
 	return 1;
@@ -221,6 +226,32 @@ OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs
 	}
 }
 
+auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand, Operator::Type operatorType) {
+	FunctionParamTypes types;
+	size_t typeIdx = 0;
+	types[typeIdx++] = operand.getType();
+
+	if (auto overloads = vm.universalScope().findOperator(op, operatorType))
+	{
+		if (auto func = findOverload(*overloads, types, 1))
+		{
+			Function::Args args;
+			args[0] = operand;
+			return vm.executeFunction(*func, args, 1).value();
+		}
+	}
+
+	throw std::runtime_error(
+			fmt::format(
+				"No matching {} operator \"{}\" for argument type: {}.",
+				operatorType == Operator::Type::Postfix ? "postfix" : "prefix",
+				op,
+				operand.type->name()
+			)
+		);
+}
+
+
 ////////////////////////////////////////
 Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 {
@@ -235,7 +266,13 @@ Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 		// return vm.allocateReference(rhs.safeRemoveRef().removePtr());
 	}
 	else if (op_ == "&")
+	{
 		return vm.allocatePointer(rhs);
+	}
+	else if (op_ == "--" || op_ == "++")
+	{
+		executeIncrementDecrement(vm, op_, rhs, Operator::Type::Prefix);
+	}
 	else
 		throw std::runtime_error("Invalid prefix operator: " + std::string(op_));
 
@@ -244,7 +281,7 @@ Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 }
 
 ////////////////////////////////////////
-OptValue ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_)
+auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> OptValue
 {
 	auto lhs = *this->evalSingleAction(lhs_);
 
@@ -325,6 +362,10 @@ OptValue ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Ac
 		if (constructor)
 			return evaluatedArgs[0];
 		return result;
+	}
+	else if (op == "--" || op == "++")
+	{
+		executeIncrementDecrement(vm, op, lhs, Operator::Type::Postfix);
 	}
 
 	return {};

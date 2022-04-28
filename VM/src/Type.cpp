@@ -42,6 +42,27 @@ namespace rigc::vm
 		return lhs_;																		\
 	}
 
+#define DEFINE_BUILTIN_POSTFIX_OP(Name, Symbol)												\
+	template <typename T>																	\
+	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_)	\
+	{																						\
+		T&			lhsData =  lhs_.removeRef().view<T>();										\
+																							\
+		lhsData Symbol;																\
+																							\
+		return lhs_;																		\
+	}
+
+#define DEFINE_BUILTIN_PREFIX_OP(Name, Symbol)												\
+	template <typename T>																	\
+	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_)	\
+	{																						\
+		T&			lhsData =  lhs_.removeRef().view<T>();										\
+																							\
+		Symbol lhsData;																\
+																							\
+		return lhs_;																		\
+	}
 
 DEFINE_BUILTIN_MATH_OP		(Add,	+);
 DEFINE_BUILTIN_MATH_OP		(Sub,	-);
@@ -63,9 +84,17 @@ DEFINE_BUILTIN_ASSIGN_OP	(MultAssign,	*=);
 DEFINE_BUILTIN_ASSIGN_OP	(DivAssign,		/=);
 DEFINE_BUILTIN_ASSIGN_OP	(ModAssign,		%=);
 
+DEFINE_BUILTIN_POSTFIX_OP(PostIncrement, ++);
+DEFINE_BUILTIN_POSTFIX_OP(PostDecrement, --);
+
+DEFINE_BUILTIN_PREFIX_OP(PreIncrement, ++);
+DEFINE_BUILTIN_PREFIX_OP(PreDecrement, --);
+
 #undef DEFINE_BUILTIN_MATH_OP
 #undef DEFINE_BUILTIN_RELATIONAL_OP
 #undef DEFINE_BUILTIN_ASSIGN_OP
+#undef DEFINE_BUILTIN_POSTFIX_OP
+#undef DEFINE_BUILTIN_PREFIX_OP
 
 
 //////////////////////////////////////
@@ -82,6 +111,9 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 	infixAssignParams[0] = { "lhs", wrap<RefType>(universeScope_, t) };
 	infixAssignParams[1] = { "rhs", t };
 
+	Function::Params prePostfixParams;
+	prePostfixParams[0] = { "lhs", wrap<RefType>(universeScope_, t) };
+
 	#define MAKE_INFIX_OP(Name, Incantation) \
 		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
 			{ \
@@ -96,6 +128,23 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 			}; \
 		{ \
 			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2)); \
+			op.returnsRef = true; \
+		}
+
+	#define MAKE_POSTFIX_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0]); \
+			}; \
+		universeScope_.registerOperator(vm_, Incantation, Operator::Postfix, Function(OPERATOR_##Name, prePostfixParams, 1));
+
+	#define MAKE_PREFIX_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0]); \
+			}; \
+		{ \
+			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Prefix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
 			op.returnsRef = true; \
 		}
 
@@ -120,6 +169,14 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 		MAKE_INFIX_ASSIGN_OP(MultAssign,	"*=");
 		MAKE_INFIX_ASSIGN_OP(DivAssign,		"/=");
 
+		// Postfix
+		MAKE_POSTFIX_OP(PostIncrement, "++");
+		MAKE_POSTFIX_OP(PostDecrement, "--");
+
+		// Prefix
+		MAKE_PREFIX_OP(PreIncrement, "++");
+		MAKE_PREFIX_OP(PreDecrement, "--");
+
 		// Relational
 		MAKE_INFIX_OP(LowerThan,		"<");
 		MAKE_INFIX_OP(GreaterThan,		">");
@@ -138,6 +195,9 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 
 	#undef MAKE_INFIX_OP
 	#undef MAKE_INFIX_ASSIGN_OP
+	#undef MAKE_POSTFIX_OP
+	#undef MAKE_PREFIX_OP
+
 }
 
 template <typename T>
