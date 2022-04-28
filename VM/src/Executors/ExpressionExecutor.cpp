@@ -38,8 +38,8 @@ int operatorPriority(rigc::ParserNode const& node_)
 	if (op == "<<" || op == ">>") return 8;
 	if (op == "+" || op == "-") return 7;
 	if (op == "*" || op == "/" || op == "%") return 6;
-	
-	if (op == "++" || op == "--") 
+
+	if (op == "++" || op == "--")
 	{
 		if(node_.is_type<PrefixOperator>()) return 3;
 		else return 2;
@@ -271,7 +271,7 @@ Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
 	}
 	else if (op_ == "--" || op_ == "++")
 	{
-		executeIncrementDecrement(vm, op_, rhs, Operator::Type::Prefix);
+		return executeIncrementDecrement(vm, op_, rhs, Operator::Prefix);
 	}
 	else
 		throw std::runtime_error("Invalid prefix operator: " + std::string(op_));
@@ -365,7 +365,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 	}
 	else if (op == "--" || op == "++")
 	{
-		executeIncrementDecrement(vm, op, lhs, Operator::Type::Postfix);
+		return executeIncrementDecrement(vm, op, lhs, Operator::Postfix);
 	}
 
 	return {};
