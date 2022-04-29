@@ -163,4 +163,23 @@ inline auto findElem(rigc::ParserNode const& node_, bool recursive_ = true) -> r
 	return it->get();
 }
 
+/// <summary>
+/// Finds the nth child of the node of the given type
+/// </summary>
+template <typename T>
+inline auto findNthElem(rigc::ParserNode const& node_, std::size_t nth_) -> rigc::ParserNode*
+{
+	if(nth_ == 0) return nullptr;
+
+	auto it = rg::find_if(node_.children, &rigc::ParserNode::is_type<T>);
+	nth_--;
+
+	while(nth_--) {
+		it = rg::find_if(it + 1, node_.children.end(), &rigc::ParserNode::is_type<T>);
+		if(it == node_.children.end()) return nullptr;
+	}
+
+	return it->get();
+}
+
 }

@@ -94,7 +94,7 @@ auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptVal
 	vm_.evaluate(variableDef);
 
 	auto& conditionExpr = *findElem<rigc::Expression>(stmt_, false);
-	auto& incrementExpr = *stmt_.children[2];
+	auto& incrementExpr = *findNthElem<rigc::Expression>(stmt_, 2);
 
 	while (true)
 	{
