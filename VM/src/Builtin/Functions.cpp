@@ -58,7 +58,6 @@ OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
 }
 
 ////////////////////////////////////////
-
 OptValue typeOf(Instance &vm_, Function::Args& args_, size_t argCount_)
 {
 	auto name = args_[0].type->name();
@@ -67,5 +66,40 @@ OptValue typeOf(Instance &vm_, Function::Args& args_, size_t argCount_)
 	return vm_.allocateOnStack( t, name.data(), name.size() );
 }
 
+////////////////////////////////////////
+void printMessage(Value const& msg) {
+	// FIXME: for now just accepting the type StaticArray<Char, Size> cuz we cant do anything else
+	if (!msg.getType()->isArray() && msg.typeName() != "Char")
+		return;
+
+	auto chars = &msg.view<const char>();
+
+	fmt::print("{}", std::string_view(chars, msg.getType()->size()));
 }
 
+////////////////////////////////////////
+template <typename CppType>
+OptValue executeRead(Instance &vm_, std::string_view rigcTypeName) {
+	auto data = CppType();
+	std::cin >> data; // scanf?
+	
+	return vm_.allocateOnStack(rigcTypeName, data);
+}
+
+////////////////////////////////////////
+OptValue readInt(Instance &vm_, Function::Args& args_, size_t argCount_) {
+	if(argCount_ != 0) 
+		printMessage(args_[0]);
+
+	return executeRead<int>(vm_, "Int32");
+}
+
+////////////////////////////////////////
+OptValue readFloat(Instance &vm_, Function::Args& args_, size_t argCount_) {
+	if(argCount_ != 0) 
+		printMessage(args_[0]);
+
+	return executeRead<double>(vm_, "Float64");
+}
+
+}
