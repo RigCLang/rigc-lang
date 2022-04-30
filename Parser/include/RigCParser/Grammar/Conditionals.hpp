@@ -32,7 +32,7 @@ struct ElseStatement
 	:
 	p::seq< ElseKeyword,
 		p::sor<
-			p::seq<ws, IfStatement>,
+			p::seq<Ws, IfStatement>,
 			p::seq<OptWs,
 				p::sor<
 					SingleBlockStatement,

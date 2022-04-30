@@ -14,6 +14,7 @@ struct AssignmentValue
 	: Expression
 {
 };
+
 struct InitializerValue
 	: AssignmentValue
 {

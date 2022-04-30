@@ -52,10 +52,10 @@ struct FunctionParams
 
 struct FunctionDefinition
 	: p::seq<
-			p::opt<ExportKeyword, ws>,
-			p::opt<TemplateDefPreamble, ws>,
+			p::opt<ExportKeyword, Ws>,
+			p::opt<TemplateDefPreamble, Ws>,
 			p::if_must<
-					FuncKeyword, ws, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock
+					FuncKeyword, Ws, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock
 				>
 		>
 {
@@ -63,20 +63,20 @@ struct FunctionDefinition
 
 struct ClosureDefinition
 	: p::seq<
-		p::sor<
-			Name,
-			FunctionParams
-		>,
-		OptWs,
-		p::if_must<
-			p::string<'=','>'>,
-			OptWs,
 			p::sor<
-				Expression,
-				CodeBlock
+				Name,
+				FunctionParams
+			>,
+			OptWs,
+			p::if_must<
+				p::string<'=','>'>,
+				OptWs,
+				p::sor<
+					Expression,
+					CodeBlock
+				>
 			>
 		>
-	>
 {};
 
 

@@ -9,8 +9,15 @@
 namespace rigc
 {
 
+struct Name;
+
 struct PackageImportNames
-	: p::seq< struct Name, p::opt< p::seq< p::one<'.'>, PackageImportNames> > >
+	: p::seq<
+			Name, 
+			p::opt< 
+				p::seq< p::one<'.'>, PackageImportNames> 
+			>
+		>
 {
 };
 
@@ -40,7 +47,7 @@ struct TemplateParamsInner
 	p::seq<
 		TemplateParam,
 		p::opt< OptWs,
-			p::opt<  p::seq< p::one<','>, OptWs, TemplateParam>  >
+			p::opt< p::seq< p::one<','>, OptWs, TemplateParam> >
 		>
 	>
 {

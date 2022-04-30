@@ -8,7 +8,7 @@ namespace rigc
 {
 
 struct VariableDefinition
-	: p::seq<DeclType, ws, Name, p::opt< Initialization > >
+	: p::seq< DeclType, Ws, Name, p::opt< Initialization > >
 {
 };
 

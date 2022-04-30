@@ -7,7 +7,7 @@ namespace rigc
 
 ////////////////////// Whitespace /////////////////////////
 
-struct whitespace
+struct Whitespace
 	: pegtl::plus< p::space >
 {
 };
@@ -17,18 +17,17 @@ struct Comment
 {
 };
 
-struct ws
+struct Ws
 	: p::sor<
 		Comment,
-		p::seq< p::plus<whitespace>, p::opt<Comment> >
+		p::seq< p::plus<Whitespace>, p::opt<Comment> >
 	>
 {
-
 };
 
-// using ws = whitespace;
+// using Rs = Whitespace;
 
-using OptWs = p::star<ws>;
+using OptWs = p::star<Ws>;
 
 template<typename... GrammarElems>
 using WsWrapped = p::seq< OptWs, GrammarElems..., OptWs >;
@@ -42,9 +41,8 @@ struct char_semicolon
 
 
 struct Semicolon
-	: p::seq< p::opt<whitespace>, p::one<';'> > 
+	: p::seq< p::opt<Whitespace>, p::one<';'> > 
 {
-
 };
 
 

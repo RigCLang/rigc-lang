@@ -16,8 +16,8 @@ struct ExprInParen;
 struct SingleExpressionFragment
 	:
 	p::seq<
-		p::star<PrefixOperator>,OptWs,
-		p::sor<AnyLiteral, Name, ExprInParen>,OptWs,
+		p::star<PrefixOperator>, OptWs,
+		p::sor<AnyLiteral, Name, ExprInParen>, OptWs,
 		p::star<PostfixOperator>
 	>
 {
@@ -44,7 +44,7 @@ struct ExprWithoutComma
 {};
 
 struct ExprInParen
-	: p::if_must<p::one<'('>, OptWs, Expression, OptWs, p::one<')'> >
+	: p::if_must< p::one<'('>, OptWs, Expression, OptWs, p::one<')'> >
 {
 };
 

@@ -9,7 +9,7 @@ namespace rigc
 {
 
 struct ExplicitType
-	: p::seq<p::one<':'>, OptWs, Type>
+	: p::seq< p::one<':'>, OptWs, Type >
 {};
 
 struct DataMemberDef
@@ -17,7 +17,7 @@ struct DataMemberDef
 {};
 
 struct MethodDef
-	: p::seq< p::opt< OverrideKeyword, ws >, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
+	: p::seq< p::opt< OverrideKeyword, Ws >, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
 {};
 
 struct MemberDef
@@ -35,9 +35,9 @@ struct ClassCodeBlock
 
 struct ClassDefinition
 	: p::seq<
-			p::opt<ExportKeyword, ws>, 
-			p::opt<TemplateDefPreamble, ws>,
-			p::if_must< ClassKeyword, ws, Name, OptWs, ClassCodeBlock > >
+			p::opt<ExportKeyword, Ws>, 
+			p::opt<TemplateDefPreamble, Ws>,
+			p::if_must< ClassKeyword, Ws, Name, OptWs, ClassCodeBlock > >
 {
 };
 

@@ -16,7 +16,7 @@ namespace rigc
 
 struct GlobalNS
 	:
-	p::star< p::sor<ImportStatement, ClassDefinition, FunctionDefinition, ws> >
+	p::star< p::sor<ImportStatement, ClassDefinition, FunctionDefinition, Ws> >
 {
 };
 

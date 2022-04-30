@@ -2,6 +2,8 @@
 
 #include RIGCPARSER_PCH
 
+#include <RigCParser/Grammar/Characters.hpp>
+
 namespace rigc
 {
 
@@ -104,14 +106,14 @@ struct TernarySecondOp	: p::one	<':'> {};
 
 struct PrefixOperator
 	: p::sor<
-		DereferenceOp,
-		ReferenceOp,
-		PreincrementOp,
-		PredecrementOp,
-		// NumericNegateOp,
-		BitNegate,
-		LogicalNegateOp
-	>
+			DereferenceOp,
+			ReferenceOp,
+			PreincrementOp,
+			PredecrementOp,
+			// NumericNegateOp,
+			BitNegate,
+			LogicalNegateOp
+		>
 {
 };
 
@@ -172,11 +174,11 @@ struct InfixOperatorNoComma	: InfixOperatorBase<> {};
 
 struct PostfixOperator
 	: p::sor<
-		SubscriptOp,
-		FunctionCallOp,
-		PostincrementOp,
-		PostdecrementOp
-	>
+			SubscriptOp,
+			FunctionCallOp,
+			PostincrementOp,
+			PostdecrementOp
+		>
 {};
 
 
