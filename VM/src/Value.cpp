@@ -11,13 +11,13 @@ namespace rigc::vm
 {
 
 /////////////////////////////////////
-Value Value::member(DataMember const& dm_) const
+auto Value::member(DataMember const& dm_) const -> Value
 {
 	return this->member(dm_.offset, dm_.type);
 }
 
 /////////////////////////////////////
-Value Value::member(size_t offset_, DeclType type_) const
+auto Value::member(size_t offset_, DeclType type_) const -> Value
 {
 	Value mem;
 	mem.type = std::move(type_);
@@ -26,7 +26,7 @@ Value Value::member(size_t offset_, DeclType type_) const
 }
 
 /////////////////////////////////////
-Value Value::safeRemoveRef() const
+auto Value::safeRemoveRef() const -> Value
 {
 	if (auto ref = type->as<RefType>())
 	{
@@ -39,7 +39,7 @@ Value Value::safeRemoveRef() const
 }
 
 /////////////////////////////////////
-Value Value::safeRemovePtr() const
+auto Value::safeRemovePtr() const -> Value
 {
 	if (auto ptr = type->as<AddrType>())
 	{
@@ -52,7 +52,7 @@ Value Value::safeRemovePtr() const
 }
 
 /////////////////////////////////////
-Value Value::removeRef() const
+auto Value::removeRef() const -> Value
 {
 	if (auto ref = type->as<RefType>())
 	{
@@ -65,7 +65,7 @@ Value Value::removeRef() const
 }
 
 /////////////////////////////////////
-Value Value::removePtr() const
+auto Value::removePtr() const -> Value
 {
 	if (auto ptr = type->as<AddrType>())
 	{
@@ -78,7 +78,7 @@ Value Value::removePtr() const
 }
 
 /////////////////////////////////////
-std::string dump(Instance& vm_, Value const& value_)
+auto dump(Instance& vm_, Value const& value_) -> std::string
 {
 	auto offset = reinterpret_cast<char const*>(value_.data) - vm_.stack.container.data();
 

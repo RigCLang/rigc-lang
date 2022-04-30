@@ -15,7 +15,7 @@ namespace rigc::vm
 
 #define DEFINE_BUILTIN_CONVERT_OP(ToCppType, ToRuntimeType)									\
 	template <typename FromType>															\
-	OptValue builtinConvertOperator_##ToRuntimeType(Instance &vm_, Value const& lhs_)		\
+	auto builtinConvertOperator_##ToRuntimeType(Instance &vm_, Value const& lhs_) -> OptValue		\
 	{																						\
 		FromType const&	lhsData = *reinterpret_cast<FromType const*>(lhs_.blob());			\
 		return vm_.allocateOnStack<ToCppType>(#ToRuntimeType, ToCppType(lhsData));			\
@@ -31,7 +31,7 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 #undef DEFINE_BUILTIN_CONVERT_OP
 
 //////////////////////////////////////////
-fs::path Instance::findModulePath(std::string_view name_) const
+auto Instance::findModulePath(std::string_view name_) const -> fs::path
 {
 	fs::path path = std::string(name_);
 
@@ -50,7 +50,7 @@ fs::path Instance::findModulePath(std::string_view name_) const
 }
 
 //////////////////////////////////////////
-Module* Instance::parseModule(std::string_view name_)
+auto Instance::parseModule(std::string_view name_) -> Module*
 {
 	auto path = this->findModulePath(name_);
 
@@ -70,7 +70,7 @@ Module* Instance::parseModule(std::string_view name_)
 }
 
 //////////////////////////////////////////
-void Instance::evaluateModule(Module& module_)
+auto Instance::evaluateModule(Module& module_) -> void
 {
 	for (auto const& stmt : module_.root->children)
 	{
@@ -79,7 +79,7 @@ void Instance::evaluateModule(Module& module_)
 }
 
 //////////////////////////////////////////
-int Instance::run(std::string_view moduleName_)
+auto Instance::run(std::string_view moduleName_) -> int
 {
 	entryPoint.module_ = this->parseModule(moduleName_);
 	if (!entryPoint.module_)
@@ -136,27 +136,27 @@ int Instance::run(std::string_view moduleName_)
 }
 
 //////////////////////////////////////////
-Value Instance::allocateReference(Value const& toValue_)
+auto Instance::allocateReference(Value const& toValue_) -> Value
 {
 	return this->allocateOnStack<void const*>(wrap<RefType>(universalScope(), toValue_.type), toValue_.blob());
 }
 
 //////////////////////////////////////////
-Value Instance::allocatePointer(Value const& toRef_)
+auto Instance::allocatePointer(Value const& toRef_) -> Value
 {
 	auto deref = toRef_.safeRemoveRef();
 	return this->allocateOnStack<void const*>(wrap<AddrType>(universalScope(), deref.type), deref.blob());
 }
 
 //////////////////////////////////////////
-OptValue Instance::executeFunction(Function const& func)
+auto Instance::executeFunction(Function const& func) -> OptValue
 {
 	Function::Args args;
 	return this->executeFunction(func, args, 0);
 }
 
 //////////////////////////////////////////
-OptValue Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_)
+auto Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_) -> OptValue
 {
 	OptValue retVal;
 
@@ -246,7 +246,7 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 }
 
 //////////////////////////////////////////
-OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
+auto Instance::evaluate(rigc::ParserNode const& stmt_) -> OptValue
 {
 	lastEvaluatedLine = this->lineAt(stmt_);
 
@@ -269,7 +269,7 @@ OptValue Instance::evaluate(rigc::ParserNode const& stmt_)
 }
 
 //////////////////////////////////////////
-OptValue Instance::tryConvert(Value value_, DeclType const& to_)
+auto Instance::tryConvert(Value value_, DeclType const& to_) -> OptValue
 {
 	if (value_.type == to_)
 		return value_;
@@ -284,7 +284,7 @@ OptValue Instance::tryConvert(Value value_, DeclType const& to_)
 }
 
 //////////////////////////////////////////
-Value Instance::getSelf()
+auto Instance::getSelf() -> Value
 {
 	assert(classContext && "Cannot get self reference outside a method");
 
@@ -292,7 +292,7 @@ Value Instance::getSelf()
 }
 
 //////////////////////////////////////////
-OptValue Instance::findVariableByName(std::string_view name_)
+auto Instance::findVariableByName(std::string_view name_) -> OptValue
 {
 	if (name_ == "stackSize")
 	{
@@ -336,13 +336,13 @@ OptValue Instance::findVariableByName(std::string_view name_)
 }
 
 //////////////////////////////////////////
-size_t Instance::lineAt(rigc::ParserNode const& node_) const
+auto Instance::lineAt(rigc::ParserNode const& node_) const -> size_t
 {
 	return node_.m_begin.line;
 }
 
 //////////////////////////////////////////
-DeclType Instance::evaluateType(rigc::ParserNode const& typeNode_)
+auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 {
 	DeclType evaluatedType;
 	auto typeName		= findElem<rigc::Name>(typeNode_)->string_view();
@@ -385,7 +385,7 @@ DeclType Instance::evaluateType(rigc::ParserNode const& typeNode_)
 
 
 //////////////////////////////////////////
-IType* Instance::findType(std::string_view name_)
+auto Instance::findType(std::string_view name_) -> IType*
 {
 	auto scope = currentScope;
 	while (scope)
@@ -400,7 +400,7 @@ IType* Instance::findType(std::string_view name_)
 }
 
 //////////////////////////////////////////
-FunctionOverloads const* Instance::findFunction(std::string_view name_)
+auto Instance::findFunction(std::string_view name_) -> FunctionOverloads const*
 {
 	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
 	{
@@ -416,7 +416,7 @@ FunctionOverloads const* Instance::findFunction(std::string_view name_)
 }
 
 //////////////////////////////////////////
-Value Instance::findFunctionExpr(std::string_view name_)
+auto Instance::findFunctionExpr(std::string_view name_) -> Value
 {
 	FunctionOverloads const* overloads = nullptr;
 	IType* type = nullptr;
@@ -437,13 +437,13 @@ Value Instance::findFunctionExpr(std::string_view name_)
 }
 
 //////////////////////////////////////////
-Value Instance::cloneValue(Value value_)
+auto Instance::cloneValue(Value value_) -> Value
 {
 	return this->allocateOnStack( value_.getType(), reinterpret_cast<void*>(value_.blob()), value_.getType()->size() );
 }
 
 //////////////////////////////////////////
-FrameBasedValue Instance::reserveOnStack(DeclType type_, bool lookBack_)
+auto Instance::reserveOnStack(DeclType type_, bool lookBack_) -> FrameBasedValue
 {
 	auto& frame = stack.frames.back();
 
@@ -461,7 +461,7 @@ FrameBasedValue Instance::reserveOnStack(DeclType type_, bool lookBack_)
 }
 
 //////////////////////////////////////////
-Value Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t toCopy)
+auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t toCopy) -> Value
 {
 	size_t toAlloc = type_->size();
 	if (toCopy == 0)
@@ -485,7 +485,7 @@ Value Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t
 }
 
 //////////////////////////////////////////
-Scope& Instance::scopeOf(void const *addr_)
+auto Instance::scopeOf(void const *addr_) -> Scope&
 {
 	auto it = scopes.find(addr_);
 	if (it == scopes.end())
@@ -500,7 +500,7 @@ Scope& Instance::scopeOf(void const *addr_)
 }
 
 //////////////////////////////////////////
-Scope& Instance::pushStackFrameOf(void const* addr_)
+auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 {
 	Scope& scope = scopeOf(addr_);
 	if (!scope.parent)
@@ -513,7 +513,7 @@ Scope& Instance::pushStackFrameOf(void const* addr_)
 }
 
 //////////////////////////////////////////
-void Instance::popStackFrame()
+auto Instance::popStackFrame() -> void
 {
 	assert(stack.frames.size() > 1 && "Tried to pop a universe scope-related stack frame.");
 

@@ -9,7 +9,7 @@ namespace rigc::vm
 {
 
 ////////////////////////////////////////
-static void replaceAll(std::string& s, std::string_view from, std::string_view to)
+static auto replaceAll(std::string& s, std::string_view from, std::string_view to) -> void
 {
 	size_t startPos = 0;
 	while((startPos = s.find(from, startPos)) != std::string::npos) {
@@ -19,32 +19,32 @@ static void replaceAll(std::string& s, std::string_view from, std::string_view t
 }
 
 ////////////////////////////////////////
-OptValue evaluateIntegerLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateIntegerLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	return vm_.allocateOnStack<int>( "Int32", std::stoi(expr_.string()) );
 }
 
 ////////////////////////////////////////
-OptValue evaluateFloat32Literal(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateFloat32Literal(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto n = expr_.string();
 	return vm_.allocateOnStack<float>( "Float32", std::stof( n.substr(0, n.size() - 1) ) );
 }
 
 ////////////////////////////////////////
-OptValue evaluateFloat64Literal(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateFloat64Literal(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	return vm_.allocateOnStack<double>( "Float64", std::stod(expr_.string()) );
 }
 
 ////////////////////////////////////////
-OptValue evaluateBoolLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateBoolLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	return vm_.allocateOnStack<bool>( "Bool", expr_.string_view()[0] == 't' ? true : false);
 }
 
 ////////////////////////////////////////
-OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto sv = expr_.string_view();
 
@@ -66,7 +66,7 @@ OptValue evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 }
 
 ////////////////////////////////////////
-OptValue evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto sv = expr_.string_view();
 
@@ -84,7 +84,7 @@ OptValue evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 }
 
 // ////////////////////////////////////////
-// OptValue evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_)
+// auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 // {
 // 	std::vector<Value> arr;
 // 	arr.reserve(expr_.children.size());
@@ -101,7 +101,7 @@ OptValue evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_)
 // }
 
 // ////////////////////////////////////////
-// OptValue evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_)
+// auto evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 // {
 // 	Value v( vm_.evaluate(*expr_.children[0]).value() );
 

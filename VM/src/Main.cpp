@@ -2,7 +2,7 @@
 
 #include <RigCVM/VM.hpp>
 
-int main(int argc, char* argv[])
+auto main(int argc, char* argv[]) -> int
 {
 	namespace pt = pegtl::parse_tree;
 

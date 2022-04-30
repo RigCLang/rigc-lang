@@ -12,7 +12,7 @@ namespace rigc::vm
 {
 
 ////////////////////////////////////
-std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
+auto makeUniverseScope(Instance &vm_) -> std::unique_ptr<Scope>
 {
 #define MAKE_BUILTIN_TYPE(CppName, RigCName) \
 	CreateCoreType<CppName>(vm_, *scope, #RigCName)
@@ -70,7 +70,7 @@ std::unique_ptr<Scope> makeUniverseScope(Instance &vm_)
 }
 
 ///////////////////////////////////////////////////////////////
-StaticString<char, 512> Scope::formatOperatorName(std::string_view opName_, Operator::Type type_)
+auto Scope::formatOperatorName(std::string_view opName_, Operator::Type type_) -> StaticString<char, 512>
 {
 	constexpr char opPrefix[]		= "operator ";
 	constexpr char prefixOpText[]	= "pr";
@@ -91,7 +91,7 @@ StaticString<char, 512> Scope::formatOperatorName(std::string_view opName_, Oper
 }
 
 ///////////////////////////////////////////////////////////////
-Function const* Scope::findConversion(DeclType const& from_, DeclType const& to_) const
+auto Scope::findConversion(DeclType const& from_, DeclType const& to_) const -> Function const*
 {
 	auto overloads = this->findFunction("operator convert");
 	if (!overloads)
@@ -102,7 +102,7 @@ Function const* Scope::findConversion(DeclType const& from_, DeclType const& to_
 
 // TODO: add support for second-pass functions
 ///////////////////////////////////////////////////////////////
-bool testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_, size_t numArgs_)
+auto testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_, size_t numArgs_) -> bool
 {
 	if (func_.paramCount != numArgs_)
 		return false;
@@ -125,7 +125,7 @@ bool testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_
 }
 
 ///////////////////////////////////////////////////////////////
-FunctionOverloads const* Scope::findFunction(std::string_view funcName_) const
+auto Scope::findFunction(std::string_view funcName_) const -> FunctionOverloads const*
 {
 	auto it = functions.find(funcName_);
 	if (it != functions.end())
@@ -135,12 +135,12 @@ FunctionOverloads const* Scope::findFunction(std::string_view funcName_) const
 }
 
 ///////////////////////////////////////////////////////////////
-Function const* findOverload(
+auto findOverload(
 		FunctionOverloads const&	funcs_,
 		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
 		bool						method,
 		Function::ReturnType		returnType_
-	)
+	) -> Function const*
 {
 	if (funcs_.size() == 1 && funcs_[0]->variadic && funcs_[0]->isRaw())
 	{
@@ -164,7 +164,7 @@ Function const* findOverload(
 
 
 ///////////////////////////////////////////////////////////////
-IType const* Scope::findType(std::string_view typeName_) const
+auto Scope::findType(std::string_view typeName_) const -> IType const*
 {
 	auto it = typeAliases.find(typeName_);
 	if (it != typeAliases.end())
@@ -174,7 +174,7 @@ IType const* Scope::findType(std::string_view typeName_) const
 }
 
 ///////////////////////////////////////////////////////////////
-FunctionOverloads const* Scope::findOperator(std::string_view opName_, Operator::Type type_) const
+auto Scope::findOperator(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const* 
 {
 	auto fmtName = formatOperatorName(opName_, type_);
 	return this->findFunction(
@@ -184,7 +184,7 @@ FunctionOverloads const* Scope::findOperator(std::string_view opName_, Operator:
 
 
 ///////////////////////////////////////////////////////////////
-IType& Scope::registerType(Instance& vm_, std::string_view name_, IType& type_)
+auto Scope::registerType(Instance& vm_, std::string_view name_, IType& type_) -> IType&
 {
 	typeAliases[std::string(name_)] = &type_;
 
@@ -193,14 +193,14 @@ IType& Scope::registerType(Instance& vm_, std::string_view name_, IType& type_)
 
 
 ///////////////////////////////////////////////////////////////
-void Scope::addType(DeclType type_)
+auto Scope::addType(DeclType type_) -> void
 {
 	types.add(type_);
 	type_->postInitialize(*vm);
 }
 
 ///////////////////////////////////////////////////////////////
-Function& Scope::registerFunction(Instance& vm_, std::string_view name_, Function func_)
+auto Scope::registerFunction(Instance& vm_, std::string_view name_, Function func_) -> Function&
 {
 	functionStorage.emplace_back( std::make_unique<Function>(std::move(func_)) );
 	Function& f = *functionStorage.back();
@@ -213,7 +213,7 @@ Function& Scope::registerFunction(Instance& vm_, std::string_view name_, Functio
 }
 
 ///////////////////////////////////////////////////////////////
-Function& Scope::registerOperator(Instance& vm_, std::string_view name_, Operator::Type type_, Function func_)
+auto Scope::registerOperator(Instance& vm_, std::string_view name_, Operator::Type type_, Function func_) -> Function&
 {
 	auto fmtName = formatOperatorName(name_, type_);
 	return this->registerFunction(

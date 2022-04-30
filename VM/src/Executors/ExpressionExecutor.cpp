@@ -11,7 +11,7 @@ namespace rigc::vm
 {
 
 ////////////////////////////////////////
-bool isOperator(rigc::ParserNode const& node_)
+auto isOperator(rigc::ParserNode const& node_) -> bool
 {
 	return (
 		node_.is_type<rigc::InfixOperator>()		||
@@ -22,7 +22,7 @@ bool isOperator(rigc::ParserNode const& node_)
 }
 
 ////////////////////////////////////////
-int operatorPriority(rigc::ParserNode const& node_)
+auto operatorPriority(rigc::ParserNode const& node_) -> int
 {
 	auto op = node_.string_view();
 	if (op == ",") return 17;
@@ -51,7 +51,7 @@ int operatorPriority(rigc::ParserNode const& node_)
 }
 
 ////////////////////////////////////////////
-OptValue ExpressionExecutor::evaluate()
+auto ExpressionExecutor::evaluate() -> OptValue
 {
 	if (ctx.children.size() == 1)
 		return vm.evaluate(*ctx.children[0]);
@@ -100,7 +100,7 @@ OptValue ExpressionExecutor::evaluate()
 }
 
 ////////////////////////////////////////
-void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
+auto ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_) -> void
 {
 	rigc::ParserNode const& oper = *std::get<PendingAction>(action_);
 
@@ -144,7 +144,7 @@ void ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_)
 }
 
 ////////////////////////////////////////
-OptValue ExpressionExecutor::evalSingleAction(Action & lhs_)
+auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> OptValue
 {
 	if (lhs_.is<PendingAction>())
 		return *vm.evaluate(*lhs_.as<PendingAction>());
@@ -153,7 +153,7 @@ OptValue ExpressionExecutor::evalSingleAction(Action & lhs_)
 }
 
 ////////////////////////////////////////
-OptValue ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_)
+auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> OptValue
 {
 	Value lhs	= *this->evalSingleAction(lhs_);
 
@@ -253,7 +253,7 @@ auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand
 
 
 ////////////////////////////////////////
-Value ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_)
+auto ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_) -> Value
 {
 	auto rhs = *this->evalSingleAction(rhs_);
 

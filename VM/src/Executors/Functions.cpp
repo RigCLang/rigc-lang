@@ -12,7 +12,7 @@ namespace rigc::vm
 
 
 ////////////////////////////////////////
-void evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_)
+auto evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_) -> void
 {
 	for (auto const& param : paramsNode_.children)
 	{
@@ -25,7 +25,7 @@ void evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, 
 
 
 ////////////////////////////////////////
-OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto& scope = *vm_.currentScope;
 
@@ -59,7 +59,7 @@ OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_
 
 
 ////////////////////////////////////////
-OptValue evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto& scope = vm_.scopeOf(vm_.currentClass->declaration);
 

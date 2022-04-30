@@ -7,7 +7,7 @@ namespace rigc::vm
 {
 
 ////////////////////////////////////////
-OptValue executeImportStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+auto executeImportStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
 	auto moduleName = findElem<rigc::PackageImportFullName>(stmt_)->string_view();
 	moduleName = moduleName.substr(1, moduleName.size() - 2);

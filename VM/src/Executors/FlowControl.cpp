@@ -7,7 +7,7 @@ namespace rigc::vm
 {
 
 ////////////////////////////////////////
-OptValue executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+auto executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
 	auto expr = findElem<rigc::Expression>(stmt_);
 
@@ -20,7 +20,7 @@ OptValue executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 }
 
 ////////////////////////////////////////
-OptValue executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+auto executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
 	auto& cond = *findElem<rigc::Condition>(stmt_, false);
 	auto& expr = *findElem<rigc::Expression>(cond, false);
@@ -54,7 +54,7 @@ OptValue executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 }
 
 ////////////////////////////////////////
-OptValue executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+auto executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
 	auto& cond = *findElem<rigc::Condition>(stmt_, false);
 	auto& expr = *findElem<rigc::Expression>(cond, false);

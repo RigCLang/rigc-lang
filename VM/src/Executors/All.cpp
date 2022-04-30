@@ -14,7 +14,7 @@ namespace rigc::vm
 
 #define MAKE_EXECUTOR(ClassName, Executor) { #ClassName, Executor }
 
-std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors = {
+std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(ImportStatement,		executeImportStatement),
 	MAKE_EXECUTOR(CodeBlock,			executeCodeBlock),
 	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
@@ -59,7 +59,7 @@ StackFramePusher::~StackFramePusher()
 
 
 ////////////////////////////////////////
-OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
+auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptValue
 {
 	StackFramePusher scope(vm_, codeBlock_);
 
@@ -83,7 +83,7 @@ OptValue executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_)
 }
 
 ////////////////////////////////////////
-OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
+auto executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
 	StackFramePusher scope(vm_, stmt_);
 
@@ -99,13 +99,13 @@ OptValue executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_)
 
 
 ////////////////////////////////////////
-OptValue evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	return ExpressionExecutor{vm_, expr_}.evaluate();
 }
 
 ////////////////////////////////////////
-OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto opt = vm_.findVariableByName(expr_.string_view());
 
@@ -124,7 +124,7 @@ OptValue evaluateName(Instance &vm_, rigc::ParserNode const& expr_)
 }
 
 ////////////////////////////////////////
-OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto declType	= findElem<rigc::DeclType>(expr_, false)->string_view();
 	auto varName	= findElem<rigc::Name>(expr_, false)->string_view();
@@ -194,7 +194,7 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 }
 
 ////////////////////////////////////////
-OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	// auto const templateParamList = getTemplateParamList(expr_); 
 	// std::pair<std::string, TypeConstraint>, string is a name,
@@ -223,7 +223,7 @@ OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 
 
 ////////////////////////////////////////
-OptValue evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_)
+auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto typeExpr	= findElem<rigc::ExplicitType>(expr_, false);
 	auto varName	= findElem<rigc::Name>(expr_, false)->string_view();

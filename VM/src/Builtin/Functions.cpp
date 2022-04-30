@@ -11,7 +11,7 @@ namespace rigc::vm::builtin
 {
 
 ////////////////////////////////////////
-OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
+auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 {
 	if (argCount_ == 0)
 		return {};
@@ -58,7 +58,7 @@ OptValue print(Instance &vm_, Function::Args& args_, size_t argCount_)
 }
 
 ////////////////////////////////////////
-OptValue typeOf(Instance &vm_, Function::Args& args_, size_t argCount_)
+auto typeOf(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 {
 	auto name = args_[0].type->name();
 	auto t = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
@@ -67,7 +67,8 @@ OptValue typeOf(Instance &vm_, Function::Args& args_, size_t argCount_)
 }
 
 ////////////////////////////////////////
-void printMessage(Value const& msg) {
+auto printMessage(Value const& msg) -> void
+{
 	// FIXME: for now just accepting the type StaticArray<Char, Size> cuz we cant do anything else
 	if (!msg.getType()->isArray() && msg.typeName() != "Char")
 		return;
@@ -79,7 +80,8 @@ void printMessage(Value const& msg) {
 
 ////////////////////////////////////////
 template <typename CppType>
-OptValue executeRead(Instance &vm_, std::string_view rigcTypeName) {
+auto executeRead(Instance &vm_, std::string_view rigcTypeName) -> OptValue
+{
 	auto data = CppType();
 	std::cin >> data; // scanf?
 	
@@ -87,7 +89,8 @@ OptValue executeRead(Instance &vm_, std::string_view rigcTypeName) {
 }
 
 ////////////////////////////////////////
-OptValue readInt(Instance &vm_, Function::Args& args_, size_t argCount_) {
+auto readInt(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
+{
 	if(argCount_ != 0) 
 		printMessage(args_[0]);
 
@@ -95,7 +98,8 @@ OptValue readInt(Instance &vm_, Function::Args& args_, size_t argCount_) {
 }
 
 ////////////////////////////////////////
-OptValue readFloat(Instance &vm_, Function::Args& args_, size_t argCount_) {
+auto readFloat(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
+{
 	if(argCount_ != 0) 
 		printMessage(args_[0]);
 

@@ -12,7 +12,7 @@ namespace rigc::vm
 
 #define DEFINE_BUILTIN_MATH_OP(Name, Symbol) \
 	template <typename T> \
-	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_) \
+	auto builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_) -> OptValue \
 	{ \
 		T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob()); \
 		T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob()); \
@@ -22,7 +22,7 @@ namespace rigc::vm
 
 #define DEFINE_BUILTIN_RELATIONAL_OP(Name, Symbol) \
 	template <typename T> \
-	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_) \
+	auto builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_) -> OptValue \
 	{ \
 		T const& lhsData = *reinterpret_cast<T const*>(lhs_.blob()); \
 		T const& rhsData = *reinterpret_cast<T const*>(rhs_.blob()); \
@@ -32,7 +32,7 @@ namespace rigc::vm
 
 #define DEFINE_BUILTIN_ASSIGN_OP(Name, Symbol)												\
 	template <typename T>																	\
-	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_)	\
+	auto builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_)	-> OptValue \
 	{																						\
 		T&			lhsData =  lhs_.removeRef().view<T>();										\
 		T const&	rhsData = *reinterpret_cast<T const*>(rhs_.blob());						\
@@ -44,7 +44,7 @@ namespace rigc::vm
 
 #define DEFINE_BUILTIN_POSTFIX_OP(Name, Symbol)												\
 	template <typename T>																	\
-	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_)	\
+	auto builtin##Name##Operator(Instance &vm_, Value const& lhs_)	-> OptValue \
 	{																						\
 		T&			lhsData =  lhs_.removeRef().view<T>();										\
 																							\
@@ -55,7 +55,7 @@ namespace rigc::vm
 
 #define DEFINE_BUILTIN_PREFIX_OP(Name, Symbol)												\
 	template <typename T>																	\
-	OptValue builtin##Name##Operator(Instance &vm_, Value const& lhs_)	\
+	auto builtin##Name##Operator(Instance &vm_, Value const& lhs_)	-> OptValue \
 	{																						\
 		T&			lhsData =  lhs_.removeRef().view<T>();										\
 																							\
@@ -99,7 +99,7 @@ DEFINE_BUILTIN_PREFIX_OP(PreDecrement, --);
 
 //////////////////////////////////////
 template <typename T>
-IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_)
+auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_) -> IType*
 {
 	auto t = std::make_shared<CoreType>(CoreType::fromCppType<T>());
 	universeScope_.addType(t);
@@ -201,7 +201,7 @@ IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view nam
 }
 
 template <typename T>
-void addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_)
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_) -> void
 {
 	Function::Params convertParams;
 	convertParams[0] = { "from", from_ };
@@ -216,7 +216,7 @@ void addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& fro
 }
 
 template <typename T>
-void addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_)
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_) -> void
 {
 	addTypeConversion<T>(
 			vm_, universeScope_,
@@ -228,8 +228,8 @@ void addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view fr
 
 #define LINK_BUILTIN_TYPE(TypeName) \
 	template IType* CreateCoreType<TypeName>(Instance&, Scope&, std::string_view, size_t); \
-	template void addTypeConversion<TypeName>(Instance&, Scope&, DeclType const&, DeclType const&, ConversionFunc&); \
-	template void addTypeConversion<TypeName>(Instance&, Scope&, std::string_view, std::string_view, ConversionFunc&)
+	template auto addTypeConversion<TypeName>(Instance&, Scope&, DeclType const&, DeclType const&, ConversionFunc&) -> void; \
+	template auto addTypeConversion<TypeName>(Instance&, Scope&, std::string_view, std::string_view, ConversionFunc&) -> void
 
 
 LINK_BUILTIN_TYPE(bool);
