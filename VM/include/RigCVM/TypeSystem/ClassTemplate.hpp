@@ -19,7 +19,7 @@ public:
 	std::string name;
 	Vec<TemplateParameter> parameters;
 
-	DeclType instantiate(vm::Instance& vm_, Vec<TemplateParameterValue> const& params_) const;
+	auto instantiate(vm::Instance& vm_, Vec<TemplateParameterValue> const& params_) const -> DeclType;
 };
 
 };

@@ -17,16 +17,19 @@ struct FuncType
 
 	bool isVariadic = false;
 
-	std::string name() const;
-	std::string symbolName() const override {
+	auto name() const -> std::string override;
+	auto symbolName() const -> std::string override {
 		return "Func";
 	}
-	std::size_t size() const override {
+
+	auto size() const -> std::size_t override {
 		return sizeof(void*);
 	}
-	bool isArray() const override {
+
+	auto isArray() const -> bool override {
 		return false;
 	}
+
 	auto decay() const -> InnerType override { return nullptr; }
 
 	void postInitialize(Instance& vm_) override;
@@ -41,16 +44,19 @@ struct MethodType
 	std::vector<InnerType> parameters;
 
 
-	std::string name() const;
-	std::string symbolName() const override {
+	auto name() const -> std::string override;
+	auto symbolName() const -> std::string override {
 		return "Method";
 	}
-	std::size_t size() const override {
+
+	auto size() const -> std::size_t override {
 		return sizeof(void*) * 2; // self reference + method pointer
 	}
-	bool isArray() const override {
+
+	auto isArray() const -> bool override {
 		return false;
 	}
+
 	auto decay() const -> InnerType override { return nullptr; }
 };
 

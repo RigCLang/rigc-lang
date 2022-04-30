@@ -23,24 +23,31 @@ struct ArrayType
 
 	std::vector<TemplateParameter> templateParams;
 
-	std::string name() const override {
+	auto name() const -> std::string override {
 		return fmt::format("StaticArray<{}, {}>", inner->name(), count);
 	}
-	std::string symbolName() const override {
+
+	auto symbolName() const -> std::string override 
+	{
 		return "StaticArray";
 	}
-	std::size_t size() const override {
+
+	auto size() const -> std::size_t override 
+	{
 		return inner->size() * count;
 	}
-	bool isArray() const override {
+
+	auto isArray() const -> bool override 
+	{
 		return true;
 	}
-	static std::size_t hashWrapped(InnerType const& inner_, size_t count_)
+
+	static auto hashWrapped(InnerType const& inner_, size_t count_) -> std::size_t 
 	{
 		return std::hash<std::string>{}(fmt::format("StaticArray<{}, {}>", inner_->name(), count_));
 	}
 
-	void postInitialize(Instance& vm_) override;
+	auto postInitialize(Instance& vm_) -> void override;
 };
 
 

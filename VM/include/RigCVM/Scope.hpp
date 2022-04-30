@@ -17,13 +17,13 @@ struct Instance;
 using FunctionParamTypes	= std::array<DeclType, Function::MAX_PARAMS>;
 
 
-Function const* findOverload(
+auto findOverload(
 		FunctionOverloads const&	funcs_,
 		FunctionParamTypes const&	paramTypes_,
 		size_t						numArgs_,
 		bool						method = false,
 		Function::ReturnType		returnType_ = std::nullopt
-	);
+	) -> Function const*;
 
 struct Scope
 {
@@ -57,7 +57,7 @@ struct Scope
 	/// </summary>
 	static auto formatOperatorName(std::string_view opName_, Operator::Type type_) -> StaticString<char, 512>;
 
-	void addType(DeclType type_);
+	auto addType(DeclType type_) -> void;
 
 	/// <summary>
 	/// Returns a function converting type `from_` to type `to_`,

@@ -30,77 +30,78 @@ struct Instance
 	constexpr static auto StackSize			= std::size_t(2 * 1024 * 1024); // 2MB
 
 
-	int run(std::string_view moduleName_);
+	auto run(std::string_view moduleName_) -> int;
 
-	OptValue executeFunction(Function const& func);
-	OptValue executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0);
-	OptValue evaluate(rigc::ParserNode const& stmt_);
+	auto executeFunction(Function const& func) -> OptValue;
+	auto executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0) -> OptValue;
+	auto evaluate(rigc::ParserNode const& stmt_) -> OptValue;
 
 	/// <summary>Returns the "self" reference in method context.</summary>
-	Value getSelf();
+	auto getSelf() -> Value;
 
-	DeclType evaluateType(rigc::ParserNode const& typeNode_);
+	auto evaluateType(rigc::ParserNode const& typeNode_) -> DeclType;
 
-	OptValue findVariableByName(std::string_view name_);
-	IType* findType(std::string_view name_);
-	FunctionOverloads const* findFunction(std::string_view name_);
-	Value findFunctionExpr(std::string_view name_);
+	auto findVariableByName(std::string_view name_) -> OptValue;
+	auto findType(std::string_view name_) -> IType*;
+	auto findFunction(std::string_view name_) -> FunctionOverloads const*;
+	auto findFunctionExpr(std::string_view name_) -> Value;
 
-	OptValue tryConvert(Value value_, DeclType const& to_);
+	auto tryConvert(Value value_, DeclType const& to_) -> OptValue;
 
-	Value cloneValue(Value value_);
+	auto cloneValue(Value value_) -> Value;
 
 	/// Address is related to the code block memory obtained from a parser.
-	Scope& scopeOf(void const *addr_);
+	auto scopeOf(void const *addr_) -> Scope&;
 
 	/// Pushes the stack frame for specified address that is used to acquire a scope.
 	/// Address is related to the code block memory obtained from a parser.
-	Scope& pushStackFrameOf(void const* addr_);
+	auto pushStackFrameOf(void const* addr_) -> Scope&;
 
 	/// Pops current stack frame
-	void popStackFrame();
+	auto popStackFrame() -> void;
 
 	/// Returns the Universe Scope (the parent to the global scope).
-	Scope& universalScope() {
+	auto universalScope() -> Scope&
+	{
 		return *scopes[nullptr];
 	}
 
 	/// Allocates reference to a specified value.
 	/// Note: when `toValue_` is a reference itself, it will create a reference to a reference.
-	Value allocateReference(Value const& toValue_);
+	auto allocateReference(Value const& toValue_) -> Value ;
 
 	/// Allocates pointer to a specified value.
 	/// Note: `toRef_` must be a reference.
-	Value allocatePointer(Value const& toRef_);
+	auto allocatePointer(Value const& toRef_) -> Value ;
 
-	FrameBasedValue reserveOnStack(DeclType type_, bool lookBack_ = false);
+	auto reserveOnStack(DeclType type_, bool lookBack_ = false) -> FrameBasedValue ;
 
 	/// Allocates stack space required for specified `type_`, initialized with value from `sourceBytes_`,
 	/// by copying `sourceBytes_`.
-	Value allocateOnStack(DeclType type_, void const* sourceBytes_, size_t toCopy = 0);
+	auto allocateOnStack(DeclType type_, void const* sourceBytes_, size_t toCopy = 0) -> Value;
 
 	/// Allocates stack space required for specified `type_`, initialized with specified `value_`.
 	template <typename T>
-	Value allocateOnStack(DeclType type_, T const& value_)
+	auto allocateOnStack(DeclType type_, T const& value_) -> Value
 	{
 		return this->allocateOnStack(std::move(type_), reinterpret_cast<void const*>(&value_), sizeof(T));
 	}
 
 	/// Allocates stack space required for type specified by its `typeName_`, initialized with specified `value_`.
 	template <typename T>
-	Value allocateOnStack(std::string_view typeName_, T const& value_)
+	auto allocateOnStack(std::string_view typeName_, T const& value_) -> Value
 	{
-		IType* type = this->findType(typeName_);
+		auto type = this->findType(typeName_);
 		if (!type)
 			throw std::runtime_error("Unknown type " + std::string(typeName_));
 
 		return this->allocateOnStack<T>( type->shared_from_this(), value_ );
 	}
 
-	Module* parseModule(std::string_view name_);
+	auto parseModule(std::string_view name_) -> Module*;
 
-	void evaluateModule(Module& module_);
-	fs::path findModulePath(std::string_view name_) const;
+	auto evaluateModule(Module& module_) -> void;
+	auto findModulePath(std::string_view name_) const -> fs::path;
 
 	std::set<fs::path>						loadedModules;
 	std::vector< std::shared_ptr<Module> >	modules;

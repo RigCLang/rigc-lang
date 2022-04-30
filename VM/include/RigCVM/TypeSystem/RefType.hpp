@@ -13,19 +13,23 @@ struct RefType
 {
 	using WrapperType::WrapperType;
 
-	std::string name() const override {
+	auto name() const -> std::string override {
 		return fmt::format("Ref<{}>", inner->name());
 	}
-	std::string symbolName() const override {
+
+	auto symbolName() const -> std::string override {
 		return "Ref";
 	}
-	std::size_t size() const override {
+
+	auto size() const -> std::size_t override {
 		return sizeof(void*);
 	}
-	bool isArray() const override {
+
+	auto isArray() const -> bool override {
 		return inner->isArray();
 	}
-	static std::size_t hashWrapped(InnerType const& inner_)
+
+	static auto hashWrapped(InnerType const& inner_) -> std::size_t
 	{
 		return std::hash<std::string>{}(fmt::format("Ref<{}>", inner_->name()));
 	}
@@ -42,28 +46,28 @@ struct AddrType
 
 	}
 
-	std::string name() const override {
+	auto name() const -> std::string override {
 		return fmt::format("Addr<{}>", inner->name());
 	}
 
-	std::string symbolName() const override {
+	auto symbolName() const -> std::string override {
 		return "Addr";
 	}
 
-	std::size_t size() const override {
+	auto size() const -> std::size_t override {
 		return sizeof(void*);
 	}
 
-	bool isArray() const override {
+	auto isArray() const -> bool override {
 		return false;
 	}
 
-	static std::size_t hashWrapped(InnerType const& inner_)
+	static auto hashWrapped(InnerType const& inner_) -> std::size_t
 	{
 		return std::hash<std::string>{}(fmt::format("Addr<{}>", inner_->name()));
 	}
 
-	void postInitialize(Instance& vm_) override;
+	auto postInitialize(Instance& vm_) -> void override;
 };
 
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace rigc::vm
 {
 
@@ -10,7 +12,7 @@ struct StackFrame
 {
 	Stack const*	stack;
 	Scope*			scope;
-	size_t			initialStackSize = 0;
+	std::size_t			initialStackSize = 0;
 };
 
 

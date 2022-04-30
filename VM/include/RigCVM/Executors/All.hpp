@@ -23,7 +23,7 @@ struct StackFramePusher
 };
 
 #define DECLARE_EXECUTOR(Name) \
-	OptValue Name(Instance &vm_, rigc::ParserNode const& stmt_)
+	auto Name(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue;
 
 DECLARE_EXECUTOR(executeImportStatement);
 DECLARE_EXECUTOR(executeCodeBlock);

@@ -18,11 +18,11 @@ struct ValueBase
 {
 	DeclType	type;
 
-	DeclType const& getType() const {
+	auto getType() const -> DeclType const& {
 		return type;
 	}
 
-	std::string typeName() const {
+	auto typeName() const -> std::string {
 		auto decayed = type->decay();
 		return (decayed ? decayed.get() : type.get())->name();
 	}
@@ -44,21 +44,21 @@ struct Value
 	}
 
 	// Temp:
-	void* blob() const {
+	auto blob() const -> void* {
 		return data;
 	}
 
-	Value member(DataMember const& dm_) const;
+	auto member(DataMember const& dm_) const-> Value;
 
-	Value member(size_t offset_, DeclType type_) const;
+	auto member(size_t offset_, DeclType type_) const-> Value;
 
-	Value safeRemoveRef() const;
-	Value safeRemovePtr() const;
-	Value removeRef() const;
-	Value removePtr() const;
+	auto safeRemoveRef() const-> Value;
+	auto safeRemovePtr() const-> Value;
+	auto removeRef() const-> Value;
+	auto removePtr() const-> Value;
 };
 
-std::string dump(Instance& vm_, Value const& value_);
+auto dump(Instance& vm_, Value const& value_)-> std::string;
 
 struct CompileTimeValue
 	: ValueBase
@@ -66,19 +66,24 @@ struct CompileTimeValue
 	std::vector<std::byte> buffer;
 
 	template <typename T>
-	T& view() {
+	T& view() 
+	{
 		return *reinterpret_cast<T*>(this->blob());
 	}
 
 	template <typename T>
-	T const& view() const {
+	T const& view() const 
+	{
 		return *reinterpret_cast<T const*>(this->blob());
 	}
 
-	void* blob() {
+	auto blob() -> void* 
+	{
 		return reinterpret_cast<void*>(buffer.data());
 	}
-	void const* blob() const {
+
+	auto blob() const -> void const* 
+	{
 		return reinterpret_cast<void const*>(buffer.data());
 	}
 };
@@ -89,22 +94,24 @@ struct FrameBasedValue
 	size_t stackOffset;
 
 	template <typename T>
-	T& view(StackFrame const& frame_) {
+	T& view(StackFrame const& frame_) 
+	{
 		return *reinterpret_cast<T*>(this->blob(frame_));
 	}
 
 	template <typename T>
-	T const& view(StackFrame const& frame_) const {
+	T const& view(StackFrame const& frame_) const 
+	{
 		return *reinterpret_cast<T*>(this->blob(frame_));
 	}
 
 	// Temp:
-	void const* blob(StackFrame const& frame_) const
+	auto blob(StackFrame const& frame_) const -> void const* 
 	{
 		return static_cast<void const*>(frame_.stack->data() + frame_.initialStackSize + stackOffset);
 	}
 
-	Value toAbsolute(StackFrame const& frame_) const
+	auto toAbsolute(StackFrame const& frame_) const -> Value
 	{
 		return Value{ type, const_cast<void*>(this->blob(frame_)) };
 	}
@@ -112,12 +119,11 @@ struct FrameBasedValue
 
 using OptValue = std::optional<Value>;
 
-
 using ConversionFunc = OptValue(Instance &, Value const&);
 
 template <typename T>
-void addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_);
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_) -> void;
 template <typename T>
-void addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_);
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_) -> void;
 
 }

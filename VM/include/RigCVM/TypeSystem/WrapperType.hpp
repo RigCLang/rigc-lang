@@ -16,7 +16,7 @@ struct WrapperType
 	{}
 
 	InnerType inner;
-	InnerType decay() const override {
+	auto decay() const -> InnerType override {
 		return inner->decay();
 	}
 };

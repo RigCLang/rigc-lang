@@ -54,15 +54,18 @@ struct Function
 	{
 	}
 
-	RuntimeFn runtimeImpl() const {
+	auto runtimeImpl() const  -> RuntimeFn
+	{
 		return std::get<RuntimeFn>(impl);
 	}
 
-	RawFn rawImpl() const {
+	auto rawImpl() const  -> RawFn
+	{
 		return std::get<RawFn>(impl);
 	}
 
-	void const* addr() const {
+	auto addr() const -> void const* 
+	{
 		if (std::holds_alternative<RuntimeFn>(impl)) {
 			return runtimeImpl();
 		} else {
@@ -70,11 +73,13 @@ struct Function
 		}
 	}
 
-	bool isRuntime() const {
+	auto isRuntime() const  -> bool
+	{
 		return std::holds_alternative<RuntimeFn>(impl);
 	}
 
-	bool isRaw() const {
+	auto isRaw() const  -> bool
+	{
 		return std::holds_alternative<RawFn>(impl);
 	}
 };

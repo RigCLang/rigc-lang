@@ -84,13 +84,13 @@ struct IType
 		return dynamic_cast<T*>(this);
 	}
 
-	void addMethod(std::string_view name_, Function* func_);
+	auto addMethod(std::string_view name_, Function* func_) -> void;
 
 
-	virtual void postInitialize(Instance& vm_) {}
+	virtual auto postInitialize(Instance& vm_) -> void {}
 };
 
 template <typename T>
-IType* CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_ = sizeof(T));
+auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_ = sizeof(T)) -> IType*;
 
 }

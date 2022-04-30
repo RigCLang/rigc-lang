@@ -25,22 +25,20 @@ public:
 	rigc::ParserNode const* declaration = nullptr;
 
 
-	std::string name() const override
+	auto name() const -> std::string override
 	{
 		return std::string(_name);
 	}
 
-	auto size() const -> size_t {
+	auto size() const -> size_t override {
 		return _size;
 	}
 
-	auto decay() const -> InnerType {
+	auto decay() const -> InnerType override {
 		return const_cast<ClassType*>(this)->shared_from_this();
 	}
 
-
-
-	inline void add(DataMember mem)
+	inline auto add(DataMember mem) -> void
 	{
 		mem.offset = _size;
 		_size += mem.type->size();
@@ -52,7 +50,7 @@ public:
 	auto constructors() const -> FunctionOverloads const*;
 	auto defaultConstructor() const -> Function*;
 
-	void parse(rigc::ParserNode const& node_);
+	auto parse(rigc::ParserNode const& node_) -> void;
 };
 
 }

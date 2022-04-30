@@ -45,7 +45,7 @@ public:
 
 
 	template <typename T>
-	static Kind fromCppType()
+	static auto fromCppType() -> Kind
 	{
 		#define HANDLE_TYPE(CppName, EnumValue) if constexpr (std::is_same_v<T, CppName>) return EnumValue;
 		#define ELSE_HANDLE_TYPE(CppName, EnumValue) else if constexpr (std::is_same_v<T, CppName>) return EnumValue;
@@ -68,22 +68,22 @@ public:
 		#undef ELSE_HANDLE_TYPE
 	}
 
-	std::string_view toString() const
+	auto toString() const -> std::string_view
 	{
 		return Names[static_cast<int>(kind)];
 	}
 
-	std::size_t size() const override
+	auto size() const -> std::size_t override
 	{
 		return Sizes[static_cast<int>(kind)];
 	}
 
-	std::string name() const override
+	auto name() const -> std::string override
 	{
 		return std::string(this->toString());
 	}
 
-	InnerType decay() const override
+	auto decay() const -> InnerType override
 	{
 		return const_cast<CoreType*>(this)->shared_from_this();
 	}

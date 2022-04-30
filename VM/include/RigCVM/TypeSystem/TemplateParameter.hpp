@@ -24,25 +24,27 @@ struct TemplateParameter
 		Opt<CompileTimeValue>	defaultValue;
 	};
 
-	static TemplateParameter value(std::string name_, DeclType type, CompileTimeValue value={})
+	static auto value(std::string name_, DeclType type, CompileTimeValue value={}) -> TemplateParameter
 	{
 		TemplateParameter param{std::move(name_)};
 		param.variant = Value{std::move(type), std::move(value)};
 		return param;
 	}
 
-	static TemplateParameter type(std::string name_, DeclType default_ = nullptr)
+	static auto type(std::string name_, DeclType default_ = nullptr) -> TemplateParameter
 	{
 		TemplateParameter param{std::move(name_)};
 		param.variant = Type{std::move(default_)};
 		return param;
 	}
 
-	bool isType() const { return variant.is<Type>(); }
-	bool isValue() const { return variant.is<Value>(); }
-	DeclType getDefaultType() const {
+	auto isType() const -> bool { return variant.is<Type>(); }
+	auto isValue() const -> bool { return variant.is<Value>(); }
+	auto getDefaultType() const -> DeclType 
+	{
 		return isType() ? variant.as<Type>().defaultType : nullptr;
 	}
+
 private:
 	TemplateParameter(std::string name_)
 		: name(std::move(name_))

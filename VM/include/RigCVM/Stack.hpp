@@ -1,5 +1,7 @@
 #pragma once
 
+#include RIGCVM_PCH
+
 #include <RigCVM/StackFrame.hpp>
 
 namespace rigc::vm
@@ -17,14 +19,17 @@ struct Stack
 	// be 100% sure that it won't reallocate
 	size_t		size = 0;
 
-	char* data() {
-		return container.data();
-	}
-	char const* data() const {
+	auto data() -> char*
+	{
 		return container.data();
 	}
 
-	StackFrame& pushFrame()
+	auto data() const -> char const*
+	{
+		return container.data();
+	}
+
+	auto pushFrame() -> StackFrame&
 	{
 		StackFrame frame{this};
 		frame.initialStackSize = this->size;
@@ -32,7 +37,7 @@ struct Stack
 		return frames.back();
 	}
 
-	void popFrame()
+	auto popFrame() -> void
 	{
 		size = frames.back().initialStackSize;
 		frames.pop_back();

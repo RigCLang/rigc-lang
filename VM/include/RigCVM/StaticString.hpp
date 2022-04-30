@@ -13,10 +13,10 @@ struct StaticString
 
 	template <size_t OtherLen>
 	constexpr
-	StaticString& operator+=(StaticString<T, OtherLen> const& other_)
+	auto operator+=(StaticString<T, OtherLen> const& other_) -> StaticString&
 	{
 		size_t toAdd = std::min(OtherLen, MaxLength - numChars);
-
+		
 		for(size_t i = 0; i < toAdd; ++i)
 			(*this)[numChars + i] = other_[i];
 		numChars += toAdd;
@@ -26,7 +26,7 @@ struct StaticString
 
 	template <size_t OtherLen>
 	constexpr
-	StaticString& operator+=(T const (&other_)[OtherLen])
+	auto operator+=(T const (&other_)[OtherLen]) -> StaticString&
 	{
 		size_t actualLength = OtherLen - 1;
 		size_t toAdd = std::min(actualLength, MaxLength - numChars);
@@ -39,7 +39,7 @@ struct StaticString
 	}
 
 	constexpr
-	StaticString& operator+=(std::string_view const& other_)
+	auto operator+=(std::string_view const& other_) -> StaticString&
 	{
 		size_t toAdd = std::min(other_.length(), MaxLength - numChars);
 

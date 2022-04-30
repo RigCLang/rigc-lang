@@ -29,13 +29,13 @@ public:
 
 private:
 
-	void evaluateAction(Action &action_, size_t actionIndex_);
+	auto evaluateAction(Action &action_, size_t actionIndex_) -> void;
 
-	OptValue evalSingleAction(Action& lhs_);
+	auto evalSingleAction(Action& lhs_) -> OptValue;
 
-	OptValue evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_);
-	Value evalPrefixOperator(std::string_view op_, Action& rhs_);
-	OptValue evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_);
+	auto evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> OptValue;
+	auto evalPrefixOperator(std::string_view op_, Action& rhs_) -> Value;
+	auto evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> OptValue;
 
 	std::vector<Action> actions;
 };

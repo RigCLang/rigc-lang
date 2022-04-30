@@ -14,7 +14,7 @@ struct ExtendedVariant
 	using BaseType::BaseType;
 
 	template <typename T>
-	bool is() const {
+	auto is() const  -> bool{
 		return std::holds_alternative<T>(*this);
 	}
 
