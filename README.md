@@ -8,6 +8,25 @@ A prototype of **RigC** programming language - the better and simpler C++ langua
 
 ![Hello World Demo](res/example-imgs/hello-world.png)
 
+
+## ⏳ Progress
+
+We're working hard to publish the first usable alpha release.
+Consider helping us by contributing.
+
+- [ ] Basic language constructs
+  - [x] Variables 
+  - [x] Functions
+  - [x] Loops
+  - [x] Classes
+  - [x] Modules
+  - [ ] Operator overloading
+  - [ ] Conversions
+- [ ] Implement advanced language constructs
+  - [ ] Basic templates
+  - [ ] Basic concepts
+- [ ] First public alpha release
+
 ## 🚀 Getting started
 
 This language is pre-alpha version. You can download the source code and compile it using [pacc](https://github.com/PoetaKodu/pacc) package manager with:
