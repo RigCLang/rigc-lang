@@ -211,13 +211,12 @@ OptValue Instance::executeFunction(Function const& func_, Function::Args& args_,
 		// Runtime function:
 		auto const& fn = *std::get<Function::RuntimeFn>(func_.impl);
 
-		if (fn.is_type<rigc::FunctionDefinition>()) {
+		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>())
+		{
 			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
-		else if (fn.is_type<rigc::MethodDef>()) {
-			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
-		}
-		else if(fn.is_type<rigc::ClosureDefinition>()) {
+		else if(fn.is_type<rigc::ClosureDefinition>())
+		{
 			auto body = findElem<rigc::CodeBlock>(fn);
 			if (!body)
 				body = findElem<rigc::Expression>(fn);
