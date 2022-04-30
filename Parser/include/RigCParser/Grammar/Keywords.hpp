@@ -26,6 +26,8 @@ DEFINE_KEYWORD(True,		't','r','u','e');
 DEFINE_KEYWORD(False,		'f','a','l','s','e');
 DEFINE_KEYWORD(Class,		'c','l','a','s','s');
 DEFINE_KEYWORD(Override,	'o','v','e','r','r','i','d','e');
+DEFINE_KEYWORD(Template,	't','e','m','p','l','a','t','e');
+DEFINE_KEYWORD(TemplateTypename,	't','y','p','e','_','n','a','m','e');
 
 }
 
