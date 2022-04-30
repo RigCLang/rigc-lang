@@ -2,6 +2,7 @@
 
 #include <RigCVM/Executors/All.hpp>
 #include <RigCVM/Executors/ExpressionExecutor.hpp>
+#include <RigCVM/Executors/Templates.hpp>
 #include <RigCVM/VM.hpp>
 
 #include <RigCVM/TypeSystem/ArrayType.hpp>
@@ -195,6 +196,11 @@ OptValue evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_
 ////////////////////////////////////////
 OptValue evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
+	// auto const templateParamList = getTemplateParamList(expr_); 
+	// std::pair<std::string, TypeConstraint>, string is a name,
+	// TypeConstraint is, for now, a struct with just a name (std::string)
+	// TODO: actually do something with the template parameter list
+
 	auto type = std::make_shared<ClassType>();
 	type->parse(expr_);
 	vm_.currentScope->addType(type);

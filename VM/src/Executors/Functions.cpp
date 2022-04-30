@@ -1,6 +1,7 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/Executors/All.hpp>
+#include <RigCVM/Executors/Templates.hpp>
 #include <RigCVM/VM.hpp>
 
 #include <RigCVM/TypeSystem/RefType.hpp>
@@ -22,12 +23,18 @@ void evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, 
 	}
 }
 
+
 ////////////////////////////////////////
 OptValue evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_)
 {
 	auto& scope = *vm_.currentScope;
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
+
+	// auto const templateParamList = getTemplateParamList(expr_); 
+	// std::pair<std::string, TypeConstraint>, string is a name,
+	// TypeConstraint is, for now, a struct with just a name (std::string)
+	// TODO: actually do something with the template parameter list
 
 	bool returnsRef = false;
 	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
