@@ -53,7 +53,7 @@ struct FunctionParams
 struct FunctionDefinition
 	: p::seq<
 			p::opt<ExportKeyword, ws>,
-			p::opt<TemplatePreamble>,
+			p::opt<TemplateDefPreamble, ws>,
 			p::if_must<
 					FuncKeyword, ws, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock
 				>

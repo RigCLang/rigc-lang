@@ -7,25 +7,31 @@
 
 namespace rigc {
 
-struct TemplateParamKind
+struct TemplateDefParamKind
 	: p::sor<TemplateTypenameKeyword, Name>
 {
 };
 
-struct TemplateParamListElem
+struct TemplateDefParamListElem
 	: 
-	p::seq<WsWrapped<Name, WsWrapped<p::one<':'>>, TemplateParamKind>>
+	p::seq<WsWrapped<Name, WsWrapped<p::one<':'>>, TemplateDefParamKind>>
 // name is a type constraint here, either a type itself or a genuine constraint, C++ concept like
 {
 };
 
-struct TemplatePreamble
+struct TemplateDefParamList
+	:
+	p::list_tail<TemplateDefParamListElem, p::one<','>>
+{
+};
+
+struct TemplateDefPreamble
 	:
 	p::if_must<
-		TemplateKeyword,
-		WsWrapped<p::one<'<'>>,
-			p::list_tail<TemplateParamListElem, p::one<','>>,
-		WsWrapped<p::one<'>'>>
+		TemplateKeyword, OptWs,
+		p::one<'<'>,
+			WsWrapped<TemplateDefParamList>,
+		p::one<'>'>
 	>
 {
 };
