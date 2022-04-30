@@ -3,6 +3,7 @@
 #include RIGCPARSER_PCH
 
 #include <RigCParser/Grammar/Parts.hpp>
+#include <RigCParser/Grammar/Templates.hpp>
 
 namespace rigc
 {
@@ -49,23 +50,10 @@ struct FunctionParams
 };
 
 
-struct TemplateParamListElem
-	: p::seq<WsWrapped<Name, WsWrapped<p::one<':'>>, p::sor<TemplateTypenameKeyword, Name>>>
-// name is a type constraint here, either a type itself or a genuine constraint, C++ concept like
-{
-};
-
 struct FunctionDefinition
 	: p::seq<
 			p::opt<ExportKeyword, ws>,
-			p::opt<
-				p::if_must<
-					TemplateKeyword,
-					WsWrapped<p::one<'<'>>,
-						p::list_tail<TemplateParamListElem, p::one<','>>,
-					WsWrapped<p::one<'>'>>
-				>
-			>,
+			p::opt<TemplatePreamble>,
 			p::if_must<
 					FuncKeyword, ws, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock
 				>

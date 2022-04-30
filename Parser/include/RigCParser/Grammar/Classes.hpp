@@ -3,6 +3,7 @@
 #include RIGCPARSER_PCH
 
 #include <RigCParser/Grammar/Functions.hpp>
+#include <RigCParser/Grammar/Templates.hpp>
 
 namespace rigc
 {
@@ -33,7 +34,10 @@ struct ClassCodeBlock
 };
 
 struct ClassDefinition
-	: p::seq< p::opt<ExportKeyword, ws>, p::if_must< ClassKeyword, ws, Name, OptWs, ClassCodeBlock > >
+	: p::seq<
+			p::opt<ExportKeyword, ws>, 
+			p::opt<TemplatePreamble>,
+			p::if_must< ClassKeyword, ws, Name, OptWs, ClassCodeBlock > >
 {
 };
 
