@@ -42,4 +42,30 @@ struct ClassDefinition
 };
 
 
+struct EnumCodeBlock
+	: p::seq< p::one<'{'>, OptWs, p::star<DataMemberDef, OptWs>, p::one<'}'> >
+{
+};
+
+struct EnumDefinition
+	: p::seq<
+			p::opt<ExportKeyword, Ws>, 
+			p::opt<TemplateDefPreamble, Ws>,
+			p::if_must< EnumKeyword, Ws, Name, OptWs, EnumCodeBlock > >
+{
+};
+
+struct UnionCodeBlock
+	: p::seq< p::one<'{'>, OptWs, p::star<DataMemberDef, OptWs>, p::one<'}'> >
+{
+};
+
+struct UnionDefinition
+	: p::seq<
+			p::opt<ExportKeyword, Ws>, 
+			p::opt<TemplateDefPreamble, Ws>,
+			p::if_must< UnionKeyword, Ws, Name, OptWs, UnionCodeBlock > >
+{
+};
+
 }

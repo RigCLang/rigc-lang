@@ -12,7 +12,7 @@
 			"includeFolders": { "public": "Parser/include" },
 			"dependencies": { "public": [ "pegtl@3.2.5" ] },
 			"defines": {
-				"interface": "RIGCPARSER_PCH=<RigCParser/RigCParserPCH.hpp>"
+				"interface": "RIGCPARSER_PCH=\"RigCParser/RigCParserPCH.hpp\""
 			},
 			"pch": {
 				"header": "Parser/include/RigCParser/RigCParserPCH.hpp",

@@ -16,7 +16,7 @@ namespace rigc
 
 struct GlobalNS
 	:
-	p::star< p::sor<ImportStatement, ClassDefinition, FunctionDefinition, Ws> >
+	p::star< p::sor<ImportStatement, ClassDefinition, FunctionDefinition, UnionDefinition, EnumDefinition, Ws> >
 {
 };
 
@@ -32,6 +32,10 @@ using Selector = p::parse_tree::selector< Rule,
 			PackageImportFullName,
 			ClassDefinition,
 			ClassCodeBlock,
+			UnionDefinition,
+			UnionCodeBlock,
+			EnumDefinition,
+			EnumCodeBlock,
 			MethodDef,
 			DataMemberDef,
 			ExplicitType,

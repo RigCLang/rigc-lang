@@ -25,6 +25,8 @@ DEFINE_KEYWORD(Ret,			"ret");
 DEFINE_KEYWORD(True,		"true");
 DEFINE_KEYWORD(False,		"false");
 DEFINE_KEYWORD(Class,		"class");
+DEFINE_KEYWORD(Union,		"union");
+DEFINE_KEYWORD(Enum,		"enum");
 DEFINE_KEYWORD(Override,	"override");
 DEFINE_KEYWORD(Template,	"template");
 DEFINE_KEYWORD(TemplateTypename,	"type_name");
