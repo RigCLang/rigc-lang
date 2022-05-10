@@ -6,13 +6,13 @@
 namespace rigc::vm
 {
 
-///////////////////////////////////////////
-void ClassType::parse(rigc::ParserNode const& node_)
-{
-	declaration = &node_;
+// ///////////////////////////////////////////
+// void ClassType::parse(rigc::ParserNode const& node_)
+// {
+// 	declaration = &node_;
 
-	_name = findElem<rigc::Name>(node_)->string_view();
-}
+// 	_name = findElem<rigc::Name>(node_)->string_view();
+// }
 
 ///////////////////////////////////////////
 auto ClassType::constructors() const

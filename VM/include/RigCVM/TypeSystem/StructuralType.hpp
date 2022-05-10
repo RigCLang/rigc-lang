@@ -1,0 +1,52 @@
+#pragma once
+
+#include RIGCVM_PCH
+
+#include <RigCVM/TypeSystem/Shared/DataMember.hpp>
+#include <RigCVM/TypeSystem/IType.hpp>
+#include <RigCVM/Scope.hpp>
+#include <RigCVM/VM.hpp>
+
+namespace rigc::vm
+{
+
+class StructuralType
+
+	:
+	public IType
+{
+	std::string_view	_name;
+	std::size_t			_size = 0;
+public:
+	rigc::ParserNode const* declaration = nullptr;
+
+	auto name() const -> std::string override
+	{
+		return std::string(_name);
+	}
+
+	auto size() const -> size_t override {
+		return _size;
+	}
+
+	auto decay() const -> InnerType override {
+		return const_cast<StructuralType*>(this)->shared_from_this();
+	}
+
+	auto add(DataMember mem) -> void
+	{
+		mem.offset = _size;
+		_size += mem.type->size();
+		dataMembers.emplace_back(std::move(mem));
+	}
+
+	Vec< DataMember > dataMembers;
+
+	auto parse(rigc::ParserNode const& node_) -> void {
+		declaration = &node_;
+
+		_name = findElem<rigc::Name>(node_)->string_view();
+	}
+};
+
+}

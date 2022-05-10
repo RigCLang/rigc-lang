@@ -3,21 +3,18 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/TypeSystem/Shared/DataMember.hpp>
-#include <RigCVM/TypeSystem/IType.hpp>
 #include <RigCVM/TypeSystem/StructuralType.hpp>
 #include <RigCVM/Scope.hpp>
+#include <RigCVM/VM.hpp>
 
 namespace rigc::vm
 {
 
-class ClassType
+class UnionType
 
 	:
 	public StructuralType
 {
-public:
-	auto constructors() const -> FunctionOverloads const*;
-	auto defaultConstructor() const -> Function*;
 };
 
 }
