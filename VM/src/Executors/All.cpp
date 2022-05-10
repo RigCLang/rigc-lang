@@ -8,6 +8,8 @@
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/ClassType.hpp>
+#include <RigCVM/TypeSystem/UnionType.hpp>
+#include <RigCVM/TypeSystem/EnumType.hpp>
 
 namespace rigc::vm
 {
@@ -37,6 +39,8 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(InitializerValue,		evaluateExpression),
 	MAKE_EXECUTOR(FunctionArg,			evaluateExpression),
 	MAKE_EXECUTOR(ClassDefinition,		evaluateClassDefinition),
+	MAKE_EXECUTOR(UnionDefinition,		executeUnionDefinition),
+	MAKE_EXECUTOR(EnumDefinition,		executeEnumDefinition),
 	MAKE_EXECUTOR(MethodDef,			evaluateMethodDefinition),
 	MAKE_EXECUTOR(DataMemberDef,		evaluateDataMemberDefinition),
 };
@@ -191,6 +195,60 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	}
 
 	return value;
+}
+
+////////////////////////////////////////
+auto executeUnionDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	// auto const templateParamList = getTemplateParamList(expr_); 
+	// std::pair<std::string, TypeConstraint>, string is a name,
+	// TypeConstraint is, for now, a struct with just a name (std::string)
+	// TODO: actually do something with the template parameter list
+
+	auto type = std::make_shared<UnionType>();
+	type->parse(expr_);
+	vm_.currentScope->addType(type);
+
+	auto prevClass = vm_.currentClass;
+	vm_.currentClass = type.get();
+
+	// Evaluate the class body
+	auto body = findElem<rigc::UnionCodeBlock>(expr_, false);
+	for (auto const& child : body->children)
+	{
+		vm_.evaluate(*child);
+	}
+
+	vm_.currentClass = prevClass;
+
+	return {};
+}
+
+////////////////////////////////////////
+auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	// auto const templateParamList = getTemplateParamList(expr_); 
+	// std::pair<std::string, TypeConstraint>, string is a name,
+	// TypeConstraint is, for now, a struct with just a name (std::string)
+	// TODO: actually do something with the template parameter list
+
+	auto type = std::make_shared<EnumType>();
+	type->parse(expr_);
+	vm_.currentScope->addType(type);
+
+	auto prevClass = vm_.currentClass;
+	vm_.currentClass = type.get();
+
+	// Evaluate the class body
+	auto body = findElem<rigc::EnumCodeBlock>(expr_, false);
+	for (auto const& child : body->children)
+	{
+		vm_.evaluate(*child);
+	}
+
+	vm_.currentClass = prevClass;
+
+	return {};
 }
 
 ////////////////////////////////////////

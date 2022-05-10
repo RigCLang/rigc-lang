@@ -13,6 +13,7 @@
 namespace rigc::vm
 {
 class ClassType;
+class StructuralType;
 
 struct EntryPoint
 {
@@ -119,7 +120,7 @@ struct Instance
 	rigc::ParserNode const*	currentFunc	= nullptr;
 
 	/// Currently parsed class type.
-	ClassType*			currentClass	= nullptr;
+	StructuralType*			currentClass	= nullptr;
 
 	/// Currently executed method's class.
 	ClassType const*	classContext	= nullptr;

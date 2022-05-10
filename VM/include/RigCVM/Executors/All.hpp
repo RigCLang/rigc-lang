@@ -46,6 +46,9 @@ DECLARE_EXECUTOR(evaluateCharLiteral);
 DECLARE_EXECUTOR(evaluateArrayLiteral);
 DECLARE_EXECUTOR(evaluateArrayElement);
 
+DECLARE_EXECUTOR(executeUnionDefinition);
+DECLARE_EXECUTOR(executeEnumDefinition);
+
 DECLARE_EXECUTOR(evaluateClassDefinition);
 DECLARE_EXECUTOR(evaluateMethodDefinition);
 DECLARE_EXECUTOR(evaluateDataMemberDefinition);
