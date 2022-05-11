@@ -3,6 +3,7 @@
 #include <RigCVM/Scope.hpp>
 #include <RigCVM/VM.hpp>
 
+#include <RigCVM/Functions.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 
@@ -170,11 +171,27 @@ auto Scope::findType(std::string_view typeName_) const -> IType const*
 	if (it != typeAliases.end())
 		return it->second;
 
+	// Find within function instantiation
+	if (func)
+	{
+		auto& impl = func->runtimeImpl();
+		if (impl.templateArguments)
+		{
+			auto it = impl.templateArguments->find(typeName_);
+			if (it != impl.templateArguments->end())
+			{
+				auto& arg = it->second;
+				if (arg.is<DeclType>())
+					return arg.as<DeclType>().get();
+			}
+		}
+	}
+
 	return nullptr;
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::findOperator(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const* 
+auto Scope::findOperator(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const*
 {
 	auto fmtName = formatOperatorName(opName_, type_);
 	return this->findFunction(
@@ -193,7 +210,7 @@ auto Scope::registerType(Instance& vm_, std::string_view name_, IType& type_) ->
 
 
 ///////////////////////////////////////////////////////////////
-auto Scope::addType(DeclType type_) -> void
+auto Scope::addType(MutDeclType type_) -> void
 {
 	types.add(type_);
 	type_->postInitialize(*vm);

@@ -11,9 +11,12 @@ struct Instance;
 struct Scope;
 struct Function;
 
-using AnyType	= std::any;
-using InnerType	= std::shared_ptr<struct IType>;
-using DeclType	= InnerType;
+struct IType;
+using AnyType		= std::any;
+using InnerType		= std::shared_ptr<const IType>;
+using MutInnerType	= std::shared_ptr<IType>;
+using DeclType		= InnerType;
+using MutDeclType	= MutInnerType;
 
 
 /// <summary>

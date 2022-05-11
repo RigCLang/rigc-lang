@@ -38,7 +38,7 @@ struct Scope
 
 	// Whether the scope belongs to a function
 	// (contains parameters and local variables)
-	bool func = false;
+	Function const* func = nullptr;
 
 	Scope* parent = nullptr;
 
@@ -57,7 +57,7 @@ struct Scope
 	/// </summary>
 	static auto formatOperatorName(std::string_view opName_, Operator::Type type_) -> StaticString<char, 512>;
 
-	auto addType(DeclType type_) -> void;
+	auto addType(MutDeclType type_) -> void;
 
 	/// <summary>
 	/// Returns a function converting type `from_` to type `to_`,

@@ -165,9 +165,8 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 	if (func_.outerType && func_.outerType->is<ClassType>())
 		classContext = func_.outerType->as<ClassType>();
 
-	bool rawFn = std::holds_alternative<Function::RawFn>(func_.impl);
 	// Raw function:
-	if (rawFn)
+	if (func_.isRaw())
 	{
 		// Process parameters (conversions)
 		for (size_t i = 0; i < func_.paramCount; ++i)
@@ -178,15 +177,16 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 				args_[i] = args_[i].removeRef();
 		}
 
-		auto const& fn = std::get<Function::RawFn>(func_.impl);
+		auto const& fn = func_.rawImpl();
 		retVal = fn(*this, args_, argsCount_);
 	}
 	else
 	{
-		size_t prevStackFrames = stack.frames.size();
-		Scope& fnScope = this->pushStackFrameOf(func_.addr());
-		StackFrame& frame = stack.frames.back();
-		fnScope.func = true;
+		auto prevStackFrames	= stack.frames.size();
+		auto& fnScope			= this->pushStackFrameOf(func_.addr());
+		auto& frame				= stack.frames.back();
+
+		fnScope.func = &func_;
 
 		// Process parameters (conversions)
 		for (size_t i = 0; i < func_.paramCount; ++i)
@@ -209,20 +209,21 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 			}
 		}
 		// Runtime function:
-		auto const& fn = *std::get<Function::RuntimeFn>(func_.impl);
+		auto const& fn = *func_.runtimeImpl().node;
 
 		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>())
 		{
 			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
-		else if(fn.is_type<rigc::ClosureDefinition>())
-		{
-			auto body = findElem<rigc::CodeBlock>(fn);
-			if (!body)
-				body = findElem<rigc::Expression>(fn);
+		// TODO: support closures
+		// else if(fn.is_type<rigc::ClosureDefinition>())
+		// {
+		// 	auto body = findElem<rigc::CodeBlock>(fn);
+		// 	if (!body)
+		// 		body = findElem<rigc::Expression>(fn);
 
-			retVal = this->evaluate( *body );
-		}
+		// 	retVal = this->evaluate( *body );
+		// }
 
 		while (stack.frames.size() > prevStackFrames)
 			this->popStackFrame();
@@ -385,13 +386,16 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 
 
 //////////////////////////////////////////
-auto Instance::findType(std::string_view name_) -> IType*
+auto Instance::findType(std::string_view name_) -> IType const*
 {
 	auto scope = currentScope;
 	while (scope)
 	{
 		if (auto type = scope->types.find(name_))
 			return type.get();
+
+		if (auto type = scope->findType(name_))
+			return type;
 
 		scope = scope->parent;
 	}
@@ -419,7 +423,7 @@ auto Instance::findFunction(std::string_view name_) -> FunctionOverloads const*
 auto Instance::findFunctionExpr(std::string_view name_) -> Value
 {
 	FunctionOverloads const* overloads = nullptr;
-	IType* type = nullptr;
+	IType const* type = nullptr;
 
 	if (auto constructed = this->findType(name_))
 	{

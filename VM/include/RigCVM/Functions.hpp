@@ -3,12 +3,22 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/Value.hpp>
+#include <RigCVM/ExtendedVariant.hpp>
 
 namespace rigc::vm
 {
 
 struct Instance;
 class ClassType;
+
+using TemplateArgument	= ExtendedVariant<int, DeclType>;
+using TemplateArguments	= std::map<std::string, TemplateArgument, std::less<>>;
+
+struct FunctionInstance
+{
+	rigc::ParserNode const* node;
+	std::optional<TemplateArguments> templateArguments = std::nullopt;
+};
 
 struct FunctionParam
 {
@@ -22,12 +32,12 @@ struct Function
 	using Params		= std::array<FunctionParam,	MAX_PARAMS>;
 	using Args			= std::array<Value,			MAX_PARAMS>;
 
-	using RuntimeFn		= rigc::ParserNode const*;
+	using RuntimeFn		= FunctionInstance;
 	using RawFnSign		= OptValue(Instance&, Args&, size_t);
 	using RawFn			= std::function<RawFnSign>;
 	using ReturnType	= std::optional<DeclType>;
 
-	using Impl = std::variant<
+	using Impl = ExtendedVariant<
 			RuntimeFn,
 			RawFn
 		>;
@@ -54,20 +64,20 @@ struct Function
 	{
 	}
 
-	auto runtimeImpl() const  -> RuntimeFn
+	auto runtimeImpl() const -> RuntimeFn const&
 	{
-		return std::get<RuntimeFn>(impl);
+		return impl.as<RuntimeFn>();
 	}
 
-	auto rawImpl() const  -> RawFn
+	auto rawImpl() const -> RawFn
 	{
-		return std::get<RawFn>(impl);
+		return impl.as<RawFn>();
 	}
 
-	auto addr() const -> void const* 
+	auto addr() const -> void const*
 	{
-		if (std::holds_alternative<RuntimeFn>(impl)) {
-			return runtimeImpl();
+		if (impl.is<RuntimeFn>()) {
+			return runtimeImpl().node;
 		} else {
 			return rawImpl().target<RawFnSign*>();
 		}
@@ -75,12 +85,12 @@ struct Function
 
 	auto isRuntime() const  -> bool
 	{
-		return std::holds_alternative<RuntimeFn>(impl);
+		return impl.is<RuntimeFn>();
 	}
 
 	auto isRaw() const  -> bool
 	{
-		return std::holds_alternative<RawFn>(impl);
+		return impl.is<RawFn>();
 	}
 };
 

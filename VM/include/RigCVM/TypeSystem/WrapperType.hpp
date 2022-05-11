@@ -22,7 +22,7 @@ struct WrapperType
 };
 
 template <std::derived_from<WrapperType> Wrapper, typename... CtorTypes>
-inline DeclType wrap(Scope& ownerScope_, DeclType decl, CtorTypes&&... ctorArgs)
+inline MutDeclType wrap(Scope& ownerScope_, DeclType decl, CtorTypes&&... ctorArgs)
 {
 	auto hash = Wrapper::hashWrapped(decl, std::as_const(ctorArgs)...);
 

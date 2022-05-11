@@ -42,7 +42,7 @@ struct Instance
 	auto evaluateType(rigc::ParserNode const& typeNode_) -> DeclType;
 
 	auto findVariableByName(std::string_view name_) -> OptValue;
-	auto findType(std::string_view name_) -> IType*;
+	auto findType(std::string_view name_) -> IType const*;
 	auto findFunction(std::string_view name_) -> FunctionOverloads const*;
 	auto findFunctionExpr(std::string_view name_) -> Value;
 
