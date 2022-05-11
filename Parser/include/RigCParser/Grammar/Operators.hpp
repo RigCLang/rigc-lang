@@ -99,6 +99,9 @@ struct LowerOrEqOp		: p::string	<'<','='> {};
 struct TernaryFirstOp	: p::one	<'?'> {};
 struct TernarySecondOp	: p::one	<':'> {};
 
+// Scope operator
+//// Infix
+struct ScopeOp : p::two<':'>{};
 
 
 ///////////////////// Grammar ////////////////////////
@@ -156,6 +159,8 @@ struct InfixOperatorBase
 			LowerThanOp,
 
 			AssignOp,
+
+			ScopeOp,
 
 			TernaryFirstOp,
 			TernarySecondOp,

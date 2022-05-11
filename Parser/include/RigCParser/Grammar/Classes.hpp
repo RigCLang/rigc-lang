@@ -13,7 +13,7 @@ struct ExplicitType
 {};
 
 struct DataMemberDef
-	: p::seq< Name, OptWs, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, Initialization>, OptWs, p::one<';'> >
+	: p::seq< Name, OptWs, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, p::opt<Initialization>>, OptWs, p::one<';'>>
 {};
 
 struct MethodDef
