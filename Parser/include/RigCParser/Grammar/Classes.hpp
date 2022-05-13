@@ -13,7 +13,7 @@ struct ExplicitType
 {};
 
 struct DataMemberDef
-	: p::seq< Name, OptWs, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, p::opt<Initialization>>, OptWs, p::one<';'>>
+	: p::seq< Name, OptWs, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, p::opt<Initialization>>, OptWs>
 {};
 
 struct MethodDef
@@ -22,7 +22,7 @@ struct MethodDef
 
 struct MemberDef
 	: p::sor<
-		DataMemberDef,
+		p::seq<DataMemberDef, p::one<';'>>,
 		MethodDef
 	>
 {
@@ -43,20 +43,21 @@ struct ClassDefinition
 
 
 struct EnumCodeBlock
-	: p::seq< p::one<'{'>, OptWs, p::star<DataMemberDef, OptWs>, p::one<'}'> >
+	: p::seq< p::one<'{'>, OptWs, p::opt<p::list_tail<DataMemberDef, p::one<','>, Ws>>, p::one<'}'> >
 {
 };
 
+using EnumExplicitType = p::if_must<Ws, OfKeyword, Ws, Name>;
+
 struct EnumDefinition
 	: p::seq<
-			p::opt<ExportKeyword, Ws>, 
-			p::opt<TemplateDefPreamble, Ws>,
-			p::if_must< EnumKeyword, Ws, Name, OptWs, EnumCodeBlock > >
+			p::opt<ExportKeyword, Ws>,
+			p::if_must< EnumKeyword, Ws, Name, p::opt<EnumExplicitType>, OptWs, EnumCodeBlock > >
 {
 };
 
 struct UnionCodeBlock
-	: p::seq< p::one<'{'>, OptWs, p::star<DataMemberDef, OptWs>, p::one<'}'> >
+	: p::seq< p::one<'{'>, OptWs, p::star<p::seq<DataMemberDef, p::one<';'>>, OptWs>, p::one<'}'> >
 {
 };
 
