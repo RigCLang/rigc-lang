@@ -43,7 +43,7 @@ struct ClassDefinition
 
 
 struct EnumCodeBlock
-	: p::seq< p::one<'{'>, OptWs, p::opt<p::list_tail<DataMemberDef, p::one<','>, Ws>>, p::one<'}'> >
+	: p::seq< p::one<'{'>, OptWs, p::opt<p::star<p::seq<DataMemberDef, p::one<';'>>, OptWs>>, p::one<'}'> >
 {
 };
 
