@@ -16,8 +16,12 @@ class ClassType
 	public StructuralType
 {
 public:
+	Vec< DataMember > dataMembers;
+
 	auto constructors() const -> FunctionOverloads const*;
 	auto defaultConstructor() const -> Function*;
+
+	auto add(DataMember mem, ParserNode const* initExpr) -> void;
 };
 
 }

@@ -16,6 +16,7 @@ class StructuralType
 	public IType
 {
 	std::string_view	_name;
+protected:
 	std::size_t			_size = 0;
 public:
 	rigc::ParserNode const* declaration = nullptr;
@@ -32,15 +33,6 @@ public:
 	auto decay() const -> InnerType override {
 		return const_cast<StructuralType*>(this)->shared_from_this();
 	}
-
-	auto add(DataMember mem) -> void
-	{
-		mem.offset = _size;
-		_size += mem.type->size();
-		dataMembers.emplace_back(std::move(mem));
-	}
-
-	Vec< DataMember > dataMembers;
 
 	auto parse(rigc::ParserNode const& node_) -> void {
 		declaration = &node_;

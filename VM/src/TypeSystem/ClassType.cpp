@@ -14,6 +14,15 @@ namespace rigc::vm
 // 	_name = findElem<rigc::Name>(node_)->string_view();
 // }
 
+auto ClassType::add(DataMember mem, [[maybe_unused]] ParserNode const* initExpr) -> void
+{
+	// TODO: actually do something with the initExpr
+	mem.offset = _size;
+	_size += mem.type->size();
+
+	dataMembers.emplace_back(std::move(mem));
+}
+
 ///////////////////////////////////////////
 auto ClassType::constructors() const
 	-> FunctionOverloads const*

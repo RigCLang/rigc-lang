@@ -15,6 +15,11 @@ class UnionType
 	:
 	public StructuralType
 {
+	public:
+	auto add(DataMember mem, ParserNode const* initExpr) -> void {
+		// TODO: implement this
+		_size = rg::max(mem.type->size(), _size);
+	}
 };
 
 }

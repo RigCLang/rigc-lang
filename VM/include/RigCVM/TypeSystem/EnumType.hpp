@@ -15,6 +15,11 @@ class EnumType
 	:
 	public StructuralType
 {
+public:
+	DeclType underlyingType;
+	std::unordered_map<std::string, Value> fields;
+
+	auto add(DataMember mem, OptValue const& val) -> void;
 };
 
 }

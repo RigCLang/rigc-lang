@@ -227,13 +227,21 @@ auto executeUnionDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> Opt
 ////////////////////////////////////////
 auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
-	// auto const templateParamList = getTemplateParamList(expr_); 
-	// std::pair<std::string, TypeConstraint>, string is a name,
-	// TypeConstraint is, for now, a struct with just a name (std::string)
-	// TODO: actually do something with the template parameter list
 
 	auto type = std::make_shared<EnumType>();
 	type->parse(expr_);
+
+	auto const typeExpr = findNthElem<rigc::Name>(expr_, 2);
+
+	type->underlyingType = [&typeExpr, &vm_] {
+		if(!typeExpr) return vm_.findType("Int32");
+
+		auto const underlying = vm_.findType(typeExpr->string_view());
+		if(!underlying) throw std::runtime_error(fmt::format("Unknown type \"{}\" for enum.", typeExpr->string_view()));
+
+		return underlying;
+	}()->shared_from_this();
+
 	vm_.currentScope->addType(type);
 
 	auto prevClass = vm_.currentClass;
@@ -287,6 +295,19 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 	auto varName	= findElem<rigc::Name>(expr_, false)->string_view();
 	auto valueExpr	= findElem<rigc::InitializerValue>(expr_, false);
 
+	// TODO: this is a quick implementation, it should remain temporary and be remade later
+	if(auto const enumType = vm_.currentClass->as<EnumType>()) {
+		auto const type = enumType->underlyingType;
+		auto member = DataMember{ std::string(varName), std::move(type) };
+
+		if(valueExpr)
+			enumType->add(std::move(member), ExpressionExecutor(vm_, *valueExpr).evaluate());
+		else
+			enumType->add(std::move(member), std::nullopt);
+
+		return {};
+	}
+
 	// bool deduceType = (typeExpr == nullptr);
 
 	// Value value;
@@ -327,7 +348,10 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 
 	// value = vm_.cloneValue(value);
 
-	vm_.currentClass->add({ std::string(varName), std::move(type) });
+	if(auto unionType = vm_.currentClass->as<UnionType>())
+		unionType->add( DataMember{ std::string(varName), std::move(type) }, valueExpr);
+	else if(auto classType = vm_.currentClass->as<ClassType>())
+		classType->add( DataMember{ std::string(varName), std::move(type) }, valueExpr);
 
 	return {};
 }
