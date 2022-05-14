@@ -4,6 +4,7 @@
 #include <RigCVM/Executors/ExpressionExecutor.hpp>
 
 #include <RigCVM/TypeSystem/ClassType.hpp>
+#include <RigCVM/TypeSystem/EnumType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 
@@ -197,6 +198,37 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		}
 		else
 			throw std::runtime_error("Invalid expression.");
+	}
+	else if(op_ == "::")
+	{
+		auto const rhs = rhs_.as<PendingAction>();
+		if(!rhs->is_type<rigc::Name>())
+			throw std::runtime_error("Rhs of the :: operator should be a valid identifier.");
+
+		auto const source = lhs_.as<PendingAction>();
+		if(!source->is_type<rigc::Name>())
+			throw std::runtime_error("Lhs of the :: operator should be a valid identifier.");
+
+		auto const memberName = rhs->string();
+		auto const sourceName = source->string_view();
+
+		auto const sourceType = vm.findType(sourceName);
+
+		if(!sourceType)
+			throw std::runtime_error(fmt::format("No type named \"{}\" found.", sourceName));
+
+		if (auto const enumType = sourceType->as<EnumType>())
+		{
+			if(enumType->fields.contains(memberName))
+				return vm.allocateReference(enumType->fields[memberName]);
+			else
+			 return {};
+		}
+		else
+		{
+			throw std::runtime_error("Infix :: not implemented for anything else than enums for now.");
+		}
+
 	}
 	else
 	{
