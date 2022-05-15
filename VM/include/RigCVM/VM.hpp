@@ -81,11 +81,6 @@ struct Instance
 	/// by copying `sourceBytes_`.
 	auto allocateOnStack(DeclType type_, void const* sourceBytes_, size_t toCopy = 0) -> Value;
 
-
-	/// Allocates dynamic space require for specified `type_`, initialized with specified `value_`.
-	template <typename T>
-	auto allocateStaticValue(DeclType type_, T const& value_) -> Value;
-
 	/// Allocates stack space required for specified `type_`, initialized with specified `value_`.
 	template <typename T>
 	auto allocateOnStack(DeclType type_, T const& value_) -> Value
