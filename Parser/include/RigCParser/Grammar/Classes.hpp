@@ -24,8 +24,7 @@ struct MethodDef
 
 struct OverloadedEntity
 	: p::sor<
-			InfixOperatorNoComma,
-			Name
+			p::seq<AsKeyword, Ws, Name>
 		>
 {
 };
