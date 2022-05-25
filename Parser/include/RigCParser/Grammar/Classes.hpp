@@ -4,6 +4,8 @@
 
 #include <RigCParser/Grammar/Functions.hpp>
 #include <RigCParser/Grammar/Templates.hpp>
+#include <RigCParser/Grammar/Keywords.hpp>
+#include <RigCParser/Grammar/Operators.hpp>
 
 namespace rigc
 {
@@ -20,10 +22,24 @@ struct MethodDef
 	: p::seq< p::opt< OverrideKeyword, Ws >, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
 {};
 
+struct OverloadedEntity
+	: p::sor<
+			InfixOperatorNoComma,
+			Name
+		>
+{
+};
+
+struct OperatorDef
+	: p::if_must<OperatorKeyword, Ws, OverloadedEntity, Ws, p::opt<FunctionParams>, OptWs, CodeBlock>
+{
+};
+
 struct MemberDef
 	: p::sor<
 		p::seq<DataMemberDef, p::one<';'>>,
-		MethodDef
+		MethodDef,
+		OperatorDef
 	>
 {
 };

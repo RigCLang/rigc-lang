@@ -32,6 +32,7 @@ DEFINE_KEYWORD(Template,	"template");
 DEFINE_KEYWORD(TemplateTypename,	"type_name");
 DEFINE_KEYWORD(Of,	"of");
 DEFINE_KEYWORD(As,	"as");
+DEFINE_KEYWORD(Operator,	"operator");
 
 }
 
