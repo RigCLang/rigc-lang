@@ -26,7 +26,8 @@ auto isOperator(rigc::ParserNode const& node_) -> bool
 auto operatorPriority(rigc::ParserNode const& node_) -> int
 {
 	auto op = node_.string_view();
-	if (op == ",") return 17;
+	if (op == ",") return 18;
+	if (op == "as") return 17;
 	if (op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "%=")
 		return 16;
 	if (op == "||") return 15;
@@ -229,6 +230,18 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 			throw std::runtime_error("Infix :: not implemented for anything else than enums for now.");
 		}
 
+	}
+	else if(op_ == "as")
+	{
+		auto const rhs = rhs_.as<PendingAction>();
+		if(!rhs->is_type<rigc::Name>())
+			throw std::runtime_error("Rhs of the conversion operator should be a valid identifier.");
+
+		auto const rhsType = vm.findType(rhs->string_view());
+		if(!rhsType)
+			throw std::runtime_error("Rhs of the conversion identifier should be a type.");
+
+		return vm.tryConvert(lhs, rhsType->shared_from_this());
 	}
 	else
 	{
