@@ -3,6 +3,7 @@
 #include RIGCPARSER_PCH
 
 #include <RigCParser/Grammar/Characters.hpp>
+#include <RigCParser/Grammar/Keywords.hpp>
 
 namespace rigc
 {
@@ -103,6 +104,10 @@ struct TernarySecondOp	: p::one	<':'> {};
 //// Infix
 struct ScopeOp : p::two<':'>{};
 
+// Conversion operator
+//// Infix
+struct ConversionOp : AsKeyword {};
+
 
 ///////////////////// Grammar ////////////////////////
 
@@ -161,6 +166,8 @@ struct InfixOperatorBase
 			AssignOp,
 
 			ScopeOp,
+
+			ConversionOp,
 
 			TernaryFirstOp,
 			TernarySecondOp,
