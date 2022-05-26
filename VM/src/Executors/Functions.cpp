@@ -138,9 +138,16 @@ auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	auto const [params, paramsCount] = evaluateParamList(vm_, expr_);
 	
 	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) {
-		auto const name = "conv " + entityName->string();
+		auto const name = "convert";
+		auto const conversionType = vm_.findType(entityName->string());
 
-		auto& op =  scope.registerOperator(vm_, name, Operator::Infix, Function(Function::RuntimeFn(&expr_), params, paramsCount));
+		if(!conversionType)
+			throw std::runtime_error("Cannot declare a conversion operator for a type that doesn't exist.");
+
+		auto func = Function(Function::RuntimeFn(&expr_), params, paramsCount);
+		func.returnType = conversionType->shared_from_this();
+
+		auto& op =  scope.registerOperator(vm_, name, Operator::Infix, std::move(func));
 		op.returnsRef = returnsRef(expr_);
 		vm_.currentClass->methods[name].push_back(&op);
 		op.outerType = vm_.currentClass;
