@@ -51,6 +51,7 @@ DECLARE_EXECUTOR(executeEnumDefinition);
 
 DECLARE_EXECUTOR(evaluateClassDefinition);
 DECLARE_EXECUTOR(evaluateMethodDefinition);
+DECLARE_EXECUTOR(evaluateOperatorDefinition);
 DECLARE_EXECUTOR(evaluateDataMemberDefinition);
 
 

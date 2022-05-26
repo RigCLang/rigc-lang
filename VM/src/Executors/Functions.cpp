@@ -92,5 +92,63 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 	return {};
 }
 
+////////////////////////////////////////
+auto returnsRef(rigc::ParserNode const& expr_)
+{
+	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
+	{
+		auto type = findElem<rigc::Type>(*explicitReturnType)->string_view();
+		if (type == "Ref")
+			return true;
+	}
+
+	return false;
+}
+
+////////////////////////////////////////
+struct EvaluatedParamList {
+	Function::Params params;	
+	std::size_t paramsCount;
+};
+
+////////////////////////////////////////
+auto evaluateParamList(Instance& vm_, rigc::ParserNode const& expr_)
+{
+	auto params = Function::Params {{
+		"self",
+		wrap<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
+	}};
+
+	size_t numParams = 1;
+
+	// TODO: refactor this
+	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
+	if (paramList)
+		evaluateFunctionParams(vm_, *paramList, params, numParams);
+
+	return EvaluatedParamList{ params, numParams };
+}
+
+////////////////////////////////////////
+auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	auto& scope = vm_.scopeOf(vm_.currentClass->declaration);
+	auto const& overloadedEntity = *findElem<rigc::OverloadedEntity>(expr_, false);
+
+	auto const [params, paramsCount] = evaluateParamList(vm_, expr_);
+	
+	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) {
+		auto const name = "conv " + entityName->string();
+
+		auto& op =  scope.registerOperator(vm_, name, Operator::Infix, Function(Function::RuntimeFn(&expr_), params, paramsCount));
+		op.returnsRef = returnsRef(expr_);
+		vm_.currentClass->methods[name].push_back(&op);
+		op.outerType = vm_.currentClass;
+	}	
+	else
+		throw std::runtime_error("Only conversion operators supported for now.");
+
+	return {};
+}
 
 }
