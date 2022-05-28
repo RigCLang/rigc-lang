@@ -138,7 +138,7 @@ auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	auto const [params, paramsCount] = evaluateParamList(vm_, expr_);
 	
 	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) {
-		auto const name = "convert";
+		auto const opName = "convert";
 		auto const conversionType = vm_.findType(entityName->string());
 
 		if(!conversionType)
@@ -147,13 +147,15 @@ auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		auto func = Function(Function::RuntimeFn(&expr_), params, paramsCount);
 		func.returnType = conversionType->shared_from_this();
 
-		auto& op =  scope.registerOperator(vm_, name, Operator::Infix, std::move(func));
+		auto& op = scope.registerOperator(vm_, opName, Operator::Infix, std::move(func));
 		op.returnsRef = returnsRef(expr_);
-		vm_.currentClass->methods[name].push_back(&op);
 		op.outerType = vm_.currentClass;
+
+		vm_.currentClass->methods[opName].push_back(&op);
 	}	
 	else
 		throw std::runtime_error("Only conversion operators supported for now.");
+	// TODO:
 
 	return {};
 }
