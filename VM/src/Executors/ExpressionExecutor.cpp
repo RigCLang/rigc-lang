@@ -7,6 +7,7 @@
 #include <RigCVM/TypeSystem/EnumType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
+#include <RigCVM/TypeSystem/WrapperType.hpp>
 
 namespace rigc::vm
 {
@@ -154,6 +155,26 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> OptValue
 	return lhs_.as<ProcessedAction>();
 }
 
+auto getOperatorOverloads(Instance& vm_, DeclType const& type_, Operator const& operator_) -> std::pair<FunctionOverloads const*, bool> {
+	if(auto const& refType = type_->as<RefType>(); refType->inner->is<ClassType>()) {
+		return { &refType->inner->methods[operator_.str], true };
+	}
+
+	return { vm_.currentScope->findOperator(operator_.str, operator_.type), true };
+}
+
+////////////////////////////////////////
+auto findFittingOperatorOverload(
+	FunctionOverloads const* operators_,
+	FunctionParamTypes const& params_,
+	std::size_t argsCount_,
+	bool method_ = false,
+	Function::ReturnType returnType_ = std::nullopt)
+	-> Function const* 
+{
+	return findOverload(*operators_, params_, argsCount_, method_, returnType_);
+}
+
 ////////////////////////////////////////
 auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> OptValue
 {
@@ -241,7 +262,17 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		if(!rhsType)
 			throw std::runtime_error("Rhs of the conversion identifier should be a type.");
 
-		return vm.tryConvert(lhs, rhsType->shared_from_this());
+		auto const wrappedLhs = wrap<RefType>( vm.universalScope(), lhs.type );
+		auto const& params = FunctionParamTypes{ wrappedLhs };
+		auto args = Function::Args { lhs };
+
+		const auto[overloads, isMethod] = getOperatorOverloads(vm, lhs.type, { "convert", Operator::Infix });
+		if(!overloads)
+			throw std::runtime_error(fmt::format("Cannot find any conversion operator for type: {}", lhs.typeName()));
+
+		const auto ov = findFittingOperatorOverload(overloads, params, 1, isMethod, std::optional(rhsType->shared_from_this()));
+
+		return vm.executeFunction(*ov, args, 1);
 	}
 	else
 	{
