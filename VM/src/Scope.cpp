@@ -135,6 +135,20 @@ auto Scope::findFunction(std::string_view funcName_) const -> FunctionOverloads 
 }
 
 ///////////////////////////////////////////////////////////////
+auto Scope::findFunctionGlobally(std::string_view funcName_) const -> FunctionOverloads const*
+{
+	auto* scope = this;
+
+	do {
+		auto it = scope->functions.find(funcName_);
+		if (it != scope->functions.end())
+			return &it->second;
+	} while((scope = scope->parent));
+
+	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
 auto findOverload(
 		FunctionOverloads const&	funcs_,
 		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
@@ -178,6 +192,15 @@ auto Scope::findOperator(std::string_view opName_, Operator::Type type_) const -
 {
 	auto fmtName = formatOperatorName(opName_, type_);
 	return this->findFunction(
+			std::string_view( fmtName.data(), fmtName.numChars )
+		);
+}
+
+///////////////////////////////////////////////////////////////
+auto Scope::findOperatorGlobally(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const* 
+{
+	auto fmtName = formatOperatorName(opName_, type_);
+	return this->findFunctionGlobally(
 			std::string_view( fmtName.data(), fmtName.numChars )
 		);
 }

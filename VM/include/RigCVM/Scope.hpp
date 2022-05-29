@@ -72,6 +72,12 @@ struct Scope
 	auto findFunction(std::string_view funcName_) const -> FunctionOverloads const*;
 
 	/// <summary>
+	/// Returns all function overloads with name `funcName_`,
+	/// or `nullptr` if no such function exist.
+	/// </summary>
+	auto findFunctionGlobally(std::string_view funcName_) const -> FunctionOverloads const*;
+
+	/// <summary>
 	/// Returns type with name `typeName_`,
 	/// or `nullptr` if no such type exist within this scope.
 	/// </summary>
@@ -85,6 +91,15 @@ struct Scope
 	/// `formatOperatorName` is used within this function to get the correct name of an operator.
 	/// </remarks>
 	auto findOperator(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const*;
+
+	/// <summary>
+	/// Returns operator overload with name `opName_` and type `type_`,
+	/// or `nullptr` if no such operator exist.
+	/// </summary>
+	/// <remarks>
+	/// `formatOperatorName` is used within this function to get the correct name of an operator.
+	/// </remarks>
+	auto findOperatorGlobally(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const*;
 
 	/// <summary>
 	/// Registers a type alias within this scope.
