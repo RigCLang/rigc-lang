@@ -130,32 +130,67 @@ auto evaluateParamList(Instance& vm_, rigc::ParserNode const& expr_)
 }
 
 ////////////////////////////////////////
+auto getOperatorQualifier(rigc::ParserNode const& expr_) -> std::optional<Operator::Type>
+{
+	if(auto const preQualifier = findElem<rigc::PreKeyword>(expr_, false))
+		return Operator::Type::Prefix;
+	else if(auto const postQualifier = findElem<rigc::PostKeyword>(expr_, false))
+		return Operator::Type::Postfix;
+
+	return {};
+}
+
+////////////////////////////////////////
 auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto& scope = vm_.scopeOf(vm_.currentClass->declaration);
 	auto const& overloadedEntity = *findElem<rigc::OverloadedEntity>(expr_, false);
 
 	auto const [params, paramsCount] = evaluateParamList(vm_, expr_);
+
+	auto func = Function(Function::RuntimeFn(&expr_), params, paramsCount);
+	auto op = Operator();
 	
-	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) {
-		auto const opName = "convert";
+	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) 
+	{
 		auto const conversionType = vm_.findType(entityName->string());
 
 		if(!conversionType)
 			throw std::runtime_error("Cannot declare a conversion operator for a type that doesn't exist.");
 
-		auto func = Function(Function::RuntimeFn(&expr_), params, paramsCount);
 		func.returnType = conversionType->shared_from_this();
-
-		auto& op = scope.registerOperator(vm_, opName, Operator::Infix, std::move(func));
-		op.returnsRef = returnsRef(expr_);
-		op.outerType = vm_.currentClass;
-
-		vm_.currentClass->methods[opName].push_back(&op);
 	}	
-	else
-		throw std::runtime_error("Only conversion operators supported for now.");
-	// TODO:
+	else if(auto const postfixOperator = findElem<rigc::PostfixOperator>(overloadedEntity, false)) // for some reason ++ and -- fall under this category only
+	{
+		op.str = postfixOperator->string_view();
+		auto const opQualifier = getOperatorQualifier(expr_);
+
+		if(op.str != "++" || op.str != "--")
+		{
+			if(opQualifier)
+				throw std::runtime_error("Cannot use 'pre' operator qualifier for a postfix operator.");
+
+			op.type = Operator::Type::Postfix;
+		}
+		else
+		{
+			if(!opQualifier)
+				throw std::runtime_error("No operator qualifier given for an ambiguous operator.");
+
+			op.type = *opQualifier;
+		}
+	}
+	else if(auto const prefixOperator = findElem<rigc::PrefixOperator>(overloadedEntity, false))// prefix operator
+	{
+		op.str = prefixOperator->string_view();
+		op.type = Operator::Type::Prefix;
+	}
+
+	auto& registeredOp = scope.registerOperator(vm_, op.str, op.type, std::move(func));
+	registeredOp.returnsRef = returnsRef(expr_);
+	registeredOp.outerType = vm_.currentClass;
+
+	vm_.currentClass->methods[op.str].push_back(&registeredOp);
 
 	return {};
 }
