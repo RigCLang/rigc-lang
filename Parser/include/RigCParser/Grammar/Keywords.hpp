@@ -33,6 +33,8 @@ DEFINE_KEYWORD(TemplateTypename,	"type_name");
 DEFINE_KEYWORD(Of,	"of");
 DEFINE_KEYWORD(As,	"as");
 DEFINE_KEYWORD(Operator,	"operator");
+DEFINE_KEYWORD(Post,	"post");
+DEFINE_KEYWORD(Pre,	"pre");
 
 }
 
