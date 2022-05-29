@@ -24,15 +24,16 @@ struct MethodDef
 
 struct OverloadedEntity
 	: p::sor<
+			InfixOperator,
 			p::if_must<AsKeyword, Ws, Name>,
-			p::seq<p::opt<p::seq<PostKeyword, Ws>>, PostfixOperator>,
-			p::seq<p::opt<p::seq<PreKeyword, Ws>>, PrefixOperator>
+			p::if_then_else<PostKeyword, p::seq<Ws, PostfixOperator>, PostfixOperator>,
+			p::if_then_else<PreKeyword, p::seq<Ws, PrefixOperator>, PrefixOperator>
 		>
 {
 };
 
 struct OperatorDef
-	: p::if_must<OperatorKeyword, Ws, OverloadedEntity, WsWrapped<p::opt<FunctionParams>>, CodeBlock>
+	: p::if_must<OperatorKeyword, Ws, OverloadedEntity, OptWs, p::opt<FunctionParams>, OptWs, CodeBlock>
 {
 };
 

@@ -34,9 +34,11 @@ struct DotOp			: p::string	<'.'> {};
 // Subscript operator
 //// Postfix
 struct SubscriptOp		: p::seq	< p::one<'['>, OptWs, Expression, OptWs, p::one<']'> > {};
+struct EmptySubscriptOp		: p::string<'[',']'> {};
 
 //// Postfix
 struct FunctionCallOp	: p::seq	< p::one<'('>, OptWs, ListOfFunctionArguments, OptWs, p::one<')'> > {};
+struct EmptyFunctionCallOp		: p::string<'(',')'> {};
 
 // Math operators
 //// Prefix
@@ -186,8 +188,8 @@ struct InfixOperatorNoComma	: InfixOperatorBase<> {};
 
 struct PostfixOperator
 	: p::sor<
-			SubscriptOp,
-			FunctionCallOp,
+			p::sor<SubscriptOp, EmptySubscriptOp>,
+			p::sor<FunctionCallOp, EmptyFunctionCallOp>,
 			PostincrementOp,
 			PostdecrementOp
 		>
