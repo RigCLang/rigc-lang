@@ -105,11 +105,6 @@ auto returnsRef(rigc::ParserNode const& expr_)
 	return false;
 }
 
-////////////////////////////////////////
-struct EvaluatedParamList {
-	Function::Params params;	
-	std::size_t paramsCount;
-};
 
 ////////////////////////////////////////
 auto evaluateParamList(Instance& vm_, rigc::ParserNode const& expr_)
@@ -126,7 +121,7 @@ auto evaluateParamList(Instance& vm_, rigc::ParserNode const& expr_)
 	if (paramList)
 		evaluateFunctionParams(vm_, *paramList, params, numParams);
 
-	return EvaluatedParamList{ params, numParams };
+	return std::pair{ params, numParams };
 }
 
 ////////////////////////////////////////
@@ -151,7 +146,7 @@ auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	auto func = Function(Function::RuntimeFn(&expr_), params, paramsCount);
 	auto op = Operator();
 	
-	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) 
+	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) // conversion operator
 	{
 		auto const conversionType = vm_.findType(entityName->string());
 
@@ -159,8 +154,9 @@ auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 			throw std::runtime_error("Cannot declare a conversion operator for a type that doesn't exist.");
 
 		func.returnType = conversionType->shared_from_this();
+		op = { "convert", Operator::Type::Infix };
 	}	
-	else if(auto const postfixOperator = findElem<rigc::PostfixOperator>(overloadedEntity, false)) // for some reason ++ and -- fall under this category only
+	else if(auto const postfixOperator = findElem<rigc::PostfixOperator>(overloadedEntity, false)) // ++ and -- fall under this category
 	{
 		op.str = postfixOperator->string_view();
 		auto const opQualifier = getOperatorQualifier(expr_);
@@ -180,10 +176,13 @@ auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 			op.type = *opQualifier;
 		}
 	}
-	else if(auto const prefixOperator = findElem<rigc::PrefixOperator>(overloadedEntity, false))// prefix operator
+	else if(auto const prefixOperator = findElem<rigc::PrefixOperator>(overloadedEntity, false))
 	{
-		op.str = prefixOperator->string_view();
-		op.type = Operator::Type::Prefix;
+		op = { prefixOperator->string_view(), Operator::Type::Prefix };
+	}
+	else //if(auto const infixOperator = findElem<rigc::InfixOperator>(overloadedEntity, false))
+	{
+		op = { overloadedEntity.string_view(), Operator::Type::Infix };
 	}
 
 	auto& registeredOp = scope.registerOperator(vm_, op.str, op.type, std::move(func));
