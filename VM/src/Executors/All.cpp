@@ -166,7 +166,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 				{
 					Function::Args args;
 					args[0] = vm_.allocateReference(value);
-					ctor->invoke(vm_, args, 1);
+					vm_.executeFunction(*ctor, Function::ArgSpan{ args.data(), 1 } );
 				}
 			}
 		}

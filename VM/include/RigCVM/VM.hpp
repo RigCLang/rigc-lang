@@ -33,7 +33,7 @@ struct Instance
 	auto run(std::string_view moduleName_) -> int;
 
 	auto executeFunction(Function const& func) -> OptValue;
-	auto executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0) -> OptValue;
+	auto executeFunction(Function const& func, Function::ArgSpan args_) -> OptValue;
 	auto evaluate(rigc::ParserNode const& stmt_) -> OptValue;
 
 	/// <summary>Returns the "self" reference in method context.</summary>

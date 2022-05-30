@@ -220,7 +220,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 				Function::Args args;
 				args[0] = lhs;
 				args[1] = rhs;
-				return vm.executeFunction(*func, args, 2).value();
+				return vm.executeFunction(*func, Function::ArgSpan{ args.data(), 2 }).value();
 			}
 		}
 
@@ -242,7 +242,7 @@ auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand
 		{
 			Function::Args args;
 			args[0] = operand;
-			return vm.executeFunction(*func, args, 1).value();
+			return vm.executeFunction(*func, Function::ArgSpan{ args.data(), 1 }).value();
 		}
 	}
 
@@ -416,7 +416,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 			numParams++;
 		}
 
-		auto result = vm.executeFunction(*fn, evaluatedArgs, numParams);
+		auto result = vm.executeFunction(*fn, Function::ArgSpan{ evaluatedArgs.data(), numParams} );
 		if (constructor)
 			return evaluatedArgs[0];
 		return result;

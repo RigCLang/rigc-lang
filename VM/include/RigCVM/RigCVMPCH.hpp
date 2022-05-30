@@ -3,6 +3,7 @@
 #include <RigCParser/Grammar.hpp>
 #include <RigCParser/Parser.hpp>
 
+#include <span>
 #include <array>
 #include <vector>
 #include <memory>

@@ -34,8 +34,11 @@ struct Function
 	using Params		= std::array<FunctionParam,	MAX_PARAMS>;
 	using Args			= std::array<Value,			MAX_PARAMS>;
 
+	using ParamSpan		= std::span<FunctionParam>;
+	using ArgSpan		= std::span<Value>;
+
 	using RuntimeFn		= FunctionInstance;
-	using RawFnSign		= OptValue(Instance&, Args&, size_t);
+	using RawFnSign		= OptValue(Instance&, ArgSpan);
 	using RawFn			= std::function<RawFnSign>;
 	using ReturnType	= std::optional<DeclType>;
 
@@ -57,7 +60,7 @@ struct Function
 	// func name -> Ref
 	bool				returnsRef = false;
 
-	OptValue invoke(Instance& vm_, Args& args_, size_t argCount_) const;
+	OptValue invoke(Instance& vm_, ArgSpan args_) const;
 
 	Function(Impl impl_, Params params_, size_t paramCount_)
 		:

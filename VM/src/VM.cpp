@@ -151,12 +151,11 @@ auto Instance::allocatePointer(Value const& toRef_) -> Value
 //////////////////////////////////////////
 auto Instance::executeFunction(Function const& func) -> OptValue
 {
-	Function::Args args;
-	return this->executeFunction(func, args, 0);
+	return this->executeFunction(func, {});
 }
 
 //////////////////////////////////////////
-auto Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_) -> OptValue
+auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -> OptValue
 {
 	OptValue retVal;
 
@@ -178,7 +177,7 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 		}
 
 		auto const& fn = func_.rawImpl();
-		retVal = fn(*this, args_, argsCount_);
+		retVal = fn(*this, args_);
 	}
 	else
 	{
@@ -281,7 +280,7 @@ auto Instance::tryConvert(Value value_, DeclType const& to_) -> OptValue
 
 	Function::Args args;
 	args[0] = value_;
-	return this->executeFunction(*cvt, args, 1);
+	return this->executeFunction(*cvt, Function::ArgSpan{ args.data(), 1 });
 }
 
 //////////////////////////////////////////

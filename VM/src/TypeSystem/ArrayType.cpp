@@ -15,7 +15,7 @@ void ArrayType::postInitialize(Instance& vm_)
 	{
 		auto& fn = vm_.universalScope().registerFunction(vm_, "data",
 			Function{
-				[](Instance& vm_, Function::Args& args_, size_t argCount_) -> OptValue
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					Value firstElem = args_[0].removeRef();
 					firstElem.type = args_[0].type->decay();
@@ -33,7 +33,7 @@ void ArrayType::postInitialize(Instance& vm_)
 	{
 		auto& fn = vm_.universalScope().registerFunction(vm_, "size",
 			Function{
-				[](Instance& vm_, Function::Args& args_, size_t argCount_) -> OptValue
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					auto val = args_[0].removeRef();
 					return vm_.allocateOnStack(

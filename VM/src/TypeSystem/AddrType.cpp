@@ -15,7 +15,7 @@ void AddrType::postInitialize(Instance& vm_)
 	{
 		auto& fn = vm_.universalScope().registerFunction(vm_, "get",
 			Function{
-				[](Instance& vm_, Function::Args& args_, size_t argCount_) -> OptValue
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					return vm_.allocateReference(args_[0].removeRef().removePtr());
 				},
@@ -36,7 +36,7 @@ void AddrType::postInitialize(Instance& vm_)
 
 		auto& fn = vm_.universalScope().registerOperator(vm_, "+", Operator::Infix,
 			Function{
-				[](Instance& vm_, Function::Args& args_, size_t argCount_) -> OptValue
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					auto self = args_[0].safeRemoveRef();
 					return vm_.allocateOnStack<void const*>(
