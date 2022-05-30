@@ -24,8 +24,8 @@ struct MethodDef
 
 struct OverloadedEntity
 	: p::sor<
-			InfixOperator,
 			p::if_must<AsKeyword, Ws, Name>,
+			InfixOperator,
 			p::if_then_else<PostKeyword, p::seq<Ws, PostfixOperator>, PostfixOperator>,
 			p::if_then_else<PreKeyword, p::seq<Ws, PrefixOperator>, PrefixOperator>
 		>
@@ -39,9 +39,9 @@ struct OperatorDef
 
 struct MemberDef
 	: p::sor<
+		OperatorDef,
 		p::seq<DataMemberDef, p::one<';'>>,
-		MethodDef,
-		OperatorDef
+		MethodDef
 	>
 {
 };

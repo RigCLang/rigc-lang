@@ -143,6 +143,9 @@ struct InfixOperatorBase
 			DivOp,
 			ModOp,
 
+			LogicalAndOp,
+			LogicalOrOp,
+
 			BitAndEqOp,
 			BitXorEqOp,
 			BitOrEqOp,
@@ -154,9 +157,6 @@ struct InfixOperatorBase
 			BitOrOp,
 			BitShLeftOp,
 			BitShRightOp,
-
-			LogicalAndOp,
-			LogicalOrOp,
 
 			EqualOp,
 			InequalOp,
