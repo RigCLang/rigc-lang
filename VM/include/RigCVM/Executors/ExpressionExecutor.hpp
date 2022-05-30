@@ -4,6 +4,7 @@
 
 #include <RigCVM/Value.hpp>
 #include <RigCVM/ExtendedVariant.hpp>
+#include <RigCVM/Scope.hpp>
 
 namespace rigc::vm
 {
@@ -34,8 +35,11 @@ private:
 	auto evalSingleAction(Action& lhs_) -> OptValue;
 
 	auto evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> OptValue;
-	auto evalPrefixOperator(std::string_view op_, Action& rhs_) -> Value;
+	auto evalPrefixOperator(std::string_view op_, Action& rhs_) -> OptValue;
 	auto evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> OptValue;
+
+	auto evalInfixOperatorNonOverloadable(std::string_view op_, Action& lhs_, Action& rhs_) -> OptValue;
+	auto evalFunctionCallOperator(rigc::ParserNode const& op_, Action& lhs_) -> OptValue;
 
 	std::vector<Action> actions;
 };
