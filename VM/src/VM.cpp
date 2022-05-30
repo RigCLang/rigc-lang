@@ -404,40 +404,28 @@ auto Instance::findType(std::string_view name_) -> IType const*
 }
 
 //////////////////////////////////////////
-auto Instance::findFunction(std::string_view name_) -> FunctionOverloads const*
+auto Instance::findFunction(std::string_view name_) -> FunctionCandidates
 {
+	auto candidates = FunctionCandidates{};
+	candidates.reserve(10);
 	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
 	{
-		auto& funcs = it->scope->functions;
-		auto funcIt = funcs.find(name_);
+		auto overloads = it->scope->findFunction(name_);
+		if (overloads)
+			candidates.push_back( { it->scope, overloads } );
 
-		if (funcIt != funcs.end())
-			return &funcIt->second;
-
-	}
-
-	return nullptr;
-}
-
-//////////////////////////////////////////
-auto Instance::findFunctionExpr(std::string_view name_) -> Value
-{
-	FunctionOverloads const* overloads = nullptr;
-	IType const* type = nullptr;
-
-	if (auto constructed = this->findType(name_))
-	{
-		if (auto c = constructed->as<ClassType>())
+		if (auto type = it->scope->types.find(name_))
 		{
-			overloads	= c->constructors();
-			return allocateMethodOverloads(*this, {}, overloads);
+			if (auto classType = type->as<ClassType>())
+			{
+				if (auto ctors = classType->constructors())
+					candidates.push_back( { it->scope, ctors } );
+			}
 		}
+
 	}
 
-	overloads	= this->findFunction(name_);
-	type		= this->findType(BuiltinTypes::OverloadedFunction);
-
-	return this->allocateOnStack<void const*>(type->shared_from_this(), overloads);
+	return candidates;
 }
 
 //////////////////////////////////////////

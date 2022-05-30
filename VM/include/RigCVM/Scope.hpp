@@ -8,6 +8,7 @@
 #include <RigCVM/StaticString.hpp>
 #include <RigCVM/StackFrame.hpp>
 #include <RigCVM/TypeSystem/TypeRegistry.hpp>
+#include <RigCVM/TypeSystem/TypeConstraint.hpp>
 
 namespace rigc::vm
 {
@@ -18,7 +19,15 @@ using FunctionParamTypes	= std::array<DeclType, Function::MAX_PARAMS>;
 
 
 auto findOverload(
-		FunctionOverloads const&	funcs_,
+		FunctionCandidates const&	funcs_,
+		FunctionParamTypes const&	paramTypes_,
+		size_t						numArgs_,
+		bool						method = false,
+		Function::ReturnType		returnType_ = std::nullopt
+	) -> Function const*;
+
+auto findOverload(
+		FunctionOverloads const&	overloads_,
 		FunctionParamTypes const&	paramTypes_,
 		size_t						numArgs_,
 		bool						method = false,
@@ -48,7 +57,9 @@ struct Scope
 
 	std::vector< std::unique_ptr<Function> >					functionStorage;
 	std::map<std::string, FunctionOverloads, std::less<> >		functions;
+	std::map<std::string, FunctionOverloads, std::less<> >		functionTemplates;
 	std::map<std::string, FrameBasedValue, std::less<> >		variables;
+	std::map<std::string, TypeConstraint, std::less<> >			templateParams;
 	TypeRegistry												types;
 
 
@@ -70,6 +81,18 @@ struct Scope
 	/// or `nullptr` if no such function exist within this scope.
 	/// </summary>
 	auto findFunction(std::string_view funcName_) const -> FunctionOverloads const*;
+
+
+	/// <summary>
+	/// Tries to generate a function with name `funcName_` and parameter types `paramTypes_`
+	/// out of the function templates registered in this scope.
+	/// </summary>
+	auto tryGenerateFunction(
+			Instance&					vm_,
+			std::string_view			funcName_,
+			FunctionParamTypes const&	paramTypes_,
+			size_t						numArgs_
+		) -> Function const*;
 
 	/// <summary>
 	/// Returns type with name `typeName_`,
@@ -95,6 +118,11 @@ struct Scope
 	/// Registers a function within this scope.
 	/// </summary>
 	auto registerFunction(Instance& vm_, std::string_view name_, Function func_) -> Function&;
+
+	/// <summary>
+	/// Registers a function template within this scope.
+	/// </summary>
+	auto registerFunctionTemplate(Instance& vm_, std::string_view name_, Function func_) -> Function&;
 
 	/// <summary>
 	/// Registers an operator within this scope.

@@ -9,6 +9,7 @@ namespace rigc::vm
 {
 
 struct Instance;
+struct Scope;
 class ClassType;
 
 using TemplateArgument	= ExtendedVariant<int, DeclType>;
@@ -24,6 +25,7 @@ struct FunctionParam
 {
 	std::string_view	name;
 	DeclType			type;
+	std::string_view	typeName = {}; // for unevaluated types in template functions
 };
 
 struct Function
@@ -48,6 +50,7 @@ struct Function
 	ReturnType			returnType;
 	bool				variadic = false;
 	IType*				outerType = nullptr;
+	bool				isConstructor = false;
 
 	// TODO: workaround, remove this
 	// once we have a proper explicit return type deduction for
@@ -77,23 +80,24 @@ struct Function
 	auto addr() const -> void const*
 	{
 		if (impl.is<RuntimeFn>()) {
-			return runtimeImpl().node;
+			return this;
 		} else {
 			return rawImpl().target<RawFnSign*>();
 		}
 	}
 
-	auto isRuntime() const  -> bool
+	auto isRuntime() const -> bool
 	{
 		return impl.is<RuntimeFn>();
 	}
 
-	auto isRaw() const  -> bool
+	auto isRaw() const -> bool
 	{
 		return impl.is<RawFn>();
 	}
 };
 
-using FunctionOverloads = std::vector<Function*>;
+using FunctionOverloads		= std::vector<Function*>;
+using FunctionCandidates	= std::vector< std::pair<Scope const*, FunctionOverloads const*> >;
 
 }

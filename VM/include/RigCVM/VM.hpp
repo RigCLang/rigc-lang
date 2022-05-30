@@ -43,8 +43,7 @@ struct Instance
 
 	auto findVariableByName(std::string_view name_) -> OptValue;
 	auto findType(std::string_view name_) -> IType const*;
-	auto findFunction(std::string_view name_) -> FunctionOverloads const*;
-	auto findFunctionExpr(std::string_view name_) -> Value;
+	auto findFunction(std::string_view name_) -> FunctionCandidates;
 
 	auto tryConvert(Value value_, DeclType const& to_) -> OptValue;
 
@@ -116,7 +115,7 @@ struct Instance
 	Scope*				currentScope	= nullptr;
 
 	/// Current execution scope, related to the current stack frame.
-	rigc::ParserNode const*	currentFunc	= nullptr;
+	FunctionInstance const*	currentFunc	= nullptr;
 
 	/// Currently parsed class type.
 	ClassType*			currentClass	= nullptr;

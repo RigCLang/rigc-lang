@@ -34,6 +34,8 @@ auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 		auto decayedTypeName = val.typeName();
 		if (typeName == "Int32")
 			store.push_back(val.view<int>());
+		if (typeName == "Char")
+			store.push_back(val.view<char>());
 		else if (typeName == "Float32")
 			store.push_back(val.view<float>());
 		else if (typeName == "Float64")
@@ -60,7 +62,7 @@ auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 ////////////////////////////////////////
 auto typeOf(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 {
-	auto name = args_[0].type->name();
+	auto name = args_[0].safeRemoveRef().type->name();
 	auto t = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
 
 	return vm_.allocateOnStack( t, name.data(), name.size() );
@@ -84,14 +86,14 @@ auto executeRead(Instance &vm_, std::string_view rigcTypeName) -> OptValue
 {
 	auto data = CppType();
 	std::cin >> data; // scanf?
-	
+
 	return vm_.allocateOnStack(rigcTypeName, data);
 }
 
 ////////////////////////////////////////
 auto readInt(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 {
-	if(argCount_ != 0) 
+	if(argCount_ != 0)
 		printMessage(args_[0]);
 
 	return executeRead<int>(vm_, "Int32");
@@ -100,7 +102,7 @@ auto readInt(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 ////////////////////////////////////////
 auto readFloat(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 {
-	if(argCount_ != 0) 
+	if(argCount_ != 0)
 		printMessage(args_[0]);
 
 	return executeRead<double>(vm_, "Float64");

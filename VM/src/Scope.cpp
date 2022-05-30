@@ -105,14 +105,23 @@ auto Scope::findConversion(DeclType const& from_, DeclType const& to_) const -> 
 ///////////////////////////////////////////////////////////////
 auto testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_, size_t numArgs_) -> bool
 {
-	if (func_.paramCount != numArgs_)
+	auto visibleParamCount = func_.paramCount;
+
+	// "self" param is not visible in constructors
+	if (func_.isConstructor)
+		visibleParamCount -= 1;
+
+	if (visibleParamCount != numArgs_)
 		return false;
 
-	for(size_t i = 0; i < numArgs_; ++i)
+	// Ignore the `self` parameter for constructors
+	size_t i = func_.isConstructor ? 1 : 0;
+	size_t testedIdx = 0;
+	for(; i < numArgs_; ++i, ++testedIdx)
 	{
-		if (func_.params[i].type != paramTypes_[i])
+		if (func_.params[i].type != paramTypes_[testedIdx])
 		{
-			if (auto ref = paramTypes_[i]->as<RefType>())
+			if (auto ref = paramTypes_[testedIdx]->as<RefType>())
 			{
 				if (ref->inner.get() != func_.params[i].type.get())
 					return false;
@@ -136,27 +145,102 @@ auto Scope::findFunction(std::string_view funcName_) const -> FunctionOverloads 
 }
 
 ///////////////////////////////////////////////////////////////
+auto Scope::tryGenerateFunction(
+		Instance &vm_,
+		std::string_view			funcName_,
+		FunctionParamTypes const&	paramTypes_,
+		size_t						numArgs_
+	) -> Function const*
+{
+	auto templIt = functionTemplates.find(funcName_);
+	if (templIt == functionTemplates.end())
+	{
+		if (parent)
+			return parent->tryGenerateFunction(vm_, funcName_, paramTypes_, numArgs_);
+		return nullptr;
+	}
+
+	for (auto& templ : templIt->second)
+	{
+		if (numArgs_ != templ->paramCount)
+			continue;
+
+		// if (testFunctionOverload(*templ, paramTypes_, numArgs_))
+		{
+			auto params = Function::Params();
+			for (size_t i = 0; i < numArgs_; ++i)
+			{
+				if (!templ->params[i].type)
+					params[i] = { templ->params[i].name, paramTypes_[i] }; // TODO: evaluate constraint
+				else
+					params[i] = { templ->params[i].name, templ->params[i].type };
+			}
+
+			auto paramsString = std::string();
+			for (size_t i = 0; i < numArgs_; ++i)
+			{
+				if (i > 0)
+					paramsString += ", ";
+				paramsString += params[i].type->name();
+			}
+
+			// fmt::print("Instantiating function template {} with params: {}\n", funcName_, paramsString);
+
+			return &this->registerFunction(vm_, funcName_,
+					Function(
+						Function::RuntimeFn(templ->runtimeImpl().node),
+						std::move(params),
+						numArgs_
+					)
+				);
+		}
+	}
+
+	if (parent)
+		return parent->tryGenerateFunction(vm_, funcName_, paramTypes_, numArgs_);
+	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
 auto findOverload(
-		FunctionOverloads const&	funcs_,
+		FunctionCandidates const&	funcs_,
 		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
 		bool						method,
 		Function::ReturnType		returnType_
 	) -> Function const*
 {
-	if (funcs_.size() == 1 && funcs_[0]->variadic && funcs_[0]->isRaw())
+	for (auto& [scope, overloads] : funcs_)
 	{
-		return funcs_[0];
+		auto result = findOverload(*overloads, paramTypes_, numArgs_, method, returnType_);
+		if (result)
+			return result;
 	}
 
-	for (size_t i = 0; i < funcs_.size(); ++i)
+	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
+auto findOverload(
+		FunctionOverloads const&	overloads_,
+		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
+		bool						method,
+		Function::ReturnType		returnType_
+	) -> Function const*
+{
+	if (overloads_.size() == 1 && overloads_[0]->variadic && overloads_[0]->isRaw())
 	{
-		if (method && funcs_[i]->params[0].name != "self")
+		return overloads_[0];
+	}
+
+	for (size_t i = 0; i < overloads_.size(); ++i)
+	{
+		if (method && overloads_[i]->params[0].name != "self")
 			continue;
 
-		if (testFunctionOverload(*funcs_[i], paramTypes_, numArgs_))
+		if (testFunctionOverload(*overloads_[i], paramTypes_, numArgs_))
 		{
-			if (!returnType_ || funcs_[i]->returnType == returnType_)
-				return funcs_[i];
+			if (!returnType_ || overloads_[i]->returnType == returnType_)
+				return overloads_[i];
 		}
 	}
 
@@ -224,6 +308,19 @@ auto Scope::registerFunction(Instance& vm_, std::string_view name_, Function fun
 
 	// TODO: ensure unique overload signature
 	FunctionOverloads& overloads = functions[ std::string(name_) ];
+	overloads.emplace_back( &f );
+
+	return f;
+}
+
+///////////////////////////////////////////////////////////////
+auto Scope::registerFunctionTemplate(Instance& vm_, std::string_view name_, Function func_) -> Function&
+{
+	functionStorage.emplace_back( std::make_unique<Function>(std::move(func_)) );
+	Function& f = *functionStorage.back();
+
+	// TODO: ensure unique overload signature
+	FunctionOverloads& overloads = functionTemplates[ std::string(name_) ];
 	overloads.emplace_back( &f );
 
 	return f;

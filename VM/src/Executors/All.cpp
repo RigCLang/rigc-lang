@@ -109,9 +109,9 @@ auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto opt = vm_.findVariableByName(expr_.string_view());
 
-	if (!opt) {
-		opt = vm_.findFunctionExpr(expr_.string_view());
-	}
+	// if (!opt) {
+	// 	opt = vm_.findFunctionExpr(expr_.string_view());
+	// }
 
 	if (!opt) {
 		throw std::runtime_error("Unrecognized identifier with name \"" + expr_.string() + "\"");
@@ -196,7 +196,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 ////////////////////////////////////////
 auto evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
-	// auto const templateParamList = getTemplateParamList(expr_); 
+	// auto const templateParamList = getTemplateParamList(expr_);
 	// std::pair<std::string, TypeConstraint>, string is a name,
 	// TypeConstraint is, for now, a struct with just a name (std::string)
 	// TODO: actually do something with the template parameter list
