@@ -215,7 +215,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 
 		if (auto overloads = vm.universalScope().findOperator(op_, Operator::Infix))
 		{
-			if (auto func = findOverload(*overloads, types, 2))
+			if (auto func = findOverload(*overloads, { types.data(), 2 }))
 			{
 				Function::Args args;
 				args[0] = lhs;
@@ -224,10 +224,12 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 			}
 		}
 
-		throw std::runtime_error(
-				"No matching operator \"" + std::string(op_) + "\" for argument types: ( " +
-				lhs.type->name() + ", " + rhs.type->name() + " )"
+		auto msg = fmt::format("No matching operator \"{}\" found for argument types: ( {}, {} )",
+				op_,
+				lhs.type->name(),
+				rhs.type->name()
 			);
+		throw std::runtime_error(msg);
 	}
 }
 
@@ -238,7 +240,7 @@ auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand
 
 	if (auto overloads = vm.universalScope().findOperator(op, operatorType))
 	{
-		if (auto func = findOverload(*overloads, types, 1))
+		if (auto func = findOverload(*overloads, { types.data(), 1 }))
 		{
 			Function::Args args;
 			args[0] = operand;
@@ -326,24 +328,25 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 			//    var func: Ref = funcWithOverloads; // 🔴 Error
 			//    func(param1, param2);
 			//
-			if (lhs_.as<PendingAction>()->is_type<rigc::Name>())
+			if (auto act = lhs_.as<PendingAction>(); act->is_type<rigc::Name>())
 			{
 				autoOverloadResolution = true;
-				candidates = vm.findFunction(lhs_.as<PendingAction>()->string_view());
+				candidates = vm.findFunction(act->string_view());
 			}
 		}
-		else if (lhs_.as<ProcessedAction>().is<ProcessedFunction>())
+		else if (auto act = lhs_.as<ProcessedAction>(); act.is<ProcessedFunction>())
 		{
 			autoOverloadResolution = true;
-			auto& processed = lhs_.as<ProcessedAction>().as<ProcessedFunction>();
+			auto& processedFunc = act.as<ProcessedFunction>();
 
-			candidates	= processed.candidates;
-			self		= processed.self;
-			fnName		= processed.name;
+			candidates	= processedFunc.candidates;
+			self		= processedFunc.self;
+			fnName		= processedFunc.name;
 		}
 
 		FunctionParamTypes paramTypes;
 		size_t numParams = 0;
+		size_t paramIdx = 1; // first one is reserved to `self` (ignored if self is not provided)
 
 		Function::Args evaluatedArgs;
 		bool method			= self.has_value();
@@ -359,23 +362,22 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 		}
 
 		if (self) {
-			evaluatedArgs[numParams]	= vm.allocateReference(*self);
-			paramTypes[numParams]		= evaluatedArgs[numParams].type;
-			numParams++;
+			evaluatedArgs[0]	= vm.allocateReference(*self);
+			paramTypes[0]		= evaluatedArgs[0].type;
+			++numParams;
 		}
 
 		auto args = findElem<rigc::ListOfFunctionArguments>(op_, false);
 
 		for(size_t i = 0; i < args->children.size(); ++i)
 		{
-			evaluatedArgs[numParams]	= vm.evaluate(*args->children[i]).value();
-			paramTypes[numParams]		= evaluatedArgs[numParams].type;
-			numParams++;
+			evaluatedArgs[paramIdx]	= vm.evaluate(*args->children[i]).value();
+			paramTypes[paramIdx]	= evaluatedArgs[paramIdx].type;
+			++numParams;
+			++paramIdx;
 		}
 
-		Function const* fn = nullptr;
-
-		fn = findOverload(candidates, paramTypes, numParams, method);
+		auto fn = findOverload(candidates, { paramTypes.data() + (self ? 0 : 1), numParams }, method);
 
 		if (!fn)
 		{
@@ -387,7 +389,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 			}
 			if (!fnName.empty())
-				fn = vm.currentScope->tryGenerateFunction(vm, fnName, paramTypes, numParams);
+				fn = vm.currentScope->tryGenerateFunction(vm, fnName, { paramTypes.data(), numParams });
 		}
 
 		if (!fn) {
@@ -404,19 +406,14 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 		if (fn->isConstructor)
 		{
-			constructor = true;
-
-			for (size_t i = numParams; i > 0; --i)
-			{
-				evaluatedArgs[i]	= std::move(evaluatedArgs[i - 1]);
-				paramTypes[i]		= std::move(paramTypes[i - 1]);
-			}
+			constructor			= true;
 			paramTypes[0]		= fn->outerType->shared_from_this();
-			evaluatedArgs[0]	= vm.allocateReference(vm.allocateOnStack(paramTypes[0], nullptr));
-			numParams++;
+			self				= vm.allocateReference(vm.allocateOnStack(paramTypes[0], nullptr));
+			evaluatedArgs[0]	= *self;
+			++numParams;
 		}
 
-		auto result = vm.executeFunction(*fn, Function::ArgSpan{ evaluatedArgs.data(), numParams} );
+		auto result = vm.executeFunction(*fn, Function::ArgSpan{ evaluatedArgs.data() + (self ? 0 : 1), numParams } );
 		if (constructor)
 			return evaluatedArgs[0];
 		return result;

@@ -16,21 +16,20 @@ namespace rigc::vm
 struct Instance;
 
 using FunctionParamTypes	= std::array<DeclType, Function::MAX_PARAMS>;
+using FunctionParamTypeSpan	= std::span<DeclType>;
 
 
 auto findOverload(
-		FunctionCandidates const&	funcs_,
-		FunctionParamTypes const&	paramTypes_,
-		size_t						numArgs_,
-		bool						method = false,
-		Function::ReturnType		returnType_ = std::nullopt
+		FunctionCandidates		const&	funcs_,
+		FunctionParamTypeSpan	paramTypes_,
+		bool					method_ = false,
+		Function::ReturnType	returnType_ = std::nullopt
 	) -> Function const*;
 
 auto findOverload(
 		FunctionOverloads const&	overloads_,
-		FunctionParamTypes const&	paramTypes_,
-		size_t						numArgs_,
-		bool						method = false,
+		FunctionParamTypeSpan		paramTypes_,
+		bool						method_ = false,
 		Function::ReturnType		returnType_ = std::nullopt
 	) -> Function const*;
 
@@ -90,8 +89,7 @@ struct Scope
 	auto tryGenerateFunction(
 			Instance&					vm_,
 			std::string_view			funcName_,
-			FunctionParamTypes const&	paramTypes_,
-			size_t						numArgs_
+			FunctionParamTypeSpan		paramTypes_
 		) -> Function const*;
 
 	/// <summary>

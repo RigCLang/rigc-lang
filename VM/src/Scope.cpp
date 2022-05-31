@@ -98,12 +98,13 @@ auto Scope::findConversion(DeclType const& from_, DeclType const& to_) const -> 
 	if (!overloads)
 		return nullptr;
 
-	return findOverload(*overloads, { from_ }, 1, false, to_);
+	auto types = FunctionParamTypes{ from_ };
+	return findOverload(*overloads,  { types.data(), 1 }, false, to_);
 }
 
 // TODO: add support for second-pass functions
 ///////////////////////////////////////////////////////////////
-auto testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_, size_t numArgs_) -> bool
+auto testFunctionOverload(Function& func_, FunctionParamTypeSpan paramTypes_) -> bool
 {
 	auto visibleParamCount = func_.paramCount;
 
@@ -111,13 +112,13 @@ auto testFunctionOverload(Function& func_, FunctionParamTypes const& paramTypes_
 	if (func_.isConstructor)
 		visibleParamCount -= 1;
 
-	if (visibleParamCount != numArgs_)
+	if (visibleParamCount != paramTypes_.size())
 		return false;
 
 	// Ignore the `self` parameter for constructors
 	size_t i = func_.isConstructor ? 1 : 0;
 	size_t testedIdx = 0;
-	for(; i < numArgs_; ++i, ++testedIdx)
+	for(; i < paramTypes_.size(); ++i, ++testedIdx)
 	{
 		if (func_.params[i].type != paramTypes_[testedIdx])
 		{
@@ -148,27 +149,26 @@ auto Scope::findFunction(std::string_view funcName_) const -> FunctionOverloads 
 auto Scope::tryGenerateFunction(
 		Instance &vm_,
 		std::string_view			funcName_,
-		FunctionParamTypes const&	paramTypes_,
-		size_t						numArgs_
+		FunctionParamTypeSpan		paramTypes_
 	) -> Function const*
 {
 	auto templIt = functionTemplates.find(funcName_);
 	if (templIt == functionTemplates.end())
 	{
 		if (parent)
-			return parent->tryGenerateFunction(vm_, funcName_, paramTypes_, numArgs_);
+			return parent->tryGenerateFunction(vm_, funcName_, paramTypes_);
 		return nullptr;
 	}
 
 	for (auto& templ : templIt->second)
 	{
-		if (numArgs_ != templ->paramCount)
+		if (paramTypes_.size() != templ->paramCount)
 			continue;
 
-		// if (testFunctionOverload(*templ, paramTypes_, numArgs_))
+		// if (testFunctionOverload(*templ, paramTypes_))
 		{
 			auto params = Function::Params();
-			for (size_t i = 0; i < numArgs_; ++i)
+			for (size_t i = 0; i < paramTypes_.size(); ++i)
 			{
 				if (!templ->params[i].type)
 					params[i] = { templ->params[i].name, paramTypes_[i] }; // TODO: evaluate constraint
@@ -177,7 +177,7 @@ auto Scope::tryGenerateFunction(
 			}
 
 			auto paramsString = std::string();
-			for (size_t i = 0; i < numArgs_; ++i)
+			for (size_t i = 0; i < paramTypes_.size(); ++i)
 			{
 				if (i > 0)
 					paramsString += ", ";
@@ -190,28 +190,28 @@ auto Scope::tryGenerateFunction(
 					Function(
 						Function::RuntimeFn(templ->runtimeImpl().node),
 						std::move(params),
-						numArgs_
+						paramTypes_.size()
 					)
 				);
 		}
 	}
 
 	if (parent)
-		return parent->tryGenerateFunction(vm_, funcName_, paramTypes_, numArgs_);
+		return parent->tryGenerateFunction(vm_, funcName_, paramTypes_);
 	return nullptr;
 }
 
 ///////////////////////////////////////////////////////////////
 auto findOverload(
 		FunctionCandidates const&	funcs_,
-		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
-		bool						method,
+		FunctionParamTypeSpan		paramTypes_,
+		bool						method_,
 		Function::ReturnType		returnType_
 	) -> Function const*
 {
 	for (auto& [scope, overloads] : funcs_)
 	{
-		auto result = findOverload(*overloads, paramTypes_, numArgs_, method, returnType_);
+		auto result = findOverload(*overloads, paramTypes_, method_, returnType_);
 		if (result)
 			return result;
 	}
@@ -222,8 +222,8 @@ auto findOverload(
 ///////////////////////////////////////////////////////////////
 auto findOverload(
 		FunctionOverloads const&	overloads_,
-		FunctionParamTypes const&	paramTypes_, size_t numArgs_,
-		bool						method,
+		FunctionParamTypeSpan		paramTypes_,
+		bool						method_,
 		Function::ReturnType		returnType_
 	) -> Function const*
 {
@@ -234,10 +234,10 @@ auto findOverload(
 
 	for (size_t i = 0; i < overloads_.size(); ++i)
 	{
-		if (method && overloads_[i]->params[0].name != "self")
+		if (method_ && overloads_[i]->params[0].name != "self")
 			continue;
 
-		if (testFunctionOverload(*overloads_[i], paramTypes_, numArgs_))
+		if (testFunctionOverload(*overloads_[i], paramTypes_))
 		{
 			if (!returnType_ || overloads_[i]->returnType == returnType_)
 				return overloads_[i];
