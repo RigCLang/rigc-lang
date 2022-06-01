@@ -288,6 +288,38 @@ auto ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_) 
 }
 
 ////////////////////////////////////////
+size_t evaluateFunctionArguments(
+		Instance&				vm_,
+		rigc::ParserNode const&	op_,
+		Function::ArgSpan		evaluated_,
+		FunctionParamTypeSpan	types_
+	)
+{
+	auto args = findElem<rigc::ListOfFunctionArguments>(op_, false);
+
+	size_t count = 0;
+	for(auto& arg : args->children)
+	{
+		evaluated_[count]	= vm_.evaluate(*arg).value();
+		types_[count]		= evaluated_[count].type;
+		++count;
+	}
+	return count;
+}
+
+////////////////////////////////////////
+template <typename T, size_t N>
+auto viewArray(std::array<T, N>& array_, size_t offset_ = 0, std::optional<size_t> c = std::nullopt)
+{
+	size_t maxSize = array_.size() - offset_;
+	return std::span{
+		array_.data() + offset_,
+		c ? (std::min(*c, maxSize)) : maxSize
+	};
+}
+
+
+////////////////////////////////////////
 auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction
 {
 
@@ -346,7 +378,9 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 		FunctionParamTypes paramTypes;
 		size_t numParams = 0;
-		size_t paramIdx = 1; // first one is reserved to `self` (ignored if self is not provided)
+
+		// First one is reserved to optional `self` (ignored if self is not provided)
+		constexpr size_t NonSelfParamStartIndex = 1;
 
 		Function::Args evaluatedArgs;
 		bool method			= self.has_value();
@@ -362,22 +396,23 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 		}
 
 		if (self) {
-			evaluatedArgs[0]	= vm.allocateReference(*self);
-			paramTypes[0]		= evaluatedArgs[0].type;
+			evaluatedArgs[0] = vm.allocateReference(*self);
+			paramTypes[0] = evaluatedArgs[0].type;
 			++numParams;
 		}
 
-		auto args = findElem<rigc::ListOfFunctionArguments>(op_, false);
 
-		for(size_t i = 0; i < args->children.size(); ++i)
-		{
-			evaluatedArgs[paramIdx]	= vm.evaluate(*args->children[i]).value();
-			paramTypes[paramIdx]	= evaluatedArgs[paramIdx].type;
-			++numParams;
-			++paramIdx;
-		}
+		auto paramCount = evaluateFunctionArguments(
+				vm, op_,
+				// Args span:
+				viewArray(evaluatedArgs, NonSelfParamStartIndex),
+				viewArray(paramTypes, NonSelfParamStartIndex)
+			);
+		numParams += paramCount;
 
-		auto fn = findOverload(candidates, { paramTypes.data() + (self ? 0 : 1), numParams }, method);
+		auto reqParamTypes = viewArray(paramTypes, (self ? 0 : 1), numParams);
+
+		auto fn = findOverload(candidates, reqParamTypes, method);
 
 		if (!fn)
 		{
@@ -389,9 +424,10 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 			}
 			if (!fnName.empty())
-				fn = vm.currentScope->tryGenerateFunction(vm, fnName, { paramTypes.data(), numParams });
+				fn = vm.currentScope->tryGenerateFunction(vm, fnName, reqParamTypes);
 		}
 
+		//
 		if (!fn) {
 			std::string paramsString;
 			for(size_t i = 0; i < numParams; ++i)
@@ -404,6 +440,8 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 			throw std::runtime_error(fmt::format("Not matching function to call with params: {}.", paramsString));
 		}
 
+		// Create the object used by the constructor:
+		// (Precondition: self was nullopt)
 		if (fn->isConstructor)
 		{
 			constructor			= true;
@@ -413,9 +451,11 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 			++numParams;
 		}
 
-		auto result = vm.executeFunction(*fn, Function::ArgSpan{ evaluatedArgs.data() + (self ? 0 : 1), numParams } );
+		auto result = vm.executeFunction(*fn, viewArray( evaluatedArgs, (self ? 0 : 1), numParams) );
+
 		if (constructor)
 			return evaluatedArgs[0];
+
 		return result;
 	}
 	else if (op == "--" || op == "++")
