@@ -13,6 +13,8 @@ struct RefType
 {
 	using WrapperType::WrapperType;
 
+	std::vector<TemplateArgument> templateArguments;
+
 	auto name() const -> std::string override {
 		return fmt::format("Ref<{}>", inner->name());
 	}
@@ -33,6 +35,10 @@ struct RefType
 	{
 		return std::hash<std::string>{}(fmt::format("Ref<{}>", inner_->name()));
 	}
+
+	auto getTemplateArguments() const -> std::vector<TemplateArgument> const& override;
+
+	auto postInitialize(Instance& vm_) -> void override;
 };
 
 struct AddrType
@@ -45,6 +51,8 @@ struct AddrType
 	{
 
 	}
+
+	std::vector<TemplateArgument> templateArguments;
 
 	auto name() const -> std::string override {
 		return fmt::format("Addr<{}>", inner->name());
@@ -66,6 +74,8 @@ struct AddrType
 	{
 		return std::hash<std::string>{}(fmt::format("Addr<{}>", inner_->name()));
 	}
+
+	auto getTemplateArguments() const -> std::vector<TemplateArgument> const& override;
 
 	auto postInitialize(Instance& vm_) -> void override;
 };

@@ -310,6 +310,14 @@ auto Instance::findVariableByName(std::string_view name_) -> OptValue
 			return varIt->second.toAbsolute(*it);
 		}
 
+		auto& templArgs = it->scope->templateArguments;
+		auto templConstantIt = templArgs.find(name_);
+		if (templConstantIt != templArgs.end())
+		{
+			if (templConstantIt->second.is<int>())
+				return this->allocateOnStack( "Int32", templConstantIt->second.as<int>() );
+		}
+
 		if (it->scope->func)
 		{
 			// If within class, search for a class data member

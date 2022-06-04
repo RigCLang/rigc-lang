@@ -9,8 +9,22 @@ namespace rigc::vm
 {
 
 //////////////////////////////////////
+auto ArrayType::getTemplateArguments() const -> std::vector<TemplateArgument> const&
+{
+	return templateArguments;
+}
+
+//////////////////////////////////////
 void ArrayType::postInitialize(Instance& vm_)
 {
+	// Setup template arguments:
+	{
+		templateArguments.clear();
+		templateArguments.reserve(2);
+		templateArguments.push_back(this->inner);
+		templateArguments.push_back(static_cast<int>(count)); // TODO: Use a proper type for this
+	}
+
 	// "data" method
 	{
 		auto& fn = vm_.universalScope().registerFunction(vm_, "data",

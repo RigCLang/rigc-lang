@@ -308,18 +308,6 @@ size_t evaluateFunctionArguments(
 }
 
 ////////////////////////////////////////
-template <typename T, size_t N>
-auto viewArray(std::array<T, N>& array_, size_t offset_ = 0, std::optional<size_t> c = std::nullopt)
-{
-	size_t maxSize = array_.size() - offset_;
-	return std::span{
-		array_.data() + offset_,
-		c ? (std::min(*c, maxSize)) : maxSize
-	};
-}
-
-
-////////////////////////////////////////
 auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction
 {
 

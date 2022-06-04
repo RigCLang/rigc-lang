@@ -60,8 +60,6 @@ auto evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 
 	auto type = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), s.size());
 
-	vm_.universalScope().addType(type);
-
 	return vm_.allocateOnStack( std::move(type), s.data(), s.size() );
 }
 

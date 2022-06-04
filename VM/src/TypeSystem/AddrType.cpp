@@ -9,8 +9,37 @@ namespace rigc::vm
 {
 
 //////////////////////////////////////
+auto RefType::getTemplateArguments() const -> std::vector<TemplateArgument> const&
+{
+	return templateArguments;
+}
+
+//////////////////////////////////////
+void RefType::postInitialize(Instance& vm_)
+{
+	// Setup template arguments
+	{
+		templateArguments.clear();
+		templateArguments.push_back(inner);
+	}
+}
+
+//////////////////////////////////////
+auto AddrType::getTemplateArguments() const -> std::vector<TemplateArgument> const&
+{
+	return templateArguments;
+}
+
+//////////////////////////////////////
 void AddrType::postInitialize(Instance& vm_)
 {
+
+	// Setup template arguments
+	{
+		templateArguments.clear();
+		templateArguments.push_back(inner);
+	}
+
 	// get method
 	{
 		auto& fn = vm_.universalScope().registerFunction(vm_, "get",

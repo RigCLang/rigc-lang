@@ -145,6 +145,76 @@ auto Scope::findFunction(std::string_view funcName_) const -> FunctionOverloads 
 	return nullptr;
 }
 
+auto tryDeduceFromSingleParamType(
+		DeclType const&				paramType_,
+		rigc::ParserNode const&		requiredTypeTemplate,
+		TemplateParameters const&	templateParams,
+		TemplateArguments&			deduced
+	)
+{
+	auto reqTemplArgs = findElem<rigc::TemplateParams>(requiredTypeTemplate);
+	auto const& subTemplArgs = paramType_->getTemplateArguments();
+
+	auto& reqTypeName = *findElem<rigc::Name>(requiredTypeTemplate);
+
+	if (!reqTemplArgs)
+	{
+		deduced[reqTypeName.string()] = paramType_;
+		return true;
+	}
+
+	if (reqTemplArgs->children.size() != subTemplArgs.size())
+		return false;
+
+	if (paramType_->symbolName() != reqTypeName.string_view())
+		return false;
+
+	for (size_t i = 0; i < subTemplArgs.size(); ++i)
+	{
+		auto& reqTemplArg = *reqTemplArgs->children[i];
+
+		auto& subTemplArg = subTemplArgs[i];
+
+		if (subTemplArg.is<DeclType>())
+		{
+			if (!tryDeduceFromSingleParamType(subTemplArg.as<DeclType>(), reqTemplArg, templateParams, deduced))
+				return false;
+		}
+		else // NTTP:
+		{
+			auto const& value = subTemplArg.as<int>();
+			deduced[reqTemplArg.string()] = value;
+		}
+	}
+
+	// fmt::print("> matching {} against {}\n", paramType_->name(), requiredTypeTemplate.string_view());
+
+	return true;
+}
+
+auto tryDeduceTemplateParams(
+		FunctionParamTypeSpan		paramTypes_,
+		Function::ParamSpan			functionParams,
+		TemplateParameters const&	templateParams
+	)
+{
+	// templateParams is a map (string -> constrain or "type_name")
+
+	auto result = TemplateArguments();
+	for (size_t i = 0; i < paramTypes_.size(); ++i)
+	{
+		if (!functionParams[i].typeNode) // not a template param
+			continue;
+
+		if (!tryDeduceFromSingleParamType(paramTypes_[i], *functionParams[i].typeNode, templateParams, result))
+		{
+			return result;
+		}
+	}
+
+	return result;
+}
+
 ///////////////////////////////////////////////////////////////
 auto Scope::tryGenerateFunction(
 		Instance &vm_,
@@ -163,6 +233,27 @@ auto Scope::tryGenerateFunction(
 	for (auto& templ : templIt->second)
 	{
 		if (paramTypes_.size() != templ->paramCount)
+			continue;
+
+		auto& fnScope = vm_.scopeOf(templ);
+		auto deduced = tryDeduceTemplateParams(
+				paramTypes_,
+				viewArray(templ->params, 0, templ->paramCount),
+				fnScope.templateParams
+			);
+		// if (deduced.size() > 0)
+		// {
+		// 	fmt::print("Deduced {} out of {} required template params\n", deduced.size(), fnScope.templateParams.size());
+		// 	for (auto const& [name, value] : deduced)
+		// 	{
+		// 		if (value.is<int>())
+		// 			fmt::print(" - {} = {}\n", name, value.as<int>());
+		// 		else
+		// 			fmt::print(" - {} = {}\n", name, value.as<DeclType>()->name());
+		// 	}
+		// }
+
+		if (deduced.size() != fnScope.templateParams.size())
 			continue;
 
 		// if (testFunctionOverload(*templ, paramTypes_))
@@ -186,13 +277,16 @@ auto Scope::tryGenerateFunction(
 
 			// fmt::print("Instantiating function template {} with params: {}\n", funcName_, paramsString);
 
-			return &this->registerFunction(vm_, funcName_,
+			auto& func = this->registerFunction(vm_, funcName_,
 					Function(
 						Function::RuntimeFn(templ->runtimeImpl().node),
 						std::move(params),
 						paramTypes_.size()
 					)
 				);
+
+			vm_.scopeOf(&func).templateArguments = std::move(deduced);
+			return &func;
 		}
 	}
 
@@ -265,6 +359,7 @@ auto Scope::findType(std::string_view typeName_) const -> IType const*
 			if (it != impl.templateArguments->end())
 			{
 				auto& arg = it->second;
+
 				if (arg.is<DeclType>())
 					return arg.as<DeclType>().get();
 			}

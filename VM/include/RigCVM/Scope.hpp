@@ -33,6 +33,8 @@ auto findOverload(
 		Function::ReturnType		returnType_ = std::nullopt
 	) -> Function const*;
 
+using TemplateParameters = std::map<std::string, TypeConstraint, std::less<> >;
+
 struct Scope
 {
 	Scope(Instance& vm_)
@@ -58,7 +60,8 @@ struct Scope
 	std::map<std::string, FunctionOverloads, std::less<> >		functions;
 	std::map<std::string, FunctionOverloads, std::less<> >		functionTemplates;
 	std::map<std::string, FrameBasedValue, std::less<> >		variables;
-	std::map<std::string, TypeConstraint, std::less<> >			templateParams;
+	TemplateParameters											templateParams;
+	TemplateArguments											templateArguments;
 	TypeRegistry												types;
 
 

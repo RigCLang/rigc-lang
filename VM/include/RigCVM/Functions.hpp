@@ -12,9 +12,6 @@ struct Instance;
 struct Scope;
 class ClassType;
 
-using TemplateArgument	= ExtendedVariant<int, DeclType>;
-using TemplateArguments	= std::map<std::string, TemplateArgument, std::less<>>;
-
 struct FunctionInstance
 {
 	rigc::ParserNode const* node;
@@ -23,14 +20,14 @@ struct FunctionInstance
 
 struct FunctionParam
 {
-	std::string_view	name;
-	DeclType			type;
-	std::string_view	typeName = {}; // for unevaluated types in template functions
+	std::string_view		name;
+	DeclType				type;
+	rigc::ParserNode const*	typeNode = nullptr; // for unevaluated types in template functions
 };
 
 struct Function
 {
-	constexpr static size_t MAX_PARAMS = 128;
+	constexpr static size_t MAX_PARAMS = 16;
 	using Params		= std::array<FunctionParam,	MAX_PARAMS>;
 	using Args			= std::array<Value,			MAX_PARAMS>;
 

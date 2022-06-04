@@ -7,17 +7,21 @@
 namespace rigc::vm
 {
 
+
 struct Instance;
 struct Scope;
 struct Function;
 
 struct IType;
+
 using AnyType		= std::any;
 using InnerType		= std::shared_ptr<const IType>;
 using MutInnerType	= std::shared_ptr<IType>;
 using DeclType		= InnerType;
 using MutDeclType	= MutInnerType;
 
+using TemplateArgument	= ExtendedVariant<int, DeclType>; // int as a placeholder
+using TemplateArguments	= std::map<std::string, TemplateArgument, std::less<>>;
 
 /// <summary>
 ///		An interface for each type.
@@ -25,6 +29,8 @@ using MutDeclType	= MutInnerType;
 struct IType
 	: public std::enable_shared_from_this<IType>
 {
+	inline static auto const EmptyTemplateArguments = std::vector<TemplateArgument>{};
+
 	virtual ~IType() = default;
 
 	///	<summary>
@@ -89,6 +95,10 @@ struct IType
 
 	auto addMethod(std::string_view name_, Function* func_) -> void;
 
+	virtual auto getTemplateArguments() const -> std::vector<TemplateArgument> const&
+	{
+		return EmptyTemplateArguments;
+	}
 
 	virtual auto postInitialize(Instance& vm_) -> void {}
 };
