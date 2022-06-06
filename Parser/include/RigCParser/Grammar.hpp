@@ -16,7 +16,7 @@ namespace rigc
 
 struct GlobalNS
 	:
-	p::star< p::sor<ImportStatement, ClassDefinition, FunctionDefinition, UnionDefinition, EnumDefinition, Ws> >
+	p::star< p::sor<ImportStatement, ClassDefinition, FunctionDefinition, OperatorDefinition, UnionDefinition, EnumDefinition, Ws> >
 {
 };
 
@@ -32,7 +32,7 @@ using Selector = p::parse_tree::selector< Rule,
 			PackageImportFullName,
 			ClassDefinition,
 			OverloadedEntity,
-			OperatorDef,
+			OperatorDefinition,
 			ClassCodeBlock,
 			UnionDefinition,
 			UnionCodeBlock,

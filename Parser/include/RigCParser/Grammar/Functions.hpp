@@ -61,6 +61,21 @@ struct FunctionDefinition
 {
 };
 
+struct OverloadedEntity
+	: p::sor<
+			p::if_must<AsKeyword, Ws, Name>,
+			InfixOperator,
+			p::if_then_else<PostKeyword, p::seq<Ws, PostfixOperator>, PostfixOperator>,
+			p::if_then_else<PreKeyword, p::seq<Ws, PrefixOperator>, PrefixOperator>
+		>
+{
+};
+
+struct OperatorDefinition
+	: p::if_must<OperatorKeyword, Ws, OverloadedEntity, OptWs, p::opt<FunctionParams>, OptWs, CodeBlock>
+{
+};
+
 struct ClosureDefinition
 	: p::seq<
 			p::sor<

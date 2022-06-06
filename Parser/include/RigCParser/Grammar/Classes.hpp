@@ -6,6 +6,7 @@
 #include <RigCParser/Grammar/Templates.hpp>
 #include <RigCParser/Grammar/Keywords.hpp>
 #include <RigCParser/Grammar/Operators.hpp>
+#include <RigCParser/Grammar/Functions.hpp>
 
 namespace rigc
 {
@@ -22,24 +23,9 @@ struct MethodDef
 	: p::seq< p::opt< OverrideKeyword, Ws >, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
 {};
 
-struct OverloadedEntity
-	: p::sor<
-			p::if_must<AsKeyword, Ws, Name>,
-			InfixOperator,
-			p::if_then_else<PostKeyword, p::seq<Ws, PostfixOperator>, PostfixOperator>,
-			p::if_then_else<PreKeyword, p::seq<Ws, PrefixOperator>, PrefixOperator>
-		>
-{
-};
-
-struct OperatorDef
-	: p::if_must<OperatorKeyword, Ws, OverloadedEntity, OptWs, p::opt<FunctionParams>, OptWs, CodeBlock>
-{
-};
-
 struct MemberDef
 	: p::sor<
-		OperatorDef,
+		OperatorDefinition,
 		p::seq<DataMemberDef, p::one<';'>>,
 		MethodDef
 	>
