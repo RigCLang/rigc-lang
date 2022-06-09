@@ -157,7 +157,7 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> OptValue
 	return lhs_.as<ProcessedAction>();
 }
 
-auto getOperatorOverloads(Instance& vm_, DeclType const& type_, Operator const& operator_, bool variable = false) -> std::pair<FunctionOverloads const*, bool> {
+auto getOperatorOverloads(Instance& vm_, DeclType const& type_, Operator const& operator_) -> std::pair<FunctionOverloads const*, bool> {
 	if(auto const& refType = type_->as<RefType>(); refType && refType->inner->is<ClassType>())
 	{
 		return { &refType->inner->methods[operator_.str], true };
@@ -412,7 +412,7 @@ auto ExpressionExecutor::evalFunctionCallOperator(rigc::ParserNode const& op_, A
 		}
 		else if(const auto var = vm.findVariableByName(calledEntityName))
 		{
-			overloads = getOperatorOverloads(vm, var->type, { "()", Operator::Postfix }, true).first;
+			overloads = getOperatorOverloads(vm, var->type, { "()", Operator::Postfix }).first;
 			prepareSelfArgument(vm, var->type, *var, params, args);
 			isMethod = true;
 		}
