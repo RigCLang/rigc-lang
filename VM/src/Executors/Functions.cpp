@@ -107,24 +107,6 @@ auto returnsRef(rigc::ParserNode const& expr_)
 
 
 ////////////////////////////////////////
-auto evaluateParamList(Instance& vm_, rigc::ParserNode const& expr_)
-{
-	auto params = Function::Params {{
-		"self",
-		wrap<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
-	}};
-
-	size_t numParams = 1;
-
-	// TODO: refactor this
-	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
-	if (paramList)
-		evaluateFunctionParams(vm_, *paramList, params, numParams);
-
-	return std::pair{ params, numParams };
-}
-
-////////////////////////////////////////
 auto getOperatorQualifier(rigc::ParserNode const& expr_) -> std::optional<Operator::Type>
 {
 	if(auto const preQualifier = findElem<rigc::PreKeyword>(expr_, false))
@@ -135,25 +117,53 @@ auto getOperatorQualifier(rigc::ParserNode const& expr_) -> std::optional<Operat
 	return {};
 }
 
-////////////////////////////////////////
-auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+auto evaluateFreeOperatorDefinition(Instance& vm_, Scope& scope_, rigc::ParserNode const& expr_, Function& func_, Operator op_) 
 {
-	auto& scope = vm_.scopeOf(vm_.currentClass->declaration);
+	auto params = Function::Params {};
+	auto paramsCount = size_t(0);
+
+	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
+	if (paramList)
+		evaluateFunctionParams(vm_, *paramList, params, paramsCount);
+
+	func_.params = std::move(params);
+	func_.paramCount = paramsCount;
+	auto& registeredOp = scope_.registerOperator(vm_, op_.str, op_.type, std::move(func_));
+	registeredOp.returnsRef = returnsRef(expr_);
+}
+
+auto evaluateMemberOperatorDefinition(Instance& vm_, Scope& scope_, rigc::ParserNode const& expr_, Function& func_, Operator op_)
+{
+	auto params = Function::Params {
+		"self",
+		wrap<RefType>( vm_.universalScope(), vm_.currentClass->shared_from_this() )
+	};
+	auto paramsCount = size_t(1);
+
+	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
+	if (paramList)
+		evaluateFunctionParams(vm_, *paramList, params, paramsCount);
+
+	func_.params = std::move(params);
+	func_.paramCount = paramsCount;
+	auto& registeredOp = scope_.registerOperator(vm_, op_.str, op_.type, std::move(func_));
+	registeredOp.returnsRef = returnsRef(expr_);
+	registeredOp.outerType = vm_.currentClass;
+
+	vm_.currentClass->methods[op_.str].push_back(&registeredOp);
+}
+
+auto evaluateOverloadedEntity(Instance& vm_, ParserNode const& expr_) -> Operator
+{
 	auto const& overloadedEntity = *findElem<rigc::OverloadedEntity>(expr_, false);
-
-	auto const [params, paramsCount] = evaluateParamList(vm_, expr_);
-
-	auto func = Function(Function::RuntimeFn(&expr_), params, paramsCount);
 	auto op = Operator();
-	
+
 	if(auto const entityName = findElem<rigc::Name>(overloadedEntity, false)) // conversion operator
 	{
-		auto const conversionType = vm_.findType(entityName->string());
-
+		auto const conversionType = vm_.findType(entityName->string_view());
 		if(!conversionType)
 			throw std::runtime_error("Cannot declare a conversion operator for a type that doesn't exist.");
-
-		func.returnType = conversionType->shared_from_this();
+	
 		op = { "convert", Operator::Type::Infix };
 	}	
 	else if(auto const postfixOperator = findElem<rigc::PostfixOperator>(overloadedEntity, false)) // ++ and -- fall under this category
@@ -177,19 +187,30 @@ auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		}
 	}
 	else if(auto const prefixOperator = findElem<rigc::PrefixOperator>(overloadedEntity, false))
-	{
 		op = { prefixOperator->string_view(), Operator::Type::Prefix };
-	}
-	else //if(auto const infixOperator = findElem<rigc::InfixOperator>(overloadedEntity, false))
-	{
+
+	else
 		op = { overloadedEntity.string_view(), Operator::Type::Infix };
+
+
+	return op;
+}
+
+////////////////////////////////////////
+auto evaluateOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	auto const overloadedEntity = findElem<rigc::OverloadedEntity>(expr_, false);
+	auto func = Function(Function::RuntimeFn(&expr_), {}, 0);
+	auto op = evaluateOverloadedEntity(vm_, expr_);
+
+	if(vm_.currentClass)
+	{
+		evaluateMemberOperatorDefinition(vm_, vm_.scopeOf(vm_.currentClass->declaration), expr_, func, op);
 	}
-
-	auto& registeredOp = scope.registerOperator(vm_, op.str, op.type, std::move(func));
-	registeredOp.returnsRef = returnsRef(expr_);
-	registeredOp.outerType = vm_.currentClass;
-
-	vm_.currentClass->methods[op.str].push_back(&registeredOp);
+	else
+	{
+		evaluateFreeOperatorDefinition(vm_, vm_.universalScope(), expr_, func, op);
+	}
 
 	return {};
 }

@@ -211,7 +211,7 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 		// Runtime function:
 		auto const& fn = *std::get<Function::RuntimeFn>(func_.impl);
 
-		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>() || fn.is_type<rigc::OperatorDef>() )
+		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>() || fn.is_type<rigc::OperatorDefinition>() )
 		{
 			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
