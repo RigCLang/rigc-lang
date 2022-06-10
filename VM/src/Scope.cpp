@@ -159,7 +159,29 @@ auto tryDeduceFromSingleParamType(
 
 	if (!reqTemplArgs)
 	{
-		deduced[reqTypeName.string()] = paramType_;
+		auto name = reqTypeName.string();
+
+		auto existing = deduced.find(name);
+		if (existing != deduced.end())
+		{
+			// Deduced param wasn't a type
+			if (!existing->second.is<DeclType>())
+				return false;
+
+			// Deduced something different (deduction mismatch)
+			if (existing->second.as<DeclType>() != paramType_)
+				return false;
+		}
+
+		auto constraint = templateParams.find(name);
+		if (constraint != templateParams.end())
+		{
+			// A NTTP specified but the deduced parameter is a type
+			if (constraint->second.name != "type_name")
+				return false;
+		}
+
+		deduced[name] = paramType_;
 		return true;
 	}
 
@@ -183,7 +205,29 @@ auto tryDeduceFromSingleParamType(
 		else // NTTP:
 		{
 			auto const& value = subTemplArg.as<int>();
-			deduced[reqTemplArg.string()] = value;
+
+			auto name		= reqTemplArg.string();
+			auto existing	= deduced.find(name);
+			if (existing != deduced.end())
+			{
+				// Deduced param wasn't a NTTP
+				if (!existing->second.is<int>())
+					return false;
+
+				// Deduced something different (deduction mismatch)
+				if (existing->second.as<int>() != value)
+					return false;
+			}
+
+			auto constraint = templateParams.find(name);
+			if (constraint != templateParams.end())
+			{
+				// A type_name required but the deduced parameter is a NTTP
+				if (constraint->second.name == "type_name")
+					return false;
+			}
+
+			deduced[name] = value;
 		}
 	}
 
@@ -262,9 +306,29 @@ auto Scope::tryGenerateFunction(
 			for (size_t i = 0; i < paramTypes_.size(); ++i)
 			{
 				if (!templ->params[i].type)
-					params[i] = { templ->params[i].name, paramTypes_[i] }; // TODO: evaluate constraint
-				else
-					params[i] = { templ->params[i].name, templ->params[i].type };
+				{
+					auto type = paramTypes_[i];
+					auto isRef = type->is<RefType>();
+					if (isRef) {
+						auto& typeName = *findElem<rigc::Name>(*templ->params[i].typeNode);
+
+						if (typeName.string_view() != "Ref") {
+							type = type->as<RefType>()->inner;
+						}
+					}
+
+					params[i] = {
+						templ->params[i].name,
+						type // TODO: evaluate constraint
+					};
+				}
+				else // Param doesn't relay on any template params
+				{
+					params[i] = {
+						templ->params[i].name,
+						templ->params[i].type
+					};
+				}
 			}
 
 			auto paramsString = std::string();
