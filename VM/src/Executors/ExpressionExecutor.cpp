@@ -157,18 +157,43 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> OptValue
 	return lhs_.as<ProcessedAction>();
 }
 
-auto getOperatorOverloads(Instance& vm_, DeclType const& type_, Operator const& operator_) -> std::pair<FunctionOverloads const*, bool> {
-	if(auto const& refType = type_->as<RefType>(); refType && refType->inner->is<ClassType>())
+auto getTargetType(FunctionParamTypes const& params_, DeclType const& first)
+{
+	if(const auto& refType = first->as<RefType>(); refType && refType->inner->is<ClassType>())
+		return refType->inner;
+	else
+		return first;
+}
+
+auto findFittingOpOverload(
+	Instance& vm_,
+	FunctionParamTypes const& params_,
+	size_t argsCount_,
+	Operator const& operator_,
+	Function::ReturnType returnType_) -> Function const*
+{
+	const auto& targetType = getTargetType(params_, params_[0]);
+	auto const isClass = targetType->is<ClassType>();
+
+	if(!isClass)
 	{
-		return { &refType->inner->methods[operator_.str], true };
-	}
-	else if(auto const& classType = type_->as<ClassType>())
-	{
-		return { &classType->methods[operator_.str], true };
+		auto const& ovs = vm_.currentScope->findOperatorGlobally(operator_.str, operator_.type);
+		if(!ovs) return nullptr;
+
+		return findOverload(*ovs, params_, argsCount_, false, returnType_);
 	}
 
-	return { vm_.currentScope->findOperatorGlobally(operator_.str, operator_.type), false };
+	auto const& methods = targetType->methods[operator_.str];
+	auto const methodOvs = findOverload(methods, params_, argsCount_, true, returnType_);
+
+	if(methodOvs) return methodOvs;
+
+	auto const& globalOvs = vm_.currentScope->findOperatorGlobally(operator_.str, operator_.type);
+	if(!globalOvs) return nullptr;
+
+	return findOverload(*globalOvs, params_, argsCount_, false, returnType_);
 }
+
 
 ////////////////////////////////////////
 auto ExpressionExecutor::evalInfixOperatorNonOverloadable(std::string_view op_, Action& lhs_, Action& rhs_) -> OptValue
@@ -296,11 +321,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		args[argsCount++] = rhs;
 	}
 
-	const auto[overloads, isMethod] = getOperatorOverloads(vm, lhs.type, { op_, Operator::Infix });
-	if(!overloads)
-		throw std::runtime_error(fmt::format("Cannot find any {} operator for types: {}", op_, lhs.typeName()));
-
-	const auto fittingOv = findOverload(*overloads, params, argsCount, isMethod, returnType);
+	const auto fittingOv = findFittingOpOverload(vm, params, argsCount, { op_, Operator::Infix }, returnType);
 	if(!fittingOv)
 		throw std::runtime_error(fmt::format("No fitting overload for op {} and type {}.", op_, lhs.typeName()));
 
@@ -314,35 +335,25 @@ auto ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_) 
 {
 	auto rhs = *this->evalSingleAction(rhs_);
 
-	auto const evalDereferenceOrAddressTake = [this, op_, &rhs] {
-		if(op_ == "&") return vm.allocatePointer(rhs);
-		else return rhs.safeRemoveRef().removePtr();
-	};
-
 	auto params = FunctionParamTypes();
 	auto args = Function::Args();
-	auto argsCount = 0;
+	auto constexpr argsCount = 1;
 
 	if (op_ == "*" || op_ == "&" || op_ == "--" || op_ == "++")
 	{
 		params[0] = rhs.type;
 		args[0] = rhs;
-		argsCount = 1;
 	}
 	else
 		throw std::runtime_error("Invalid prefix operator: " + std::string(op_));
 
-	const auto[overloads, isMethod] = getOperatorOverloads(vm, rhs.type, { op_, Operator::Prefix });
-	if(!overloads) 
-	{
-		if(op_ == "&" || op_ == "*") return evalDereferenceOrAddressTake();
-		throw std::runtime_error(fmt::format("Cannot find prefix operator {} for type: {}", op_, rhs.typeName()));
-	}
+	const auto fittingOv = findFittingOpOverload(vm, params, argsCount, { op_, Operator::Prefix }, {});
 
-	const auto fittingOv = findOverload(*overloads, params, 1, isMethod);
 	if(!fittingOv)
 	{
-		if(op_ == "&" || op_ == "*") return evalDereferenceOrAddressTake();
+		if(op_ == "&") return vm.allocatePointer(rhs);
+		else if(op_ == "*") return rhs.safeRemoveRef().removePtr(); 
+
 		throw std::runtime_error(fmt::format("No fitting overload for op {} and type {}.", op_, rhs.typeName()));
 	}
 
@@ -383,7 +394,7 @@ auto ExpressionExecutor::evalFunctionCallOperator(rigc::ParserNode const& op_, A
 	// If it's not a function type then it needs a self argument (method, function call op overload, constructor),
 	// so we start filling from the second one
 	auto const startIndex = lhsVal.type->is<FuncType>() ? 0 : 1;
-	auto [params, args, numArgs] = evaluateArgumentList(vm, argsList, startIndex);
+	auto [params, args, argsCount] = evaluateArgumentList(vm, argsList, startIndex);
 
 	auto overloads = lhsVal.view<FunctionOverloads const*>();
 
@@ -412,25 +423,28 @@ auto ExpressionExecutor::evalFunctionCallOperator(rigc::ParserNode const& op_, A
 		}
 		else if(const auto var = vm.findVariableByName(calledEntityName))
 		{
-			overloads = getOperatorOverloads(vm, var->type, { "()", Operator::Postfix }).first;
-			prepareSelfArgument(vm, var->type, *var, params, args);
-			isMethod = true;
+			prepareSelfArgument(vm, lhsVal.type, lhsVal, params, args);
+			const auto fittingOv = findFittingOpOverload(vm, params, argsCount, { "()", Operator::Postfix }, {});
+			if(!fittingOv)
+				throw std::runtime_error(fmt::format("No fitting overload for op {} and type {}.", op_.string_view(), var->type->name()));
+
+			return vm.executeFunction(*fittingOv, args, argsCount);
 		}
 	}
 	if(!overloads)
 		throw std::runtime_error(fmt::format("Cannot find function call operator for type: {}", lhsVal.type->symbolName()));
 
-	const auto fn = findOverload(*overloads, params, numArgs, isMethod);
+	const auto fn = findOverload(*overloads, params, argsCount, isMethod);
 	if(!fn)
 		throw std::runtime_error(fmt::format("No valid overloads for type: {}", lhsVal.typeName()));
 
-	return vm.executeFunction(*fn, args, numArgs);
+	return vm.executeFunction(*fn, args, argsCount);
 }
 
 ////////////////////////////////////////
 auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> OptValue
 {
-	auto lhs = *this->evalSingleAction(lhs_);
+	auto lhs = this->evalSingleAction(lhs_)->safeRemoveRef();
 	auto op = op_.string_view();
 
 	if(op[0] == '(') return evalFunctionCallOperator(op_, lhs_);
@@ -475,11 +489,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 		argsCount = 1;
 	}
 
-	const auto[overloads, isMethod] = getOperatorOverloads(vm, lhs.type, { op, Operator::Postfix });
-	if(!overloads)
-		throw std::runtime_error(fmt::format("Cannot find postfix operator {} for type: {}", op, lhs.type->symbolName()));
-
-	const auto fittingOv = findOverload(*overloads, params, argsCount, isMethod, returnType);
+	const auto fittingOv = findFittingOpOverload(vm, params, argsCount, { op, Operator::Postfix }, returnType);
 	if(!fittingOv)
 		throw std::runtime_error(fmt::format("No fitting overload for op {} and type {}.", op, lhs.typeName()));
 
