@@ -145,12 +145,19 @@ auto Scope::findFunction(std::string_view funcName_) const -> FunctionOverloads 
 	return nullptr;
 }
 
+enum class DeductionResult
+{
+	Failed,				// couldn't deduce
+	FailedWithError,	// deduction resulted in a different type or value
+	Succeeded,			// deduction succeeded
+};
+
 auto tryDeduceFromSingleParamType(
 		DeclType const&				paramType_,
 		rigc::ParserNode const&		requiredTypeTemplate,
 		TemplateParameters const&	templateParams,
 		TemplateArguments&			deduced
-	)
+	) -> DeductionResult
 {
 	auto reqTemplArgs = findElem<rigc::TemplateParams>(requiredTypeTemplate);
 	auto const& subTemplArgs = paramType_->getTemplateArguments();
@@ -166,11 +173,18 @@ auto tryDeduceFromSingleParamType(
 		{
 			// Deduced param wasn't a type
 			if (!existing->second.is<DeclType>())
-				return false;
+				return DeductionResult::FailedWithError;
+
+			// fmt::print("{} is '{}' (addr: {}) and now deduced to '{}' (addr: {})\n", name,
+			// 		existing->second.as<DeclType>()->name(),
+			// 		(void*)existing->second.as<DeclType>().get(),
+			// 		paramType_->name(),
+			// 		(void*)paramType_.get()
+			// 	);
 
 			// Deduced something different (deduction mismatch)
 			if (existing->second.as<DeclType>() != paramType_)
-				return false;
+				return DeductionResult::FailedWithError;
 		}
 
 		auto constraint = templateParams.find(name);
@@ -178,18 +192,18 @@ auto tryDeduceFromSingleParamType(
 		{
 			// A NTTP specified but the deduced parameter is a type
 			if (constraint->second.name != "type_name")
-				return false;
+				return DeductionResult::FailedWithError;
 		}
 
 		deduced[name] = paramType_;
-		return true;
+		return DeductionResult::Succeeded;
 	}
 
 	if (reqTemplArgs->children.size() != subTemplArgs.size())
-		return false;
+		return DeductionResult::Failed;
 
 	if (paramType_->symbolName() != reqTypeName.string_view())
-		return false;
+		return DeductionResult::Failed;
 
 	for (size_t i = 0; i < subTemplArgs.size(); ++i)
 	{
@@ -199,8 +213,10 @@ auto tryDeduceFromSingleParamType(
 
 		if (subTemplArg.is<DeclType>())
 		{
-			if (!tryDeduceFromSingleParamType(subTemplArg.as<DeclType>(), reqTemplArg, templateParams, deduced))
-				return false;
+			auto res = tryDeduceFromSingleParamType(subTemplArg.as<DeclType>(), reqTemplArg, templateParams, deduced);
+			// Skip if deduction failed
+			if (res != DeductionResult::Succeeded)
+				return res;
 		}
 		else // NTTP:
 		{
@@ -212,11 +228,11 @@ auto tryDeduceFromSingleParamType(
 			{
 				// Deduced param wasn't a NTTP
 				if (!existing->second.is<int>())
-					return false;
+					return DeductionResult::FailedWithError;
 
 				// Deduced something different (deduction mismatch)
 				if (existing->second.as<int>() != value)
-					return false;
+					return DeductionResult::FailedWithError;
 			}
 
 			auto constraint = templateParams.find(name);
@@ -224,7 +240,7 @@ auto tryDeduceFromSingleParamType(
 			{
 				// A type_name required but the deduced parameter is a NTTP
 				if (constraint->second.name == "type_name")
-					return false;
+					return DeductionResult::FailedWithError;
 			}
 
 			deduced[name] = value;
@@ -233,7 +249,7 @@ auto tryDeduceFromSingleParamType(
 
 	// fmt::print("> matching {} against {}\n", paramType_->name(), requiredTypeTemplate.string_view());
 
-	return true;
+	return DeductionResult::Succeeded;
 }
 
 auto tryDeduceTemplateParams(
@@ -250,10 +266,10 @@ auto tryDeduceTemplateParams(
 		if (!functionParams[i].typeNode) // not a template param
 			continue;
 
-		if (!tryDeduceFromSingleParamType(paramTypes_[i], *functionParams[i].typeNode, templateParams, result))
-		{
-			return result;
-		}
+		auto res = tryDeduceFromSingleParamType(paramTypes_[i], *functionParams[i].typeNode, templateParams, result);
+		if (res == DeductionResult::FailedWithError)
+			return TemplateArguments(); // Empty
+
 	}
 
 	return result;
