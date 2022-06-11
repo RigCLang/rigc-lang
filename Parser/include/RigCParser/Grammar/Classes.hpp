@@ -35,9 +35,9 @@ struct ClassCodeBlock
 
 struct ClassDefinition
 	: p::seq<
-			p::opt<ExportKeyword, Ws>, 
-			p::opt<TemplateDefPreamble, Ws>,
-			p::if_must< ClassKeyword, Ws, Name, OptWs, ClassCodeBlock > >
+			p::opt<ExportKeyword, Ws>,
+			p::opt<TemplateDefPreamble, OptWs>,
+			p::if_must< ClassKeyword, Ws, Name, OptWs, ClassCodeBlock> >
 {
 };
 

@@ -21,12 +21,12 @@ struct IntegerLiteral
 };
 
 struct Float64Literal
-	: p::seq<IntegerLiteral, p::one<'.'>, p::star<Digits> >
+	: p::seq<IntegerLiteral, p::one<'.'>, p::star<Digits>, p::not_at<p::alnum> >
 {
 };
 
 struct Float32Literal
-	: p::seq<Float64Literal, p::one<'f'> >
+	: p::seq<Float64Literal, p::one<'f'>, p::not_at<Digits>, p::not_at<p::alnum> >
 {
 };
 
