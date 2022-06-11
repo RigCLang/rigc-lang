@@ -22,6 +22,8 @@ DEFINE_KEYWORD(While,		"while");
 DEFINE_KEYWORD(Do,			"do");
 DEFINE_KEYWORD(For,			"for");
 DEFINE_KEYWORD(Ret,			"ret");
+DEFINE_KEYWORD(Break,			"break");
+DEFINE_KEYWORD(Continue,			"continue");
 DEFINE_KEYWORD(True,		"true");
 DEFINE_KEYWORD(False,		"false");
 DEFINE_KEYWORD(Class,		"class");

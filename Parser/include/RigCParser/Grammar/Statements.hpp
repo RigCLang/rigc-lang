@@ -11,10 +11,22 @@
 namespace rigc
 {
 
+struct BreakStatement
+	: BreakKeyword
+{
+};
+
+struct ContinueStatement
+	: ContinueKeyword
+{
+};
+
 struct NonExpression
 	:
 	p::sor<
 		ReturnStatement,
+		BreakStatement,
+		ContinueStatement,
 		VariableDefinition
 	>
 {
