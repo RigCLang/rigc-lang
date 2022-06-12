@@ -23,6 +23,8 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
 	MAKE_EXECUTOR(ForStatement,		executeForStatement),
 	MAKE_EXECUTOR(ReturnStatement,		executeReturnStatement),
+	MAKE_EXECUTOR(BreakStatement,		evaluateBreakStatement),
+	MAKE_EXECUTOR(ContinueStatement,		evaluateContinueStatement),
 	MAKE_EXECUTOR(SingleBlockStatement,	executeSingleStatement),
 	MAKE_EXECUTOR(Expression,			evaluateExpression),
 	MAKE_EXECUTOR(Name,					evaluateName),
@@ -80,6 +82,10 @@ auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptV
 
 			if (vm_.returnTriggered)
 				return val;
+			else if(vm_.continueTriggered)
+				return {};
+			else if(vm_.breakTriggered)
+				return {};
 		}
 	}
 

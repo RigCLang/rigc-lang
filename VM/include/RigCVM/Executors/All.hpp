@@ -33,6 +33,9 @@ DECLARE_EXECUTOR(executeWhileStatement);
 DECLARE_EXECUTOR(executeForStatement);
 DECLARE_EXECUTOR(executeReturnStatement);
 
+DECLARE_EXECUTOR(evaluateBreakStatement);
+DECLARE_EXECUTOR(evaluateContinueStatement);
+
 DECLARE_EXECUTOR(evaluateFunctionDefinition);
 DECLARE_EXECUTOR(evaluateExpression);
 

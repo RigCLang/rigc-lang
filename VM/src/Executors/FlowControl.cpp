@@ -20,6 +20,20 @@ auto executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 }
 
 ////////////////////////////////////////
+auto evaluateBreakStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
+{
+	vm_.breakTriggered = true;
+	return {};
+}
+
+////////////////////////////////////////
+auto evaluateContinueStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
+{
+	vm_.continueTriggered = true;
+	return {};
+}
+
+////////////////////////////////////////
 auto executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
 	auto& cond = *findElem<rigc::Condition>(stmt_, false);
@@ -72,8 +86,16 @@ auto executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptV
 		if (result.has_value() && result.value().view<bool>())
 		{
 			auto ret = vm_.evaluate(*body);
-			if (vm_.returnTriggered)
-				return ret;
+
+			if (vm_.returnTriggered) return ret;
+			if(vm_.breakTriggered) {
+				vm_.breakTriggered = false;
+				break;
+			}
+			else if(vm_.continueTriggered) {
+				vm_.continueTriggered = false;
+				continue;
+			}
 		}
 		else
 			break;
@@ -93,24 +115,32 @@ auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptVal
 	auto& variableDef = *findElem<rigc::VariableDefinition>(stmt_, false);
 	vm_.evaluate(variableDef);
 
-	auto& conditionExpr = *findElem<rigc::Expression>(stmt_, false);
-	auto& incrementExpr = *findNthElem<rigc::Expression>(stmt_, 2);
+	auto const& conditionExpr = *findElem<rigc::Expression>(stmt_, false);
+	auto const& incrementExpr = *findNthElem<rigc::Expression>(stmt_, 2);
 
 	while (true)
 	{
-		StackFramePusher scope(vm_, *body);
+		auto scope = StackFramePusher(vm_, *body);
 		auto const conditionResult = vm_.evaluate(conditionExpr);
 
 		if (conditionResult.has_value() && conditionResult.value().view<bool>())
 		{
 			auto ret = vm_.evaluate(*body);
-			if (vm_.returnTriggered)
-				return ret;
+
+			if (vm_.returnTriggered) return ret;
 		}
 		else
 			break;
-
+		
 		vm_.evaluate(incrementExpr);
+		if(vm_.breakTriggered) {
+			vm_.breakTriggered = false;
+			break;
+		}
+		else if(vm_.continueTriggered) {
+			vm_.continueTriggered = false;
+			continue;
+		}
 	}
 
 	return {};
