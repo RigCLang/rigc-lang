@@ -12,7 +12,7 @@ namespace rigc
 {
 
 struct BreakStatement
-	: BreakKeyword
+	: p::if_must< BreakKeyword, p::sor< p::seq< Ws, IntegerLiteral >, OptWs > >
 {
 };
 
