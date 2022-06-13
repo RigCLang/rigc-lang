@@ -128,8 +128,8 @@ struct Instance
 	/// Whether currently executed function has triggered a return statement.
 	bool				returnTriggered	= false;
 
-	/// Whether currently executed loop has triggered a return statement.
-	bool				breakTriggered	= false;
+	/// The level of loop breakage triggered by `break <number>;` or `break;`
+	int				breakLevel	= 0;
 
 	/// Whether currently executed loop has triggered a return statement.
 	bool				continueTriggered	= false;

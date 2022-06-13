@@ -84,7 +84,7 @@ auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptV
 				return val;
 			else if(vm_.continueTriggered)
 				return {};
-			else if(vm_.breakTriggered)
+			else if(vm_.breakLevel)
 				return {};
 		}
 	}

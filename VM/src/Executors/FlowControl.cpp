@@ -22,7 +22,13 @@ auto executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 ////////////////////////////////////////
 auto evaluateBreakStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
-	vm_.breakTriggered = true;
+	auto const breakLevel = findElem<IntegerLiteral>(stmt_, false);
+
+	if(!breakLevel)
+		vm_.breakLevel = 1;
+	else
+		vm_.breakLevel = std::stoi( breakLevel->string()  );
+
 	return {};
 }
 
@@ -88,8 +94,8 @@ auto executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptV
 			auto ret = vm_.evaluate(*body);
 
 			if (vm_.returnTriggered) return ret;
-			if(vm_.breakTriggered) {
-				vm_.breakTriggered = false;
+			if(vm_.breakLevel) {
+				vm_.breakLevel--;
 				break;
 			}
 			else if(vm_.continueTriggered) {
@@ -133,8 +139,8 @@ auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptVal
 			break;
 		
 		vm_.evaluate(incrementExpr);
-		if(vm_.breakTriggered) {
-			vm_.breakTriggered = false;
+		if(vm_.breakLevel) {
+			vm_.breakLevel--;
 			break;
 		}
 		else if(vm_.continueTriggered) {
