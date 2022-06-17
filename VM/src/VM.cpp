@@ -138,14 +138,14 @@ auto Instance::run(std::string_view moduleName_) -> int
 //////////////////////////////////////////
 auto Instance::allocateReference(Value const& toValue_) -> Value
 {
-	return this->allocateOnStack<void const*>(wrap<RefType>(universalScope(), toValue_.type), toValue_.blob());
+	return this->allocateOnStack<void const*>(constructTemplateType<RefType>(universalScope(), toValue_.type), toValue_.blob());
 }
 
 //////////////////////////////////////////
 auto Instance::allocatePointer(Value const& toRef_) -> Value
 {
 	auto deref = toRef_.safeRemoveRef();
-	return this->allocateOnStack<void const*>(wrap<AddrType>(universalScope(), deref.type), deref.blob());
+	return this->allocateOnStack<void const*>(constructTemplateType<AddrType>(universalScope(), deref.type), deref.blob());
 }
 
 //////////////////////////////////////////
@@ -353,15 +353,20 @@ auto Instance::lineAt(rigc::ParserNode const& node_) const -> size_t
 auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 {
 	DeclType evaluatedType;
-	auto typeName		= findElem<rigc::Name>(typeNode_)->string_view();
-	auto templateParams = findElem<rigc::TemplateParams>(typeNode_);
+	// Note:
+	// "Type" node might be either disambiguated ("name::<Params>") or not ("name<Params>")
+	// Sometimes not disambiguated notation is acceptable.
+	auto& actualTypeNode = *typeNode_.children.front();
+
+	auto typeName		= findElem<rigc::Name>(actualTypeNode)->string_view();
+	auto templateParams = findElem<rigc::TemplateParams>(actualTypeNode);
 
 	if (templateParams)
 	{
 		if (typeName == "Ref")
 		{
 			auto inner = findElem<rigc::TemplateParam>(*templateParams);
-			return wrap<RefType>(
+			return constructTemplateType<RefType>(
 					this->universalScope(),
 					this->evaluateType(*findElem<rigc::Type>(*inner))
 				);
@@ -369,7 +374,7 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 		else if (typeName == "Addr")
 		{
 			auto inner = findElem<rigc::TemplateParam>(*templateParams);
-			return wrap<AddrType>(
+			return constructTemplateType<AddrType>(
 					this->universalScope(),
 					this->evaluateType(*findElem<rigc::Type>(*inner))
 				);
@@ -378,13 +383,13 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 		{
 			// ensure 2 template params
 			if (templateParams->children.size() != 2)
-				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, Int32 N>");
+				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, N: Int32>");
 
 			auto inner	= this->evaluateType(*findElem<rigc::Type>(*templateParams->children[0]));
 			// TEMP:
 			auto size	= std::stoi(templateParams->children[1]->string());
 
-			return wrap<ArrayType>(this->universalScope(), inner, size);
+			return constructTemplateType<ArrayType>(this->universalScope(), inner, size);
 		}
 	}
 

@@ -10,21 +10,21 @@ namespace rigc::vm
 {
 
 struct ArrayType
-	: WrapperType
+	: TemplateType
 {
 	ArrayType() = default;
 	ArrayType(InnerType inner_, size_t size_)
 		:
-		WrapperType( std::move(inner_) ),
-		count{ size_ }
-	{}
+		TemplateType( std::move(inner_) )
+	{
+		// TODO: support types other than int as NTTPs
+		args.push_back( int(size_) );
+	}
 
-	size_t count = 1;
-
-	std::vector<TemplateArgument> templateArguments;
+	auto inner() const { return args.front().as<DeclType>(); }
 
 	auto name() const -> std::string override {
-		return fmt::format("StaticArray<{}, {}>", inner->name(), count);
+		return fmt::format("StaticArray<{}, {}>", this->inner()->name(), this->count());
 	}
 
 	auto symbolName() const -> std::string override
@@ -32,9 +32,14 @@ struct ArrayType
 		return "StaticArray";
 	}
 
+	auto count() const -> std::size_t
+	{
+		return args[1].as<int>();
+	}
+
 	auto size() const -> std::size_t override
 	{
-		return inner->size() * count;
+		return this->inner()->size() * args[1].as<int>();
 	}
 
 	auto isArray() const -> bool override
@@ -46,8 +51,6 @@ struct ArrayType
 	{
 		return std::hash<std::string>{}(fmt::format("StaticArray<{}, {}>", inner_->name(), count_));
 	}
-
-	auto getTemplateArguments() const -> std::vector<TemplateArgument> const& override;
 
 	auto postInitialize(Instance& vm_) -> void override;
 };

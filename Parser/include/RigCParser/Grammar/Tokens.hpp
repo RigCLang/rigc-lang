@@ -13,9 +13,9 @@ struct Name;
 
 struct PackageImportNames
 	: p::seq<
-			Name, 
-			p::opt< 
-				p::seq< p::one<'.'>, PackageImportNames> 
+			Name,
+			p::opt<
+				p::seq< p::one<'.'>, PackageImportNames>
 			>
 		>
 {
@@ -59,10 +59,26 @@ struct TemplateParams
 {
 };
 
-struct Type
+struct PossiblyTemplatedSymbolNoDisamb
 	:
 	p::seq< Name, p::opt<OptWs, TemplateParams> >
 {};
+
+struct PossiblyTemplatedSymbol
+	:
+	p::seq< Name,
+		p::if_then_else<
+			WsWrapped<p::string<':',':'>>, TemplateParams,
+			// If ::< Args > not succeded, then make sure the Name (at the start) isn't followed by the TemplateParams
+			p::not_at<TemplateParams>
+		>
+	>
+{};
+
+struct Type
+	: p::sor< PossiblyTemplatedSymbol, PossiblyTemplatedSymbolNoDisamb >
+{
+};
 
 struct DeclType
 	:

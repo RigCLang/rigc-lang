@@ -9,36 +9,16 @@ namespace rigc::vm
 {
 
 //////////////////////////////////////
-auto RefType::getTemplateArguments() const -> std::vector<TemplateArgument> const&
-{
-	return templateArguments;
-}
-
-//////////////////////////////////////
 void RefType::postInitialize(Instance& vm_)
 {
 	// Setup template arguments
-	{
-		templateArguments.clear();
-		templateArguments.push_back(inner);
-	}
-}
-
-//////////////////////////////////////
-auto AddrType::getTemplateArguments() const -> std::vector<TemplateArgument> const&
-{
-	return templateArguments;
+	assert((args.size() == 1) && "RefType::postInitialize: AddrType must have 1 template argument");
 }
 
 //////////////////////////////////////
 void AddrType::postInitialize(Instance& vm_)
 {
-
-	// Setup template arguments
-	{
-		templateArguments.clear();
-		templateArguments.push_back(inner);
-	}
+	assert((args.size() == 1) && "AddrType::postInitialize: AddrType must have 1 template argument");
 
 	// get method
 	{
@@ -48,7 +28,7 @@ void AddrType::postInitialize(Instance& vm_)
 				{
 					return vm_.allocateReference(args_[0].removeRef().removePtr());
 				},
-				{ { "self", wrap<RefType>(vm_.universalScope(), this->shared_from_this()) } },
+				{ { "self", constructTemplateType<RefType>(vm_.universalScope(), this->shared_from_this()) } },
 				1
 			}
 		);

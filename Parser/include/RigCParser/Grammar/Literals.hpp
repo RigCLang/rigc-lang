@@ -26,7 +26,7 @@ struct Float64Literal
 };
 
 struct Float32Literal
-	: p::seq<Float64Literal, p::one<'f'>, p::not_at<Digits>, p::not_at<p::alnum> >
+	: p::seq<IntegerLiteral, p::one<'.'>, p::star<Digits>, p::one<'f'>, p::not_at<p::alnum> >
 {
 };
 

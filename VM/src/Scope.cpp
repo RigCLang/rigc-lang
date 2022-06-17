@@ -124,7 +124,7 @@ auto testFunctionOverload(Function& func_, FunctionParamTypeSpan paramTypes_) ->
 		{
 			if (auto ref = paramTypes_[testedIdx]->as<RefType>())
 			{
-				if (ref->inner.get() != func_.params[i].type.get())
+				if (ref->inner().get() != func_.params[i].type.get())
 					return false;
 			}
 			else
@@ -159,10 +159,13 @@ auto tryDeduceFromSingleParamType(
 		TemplateArguments&			deduced
 	) -> DeductionResult
 {
-	auto reqTemplArgs = findElem<rigc::TemplateParams>(requiredTypeTemplate);
-	auto const& subTemplArgs = paramType_->getTemplateArguments();
+	// Ensure that we got either `PossiblyTemplatedSymbol` or `PossiblyTemplatedSymbolNoDisamb`
+	auto& actualReqTypeTempl = *requiredTypeTemplate.children.front();
 
-	auto& reqTypeName = *findElem<rigc::Name>(requiredTypeTemplate);
+	auto reqTemplArgs = findElem<rigc::TemplateParams>(actualReqTypeTempl);
+	auto& reqTypeName = *findElem<rigc::Name>(actualReqTypeTempl);
+
+	auto const& subTemplArgs = paramType_->getTemplateArguments();
 
 	if (!reqTemplArgs)
 	{
@@ -329,7 +332,7 @@ auto Scope::tryGenerateFunction(
 						auto& typeName = *findElem<rigc::Name>(*templ->params[i].typeNode);
 
 						if (typeName.string_view() != "Ref") {
-							type = type->as<RefType>()->inner;
+							type = type->as<RefType>()->inner();
 						}
 					}
 

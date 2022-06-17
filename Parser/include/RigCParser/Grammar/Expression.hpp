@@ -17,7 +17,7 @@ struct SingleExpressionFragment
 	:
 	p::seq<
 		p::star<PrefixOperator>, OptWs,
-		p::sor<AnyLiteral, Name, ExprInParen>, OptWs,
+		p::sor<AnyLiteral, PossiblyTemplatedSymbol, ExprInParen>, OptWs,
 		p::star<PostfixOperator>
 	>
 {

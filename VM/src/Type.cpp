@@ -108,11 +108,11 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 	infixParams[1] = { "rhs", t };
 
 	Function::Params infixAssignParams;
-	infixAssignParams[0] = { "lhs", wrap<RefType>(universeScope_, t) };
+	infixAssignParams[0] = { "lhs", constructTemplateType<RefType>(universeScope_, t) };
 	infixAssignParams[1] = { "rhs", t };
 
 	Function::Params prePostfixParams;
-	prePostfixParams[0] = { "lhs", wrap<RefType>(universeScope_, t) };
+	prePostfixParams[0] = { "lhs", constructTemplateType<RefType>(universeScope_, t) };
 
 	#define MAKE_INFIX_OP(Name, Incantation) \
 		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \

@@ -15,30 +15,32 @@ namespace rigc::vm
 #define MAKE_EXECUTOR(ClassName, Executor) { #ClassName, Executor }
 
 std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
-	MAKE_EXECUTOR(ImportStatement,		executeImportStatement),
-	MAKE_EXECUTOR(CodeBlock,			executeCodeBlock),
-	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
-	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
-	MAKE_EXECUTOR(ForStatement,		executeForStatement),
-	MAKE_EXECUTOR(ReturnStatement,		executeReturnStatement),
-	MAKE_EXECUTOR(SingleBlockStatement,	executeSingleStatement),
-	MAKE_EXECUTOR(Expression,			evaluateExpression),
-	MAKE_EXECUTOR(Name,					evaluateName),
-	MAKE_EXECUTOR(IntegerLiteral,		evaluateIntegerLiteral),
-	MAKE_EXECUTOR(BoolLiteral,			evaluateBoolLiteral),
-	MAKE_EXECUTOR(StringLiteral,		evaluateStringLiteral),
-	MAKE_EXECUTOR(CharLiteral,			evaluateCharLiteral),
-	MAKE_EXECUTOR(Float32Literal,		evaluateFloat32Literal),
-	MAKE_EXECUTOR(Float64Literal,		evaluateFloat64Literal),
-	// MAKE_EXECUTOR(ArrayLiteral,			evaluateArrayLiteral),
-	// MAKE_EXECUTOR(ArrayElement,			evaluateArrayElement),
-	MAKE_EXECUTOR(VariableDefinition,	evaluateVariableDefinition),
-	MAKE_EXECUTOR(FunctionDefinition,	evaluateFunctionDefinition),
-	MAKE_EXECUTOR(InitializerValue,		evaluateExpression),
-	MAKE_EXECUTOR(FunctionArg,			evaluateExpression),
-	MAKE_EXECUTOR(ClassDefinition,		evaluateClassDefinition),
-	MAKE_EXECUTOR(MethodDef,			evaluateMethodDefinition),
-	MAKE_EXECUTOR(DataMemberDef,		evaluateDataMemberDefinition),
+	MAKE_EXECUTOR(ImportStatement,					executeImportStatement),
+	MAKE_EXECUTOR(CodeBlock,						executeCodeBlock),
+	MAKE_EXECUTOR(IfStatement,						executeIfStatement),
+	MAKE_EXECUTOR(WhileStatement,					executeWhileStatement),
+	MAKE_EXECUTOR(ForStatement,						executeForStatement),
+	MAKE_EXECUTOR(ReturnStatement,					executeReturnStatement),
+	MAKE_EXECUTOR(SingleBlockStatement,				executeSingleStatement),
+	MAKE_EXECUTOR(Expression,						evaluateExpression),
+	MAKE_EXECUTOR(PossiblyTemplatedSymbol,			evaluateSymbol),
+	MAKE_EXECUTOR(PossiblyTemplatedSymbolNoDisamb,	evaluateSymbol),
+	MAKE_EXECUTOR(Name,								evaluateName),
+	MAKE_EXECUTOR(IntegerLiteral,					evaluateIntegerLiteral),
+	MAKE_EXECUTOR(BoolLiteral,						evaluateBoolLiteral),
+	MAKE_EXECUTOR(StringLiteral,					evaluateStringLiteral),
+	MAKE_EXECUTOR(CharLiteral,						evaluateCharLiteral),
+	MAKE_EXECUTOR(Float32Literal,					evaluateFloat32Literal),
+	MAKE_EXECUTOR(Float64Literal,					evaluateFloat64Literal),
+	// MAKE_EXECUTOR(ArrayLiteral,					evaluateArrayLiteral),
+	// MAKE_EXECUTOR(ArrayElement,					evaluateArrayElement),
+	MAKE_EXECUTOR(VariableDefinition,				evaluateVariableDefinition),
+	MAKE_EXECUTOR(FunctionDefinition,				evaluateFunctionDefinition),
+	MAKE_EXECUTOR(InitializerValue,					evaluateExpression),
+	MAKE_EXECUTOR(FunctionArg,						evaluateExpression),
+	MAKE_EXECUTOR(ClassDefinition,					evaluateClassDefinition),
+	MAKE_EXECUTOR(MethodDef,						evaluateMethodDefinition),
+	MAKE_EXECUTOR(DataMemberDef,					evaluateDataMemberDefinition),
 };
 
 #undef MAKE_EXECUTOR
@@ -102,6 +104,27 @@ auto executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	return ExpressionExecutor{vm_, expr_}.evaluate();
+}
+
+////////////////////////////////////////
+auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	// Either "PossiblyTemplatedSymbol" or "PossiblyTemplatedSymbolNoDisamb"
+	auto& name	= *findElem<rigc::Name>(expr_, false);
+	auto opt	= vm_.findVariableByName(name.string_view());
+
+	// if (!opt) {
+	// 	opt = vm_.findFunctionExpr(actualExpr.string_view());
+	// }
+
+	if (!opt) {
+		throw std::runtime_error("Unrecognized identifier with name \"" + name.string() + "\"");
+	}
+
+	if (auto ref = opt->type->as<RefType>())
+		return opt;
+
+	return vm_.allocateReference(opt.value());
 }
 
 ////////////////////////////////////////

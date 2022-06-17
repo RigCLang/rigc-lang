@@ -9,14 +9,14 @@ namespace rigc::vm
 {
 
 struct RefType
-	: WrapperType
+	: TemplateType
 {
-	using WrapperType::WrapperType;
+	using TemplateType::TemplateType;
 
-	std::vector<TemplateArgument> templateArguments;
+	auto inner() const -> DeclType { return args.front().as<DeclType>(); }
 
 	auto name() const -> std::string override {
-		return fmt::format("Ref<{}>", inner->name());
+		return fmt::format("Ref<{}>", this->inner()->name());
 	}
 
 	auto symbolName() const -> std::string override {
@@ -28,7 +28,7 @@ struct RefType
 	}
 
 	auto isArray() const -> bool override {
-		return inner->isArray();
+		return this->inner()->isArray();
 	}
 
 	static auto hashWrapped(InnerType const& inner_) -> std::size_t
@@ -36,26 +36,18 @@ struct RefType
 		return std::hash<std::string>{}(fmt::format("Ref<{}>", inner_->name()));
 	}
 
-	auto getTemplateArguments() const -> std::vector<TemplateArgument> const& override;
-
 	auto postInitialize(Instance& vm_) -> void override;
 };
 
 struct AddrType
-	: WrapperType
+	: TemplateType
 {
-	using WrapperType::WrapperType;
+	using TemplateType::TemplateType;
 
-	AddrType(InnerType inner_ = nullptr)
-		: WrapperType(std::move(inner_))
-	{
-
-	}
-
-	std::vector<TemplateArgument> templateArguments;
+	auto inner() const { return args.front().as<DeclType>(); }
 
 	auto name() const -> std::string override {
-		return fmt::format("Addr<{}>", inner->name());
+		return fmt::format("Addr<{}>", this->inner()->name());
 	}
 
 	auto symbolName() const -> std::string override {
@@ -74,8 +66,6 @@ struct AddrType
 	{
 		return std::hash<std::string>{}(fmt::format("Addr<{}>", inner_->name()));
 	}
-
-	auto getTemplateArguments() const -> std::vector<TemplateArgument> const& override;
 
 	auto postInitialize(Instance& vm_) -> void override;
 };

@@ -14,7 +14,7 @@ namespace rigc::vm
 // // Forward declarations:
 struct Function;
 struct ArrayType;
-struct WrapperType;
+struct TemplateType;
 struct RefType;
 
 namespace BuiltinTypes

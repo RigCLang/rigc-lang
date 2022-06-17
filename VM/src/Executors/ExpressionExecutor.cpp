@@ -22,6 +22,15 @@ auto isOperator(rigc::ParserNode const& node_) -> bool
 }
 
 ////////////////////////////////////////
+auto isSymbol(rigc::ParserNode const& node_) -> bool
+{
+	return (
+		node_.is_type<rigc::PossiblyTemplatedSymbol>() ||
+		node_.is_type<rigc::PossiblyTemplatedSymbolNoDisamb>()
+	);
+}
+
+////////////////////////////////////////
 auto operatorPriority(rigc::ParserNode const& node_) -> int
 {
 	auto op = node_.string_view();
@@ -54,7 +63,7 @@ auto operatorPriority(rigc::ParserNode const& node_) -> int
 auto ExpressionExecutor::evaluate() -> OptValue
 {
 	if (ctx.children.size() == 1)
-		return vm.evaluate(*ctx.children[0]);
+		return vm.evaluate(*ctx.children.front());
 
 	actions.reserve(ctx.children.size());
 
@@ -71,13 +80,14 @@ auto ExpressionExecutor::evaluate() -> OptValue
 
 		for (size_t i = 0; i < actions.size(); ++i)
 		{
-			if ( !std::holds_alternative<PendingAction>(actions[i]) )
+			if ( !actions[i].is<PendingAction>() )
 				continue;
-			PendingAction pa = std::get<PendingAction>(actions[i]);
+
+			auto pa = actions[i].as<PendingAction>();
 
 			if (isOperator(*pa))
 			{
-				int priority = operatorPriority(*pa);
+				auto priority = operatorPriority(*pa);
 				if (priority < bestPriority)
 				{
 					bestIdx			= i;
@@ -88,12 +98,7 @@ auto ExpressionExecutor::evaluate() -> OptValue
 
 		this->evaluateAction(actions[bestIdx], bestIdx);
 
-		numPending = 0;
-		for (size_t i = 0; i < actions.size(); ++i)
-		{
-			if ( std::holds_alternative<PendingAction>(actions[i]) )
-				++numPending;
-		}
+		numPending = rg::count_if(actions, &Action::is<PendingAction>);
 	}
 
 	auto& result = actions[0].as<ProcessedAction>();
@@ -157,6 +162,8 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> ProcessedAction
 	return lhs_.as<ProcessedAction>();
 }
 
+
+
 ////////////////////////////////////////
 auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> ProcessedAction
 {
@@ -169,11 +176,12 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 
 		auto rhsExpr = rhs_.as<PendingAction>();
 
-		if (rhsExpr->is_type<rigc::Name>())
+		if (isSymbol(*rhsExpr))
 		{
+			auto& symbolName = *rhsExpr->children[0];
 			lhs = lhs.removeRef();
 
-			auto memberName = rhsExpr->string_view();
+			auto memberName = symbolName.string_view();
 
 			if (auto classType = lhs.type->as<ClassType>())
 			{
@@ -348,10 +356,10 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 			//    var func: Ref = funcWithOverloads; // 🔴 Error
 			//    func(param1, param2);
 			//
-			if (auto act = lhs_.as<PendingAction>(); act->is_type<rigc::Name>())
+			if (auto act = lhs_.as<PendingAction>(); isSymbol(*act))
 			{
 				autoOverloadResolution = true;
-				candidates = vm.findFunction(act->string_view());
+				candidates = vm.findFunction(findElem<rigc::Name>(*act)->string_view());
 			}
 		}
 		else if (auto act = lhs_.as<ProcessedAction>(); act.is<ProcessedFunction>())
@@ -407,8 +415,10 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 			if (fnName.empty() && lhs_.is<PendingAction>())
 			{
 				auto& lhsExpr = *lhs_.as<PendingAction>();
-				if (lhsExpr.is_type<rigc::Name>())
-					fnName = lhsExpr.string_view();
+				if (isSymbol(lhsExpr)) // TODO: support variable templates
+				{
+					fnName = findElem<rigc::Name>(lhsExpr, false)->string_view();
+				}
 
 			}
 			if (!fnName.empty())

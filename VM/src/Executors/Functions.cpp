@@ -114,7 +114,7 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 	size_t numParams = 0;
 	params[numParams++] = {
 		"self",
-		wrap<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
+		constructTemplateType<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
 	};
 
 	auto templateParams = TemplateParameters();

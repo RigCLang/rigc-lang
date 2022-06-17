@@ -9,21 +9,10 @@ namespace rigc::vm
 {
 
 //////////////////////////////////////
-auto ArrayType::getTemplateArguments() const -> std::vector<TemplateArgument> const&
-{
-	return templateArguments;
-}
-
-//////////////////////////////////////
 void ArrayType::postInitialize(Instance& vm_)
 {
 	// Setup template arguments:
-	{
-		templateArguments.clear();
-		templateArguments.reserve(2);
-		templateArguments.push_back(this->inner);
-		templateArguments.push_back(static_cast<int>(count)); // TODO: Use a proper type for this
-	}
+	assert((args.size() == 2) && "ArrayType::postInitialize: ArrayType must have 2 template arguments");
 
 	// "data" method
 	{
@@ -36,7 +25,7 @@ void ArrayType::postInitialize(Instance& vm_)
 
 					return vm_.allocatePointer(firstElem);
 				},
-				{ { "self", wrap<RefType>(vm_.universalScope(), this->shared_from_this()) } },
+				{ { "self", constructTemplateType<RefType>(vm_.universalScope(), this->shared_from_this()) } },
 				1
 			}
 		);
@@ -55,7 +44,7 @@ void ArrayType::postInitialize(Instance& vm_)
 							int(val.type->size())
 						);
 				},
-				{ { "self", wrap<RefType>(vm_.universalScope(), this->shared_from_this()) } },
+				{ { "self", constructTemplateType<RefType>(vm_.universalScope(), this->shared_from_this()) } },
 				1
 			}
 		);

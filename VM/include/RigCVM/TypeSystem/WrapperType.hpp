@@ -8,21 +8,35 @@
 namespace rigc::vm
 {
 
-struct WrapperType
+struct TemplateType
 	: IType
 {
-	WrapperType(InnerType inner_ = nullptr)
-		: inner(std::move(inner_))
+	Vec<TemplateArgument> args;
+
+	TemplateType()
 	{}
 
-	InnerType inner;
+	// DEPRECATED
+	TemplateType(DeclType inner_)
+		: args{ std::move(inner_) }
+	{}
+
+	TemplateType(std::span<DeclType> args_)
+		: args(args_.begin(), args_.end())
+	{}
+
 	auto decay() const -> InnerType override {
-		return inner->decay();
+		return args.front().as<DeclType>()->decay();
+	}
+
+	auto getTemplateArguments() const -> std::vector<TemplateArgument> const& override
+	{
+		return args;
 	}
 };
 
-template <std::derived_from<WrapperType> Wrapper, typename... CtorTypes>
-inline MutDeclType wrap(Scope& ownerScope_, DeclType decl, CtorTypes&&... ctorArgs)
+template <std::derived_from<TemplateType> Wrapper, typename... CtorTypes>
+inline MutDeclType constructTemplateType(Scope& ownerScope_, DeclType decl, CtorTypes&&... ctorArgs)
 {
 	auto hash = Wrapper::hashWrapped(decl, std::as_const(ctorArgs)...);
 
