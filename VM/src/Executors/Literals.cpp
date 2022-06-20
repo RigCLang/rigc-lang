@@ -7,7 +7,6 @@
 
 namespace rigc::vm
 {
-
 ////////////////////////////////////////
 static auto replaceAll(std::string& s, std::string_view from, std::string_view to) -> void
 {
@@ -106,6 +105,4 @@ auto evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVal
 // 	// vm_.stack.push( v );
 // 	return v;
 // }
-
-
 }
