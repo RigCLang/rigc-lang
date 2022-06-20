@@ -15,7 +15,8 @@ auto getTemplateParamList(rigc::ParserNode const& expr_) -> Vec<Pair<std::string
 	auto list = Vec<Pair<std::string, TypeConstraint>>();
 
 	auto i = 0;
-	for(auto const& templateParam : templateParamList->children) {
+	for(auto const& templateParam : templateParamList->children) 
+	{
 		auto const paramName = findElem<rigc::Name>(*templateParam);
 		auto const constraintName = findElem<rigc::TemplateDefParamKind>(*templateParam);
 
