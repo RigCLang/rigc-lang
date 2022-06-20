@@ -11,7 +11,6 @@
 
 namespace rigc::vm
 {
-
 ////////////////////////////////////
 auto makeUniverseScope(Instance &vm_) -> std::unique_ptr<Scope>
 {
@@ -35,7 +34,6 @@ auto makeUniverseScope(Instance &vm_) -> std::unique_ptr<Scope>
 
 	scope->addType(std::make_unique<FuncType>());
 	scope->addType(std::make_unique<MethodType>());
-
 	// "print" builtin function
 	{
 		auto func = Function{ &builtin::print, {}, 0 };
@@ -516,6 +514,4 @@ auto Scope::registerOperator(Instance& vm_, std::string_view name_, Operator::Ty
 			std::move(func_)
 		);
 }
-
-
 }

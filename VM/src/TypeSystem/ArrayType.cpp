@@ -7,9 +7,8 @@
 
 namespace rigc::vm
 {
-
 //////////////////////////////////////
-void ArrayType::postInitialize(Instance& vm_)
+auto ArrayType::postInitialize(Instance& vm_) -> void
 {
 	// Setup template arguments:
 	assert((args.size() == 2) && "ArrayType::postInitialize: ArrayType must have 2 template arguments");
@@ -51,5 +50,4 @@ void ArrayType::postInitialize(Instance& vm_)
 		this->addMethod("size", &fn);
 	}
 }
-
 }

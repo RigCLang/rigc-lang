@@ -8,8 +8,8 @@
 
 namespace rigc::vm
 {
-
-auto EnumType::add(DataMember mem, OptValue const& val) -> void {
+auto EnumType::add(DataMember mem, OptValue const& val) -> void 
+{
 	_size = mem.type->size();
 
 	if(!val) {
@@ -24,8 +24,8 @@ auto EnumType::add(DataMember mem, OptValue const& val) -> void {
 }
 
 
-auto EnumType::postInitialize(Instance& vm) -> void {
-
+auto EnumType::postInitialize(Instance& vm) -> void 
+{
 	// assignment operator
 	{
 		auto params = Function::Params {{
@@ -78,5 +78,4 @@ auto EnumType::postInitialize(Instance& vm) -> void {
 		);
 	} // equality operator
 }
-
 }

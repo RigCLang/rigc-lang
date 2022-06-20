@@ -9,7 +9,6 @@
 
 namespace rigc::vm
 {
-
 /////////////////////////////////////
 auto Value::member(DataMember const& dm_) const -> Value
 {
@@ -130,5 +129,4 @@ auto dump(Instance& vm_, Value const& value_) -> std::string
 	}
 	return "<unknown>";
 }
-
 }

@@ -5,7 +5,6 @@
 
 namespace rigc::vm
 {
-
 // ///////////////////////////////////////////
 // void ClassType::parse(rigc::ParserNode const& node_)
 // {
@@ -48,5 +47,4 @@ auto ClassType::defaultConstructor() const
 
 	return *def;
 }
-
 }
