@@ -67,8 +67,8 @@ struct PossiblyTemplatedSymbolNoDisamb
 struct PossiblyTemplatedSymbol
 	:
 	p::seq< Name,
-		p::if_then_else<
-			WsWrapped<p::string<':',':'>>, TemplateParams,
+		p::sor<
+			p::seq< WsWrapped<p::string<':',':'>>, TemplateParams >,
 			// If ::< Args > not succeded, then make sure the Name (at the start) isn't followed by the TemplateParams
 			p::not_at<TemplateParams>
 		>
