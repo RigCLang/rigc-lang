@@ -26,4 +26,6 @@ This command will run the `HelloWorld` example using RigC's virtual machine.
 
 To run other examples just replace `HelloWorld` with a filename of a different one (e.g. `AdvancedFunctionTemplates`).
 
+![Running an example](../res/imgs/running-examples.gif)
+
 You may also run the virtual machine from any other folder, but you have to make sure you specify a correct script path.
