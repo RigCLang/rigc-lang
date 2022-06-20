@@ -41,7 +41,7 @@ auto EnumType::postInitialize(Instance& vm) -> void {
 				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					auto self = args_[0].safeRemoveRef();
-					auto const rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
+					auto const& rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
 
 					self.view<EnumValue>() = rhsEnumValue;
 
@@ -67,8 +67,8 @@ auto EnumType::postInitialize(Instance& vm) -> void {
 			Function{
 				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
-					auto const selfEnumValue = args_[0].safeRemoveRef().view<EnumValue>();
-					auto const rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
+					auto const& selfEnumValue = args_[0].safeRemoveRef().view<EnumValue>();
+					auto const& rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
 
 					return vm_.allocateOnStack("Bool", selfEnumValue.fieldName == selfEnumValue.fieldName);
 				},

@@ -169,10 +169,12 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> ProcessedAction
 ////////////////////////////////////////
 auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> ProcessedAction
 {
-	Value lhs = *this->evalSingleAction(lhs_).as<OptValue>();
+	auto evalSide = [&](Action& side) -> Value { return *this->evalSingleAction(side).as<OptValue>(); };
 
 	if (op_ == ".")
 	{
+		auto lhs = evalSide(lhs_);
+
 		if (!lhs.type->is<RefType>())
 			lhs = vm.allocateReference(lhs);
 
@@ -216,17 +218,17 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 	else if(op_ == "::")
 	{
 		auto const rhs = rhs_.as<PendingAction>();
-		if(!rhs->is_type<rigc::Name>())
+		if(!isSymbol(*rhs))
 			throw std::runtime_error("Rhs of the :: operator should be a valid identifier.");
 
 		auto const source = lhs_.as<PendingAction>();
-		if(!source->is_type<rigc::Name>())
+		if(!isSymbol(*source))
 			throw std::runtime_error("Lhs of the :: operator should be a valid identifier.");
 
 		auto const memberName = rhs->string();
 		auto const sourceName = source->string_view();
 
-		auto const sourceType = vm.findType(sourceName);
+		auto const sourceType = vm.evaluateType(*source);
 
 		if(!sourceType)
 			throw std::runtime_error(fmt::format("No type named \"{}\" found.", sourceName));
@@ -246,6 +248,8 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 	}
 	else if(op_ == "as")
 	{
+		auto lhs = evalSide(lhs_);
+
 		auto const rhs = rhs_.as<PendingAction>();
 		if(!rhs->is_type<rigc::Name>())
 			throw std::runtime_error("Rhs of the conversion operator should be a valid identifier.");
@@ -258,7 +262,8 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 	}
 	else
 	{
-		Value rhs = *this->evalSingleAction(rhs_).as<OptValue>();
+		auto lhs = evalSide(lhs_);
+		auto rhs = evalSide(rhs_);
 
 		FunctionParamTypes types;
 

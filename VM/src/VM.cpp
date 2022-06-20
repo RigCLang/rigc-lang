@@ -360,7 +360,7 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 	// Note:
 	// "Type" node might be either disambiguated ("name::<Params>") or not ("name<Params>")
 	// Sometimes not disambiguated notation is acceptable.
-	auto& actualTypeNode = *typeNode_.children.front();
+	auto& actualTypeNode = (typeNode_.is_type<rigc::Type>() ? *typeNode_.children.front() : typeNode_);
 
 	auto typeName		= findElem<rigc::Name>(actualTypeNode)->string_view();
 	auto templateParams = findElem<rigc::TemplateParams>(actualTypeNode);
