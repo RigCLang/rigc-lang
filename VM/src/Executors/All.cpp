@@ -43,6 +43,7 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(InitializerValue,					evaluateExpression),
 	MAKE_EXECUTOR(FunctionArg,						evaluateExpression),
 	MAKE_EXECUTOR(ClassDefinition,					evaluateClassDefinition),
+	MAKE_EXECUTOR(EnumDefinition,					executeEnumDefinition),
 	MAKE_EXECUTOR(MethodDef,						evaluateMethodDefinition),
 	MAKE_EXECUTOR(DataMemberDef,					evaluateDataMemberDefinition),
 };
