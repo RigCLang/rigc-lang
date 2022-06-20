@@ -9,7 +9,6 @@
 
 namespace rigc::vm::builtin
 {
-
 ////////////////////////////////////////
 auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
@@ -107,5 +106,4 @@ auto readFloat(Instance &vm_, Function::ArgSpan args_) -> OptValue
 
 	return executeRead<double>(vm_, "Float64");
 }
-
 }

@@ -13,7 +13,6 @@
 
 namespace rigc::vm
 {
-
 #define MAKE_EXECUTOR(ClassName, Executor) { #ClassName, Executor }
 
 std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
@@ -64,7 +63,6 @@ StackFramePusher::~StackFramePusher()
 		vm.popStackFrame();
 }
 
-
 ////////////////////////////////////////
 auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptValue
 {
@@ -108,13 +106,13 @@ auto executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 	return {};
 }
 
-
 ////////////////////////////////////////
 auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	return ExpressionExecutor{vm_, expr_}.evaluate();
 }
 
+//todo refactor evaluateSymbol and evaluateName
 ////////////////////////////////////////
 auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
@@ -126,7 +124,8 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 	// 	opt = vm_.findFunctionExpr(actualExpr.string_view());
 	// }
 
-	if (!opt) {
+	if (!opt) 
+	{
 		throw std::runtime_error("Unrecognized identifier with name \"" + name.string() + "\"");
 	}
 
@@ -145,7 +144,8 @@ auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 	// 	opt = vm_.findFunctionExpr(expr_.string_view());
 	// }
 
-	if (!opt) {
+	if (!opt) 
+	{
 		throw std::runtime_error("Unrecognized identifier with name \"" + expr_.string() + "\"");
 	}
 
@@ -165,14 +165,16 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	bool deduceType = (declType == "var" || declType == "const");
 
 	Value value;
-	if (valueExpr) {
+	if (valueExpr) 
+	{
 		value = vm_.evaluate(*valueExpr).value();
 		if (auto ref = value.type->as<RefType>())
 		{
 			value = value.removeRef();
 		}
 	}
-	else if (deduceType) {
+	else if (deduceType) 
+	{
 		throw std::runtime_error(
 				fmt::format("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
 			);
@@ -383,5 +385,4 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 
 	return {};
 }
-
 }

@@ -164,8 +164,6 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> ProcessedAction
 	return lhs_.as<ProcessedAction>();
 }
 
-
-
 ////////////////////////////////////////
 auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> ProcessedAction
 {
@@ -316,7 +314,6 @@ auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand
 		);
 }
 
-
 ////////////////////////////////////////
 auto ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_) -> ProcessedAction
 {
@@ -442,12 +439,12 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 				candidates.push_back( { &vm.scopeOf(nullptr), funcVal.view<FunctionOverloads const*>() } );
 		}
 
-		if (self) {
+		if (self) 
+		{
 			evaluatedArgs[0] = vm.allocateReference(*self);
 			paramTypes[0] = evaluatedArgs[0].type;
 			++numParams;
 		}
-
 
 		auto paramCount = evaluateFunctionArguments(
 				vm, op_,
@@ -525,6 +522,4 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 	return {};
 }
-
-
 }

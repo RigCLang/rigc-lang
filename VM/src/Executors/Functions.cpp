@@ -9,14 +9,13 @@
 
 namespace rigc::vm
 {
-
-
 ////////////////////////////////////////
-bool isTemplatedType(rigc::ParserNode const& typeNode_, TemplateParameters const& templateParams_)
+auto isTemplatedType(rigc::ParserNode const& typeNode_, TemplateParameters const& templateParams_) -> bool
 {
 	auto templParamsNode = findElem<rigc::TemplateParams>(typeNode_);
 
-	if (!templParamsNode) {
+	if (!templParamsNode) 
+	{
 		return templateParams_.find(typeNode_.string_view()) != templateParams_.end();
 	}
 
@@ -30,7 +29,8 @@ bool isTemplatedType(rigc::ParserNode const& typeNode_, TemplateParameters const
 }
 
 ////////////////////////////////////////
-auto evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_, TemplateParameters& templateParams_) -> void
+auto evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_,
+						    size_t& numParams_, TemplateParameters& templateParams_) -> void
 {
 	for (auto const& param : paramsNode_.children)
 	{
@@ -93,7 +93,6 @@ auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	return {};
 }
 
-
 ////////////////////////////////////////
 auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
@@ -150,6 +149,4 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 
 	return {};
 }
-
-
 }

@@ -5,7 +5,6 @@
 
 namespace rigc::vm
 {
-
 ////////////////////////////////////////
 auto executeReturnStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
@@ -110,7 +109,6 @@ auto executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptV
 	return {};
 }
 
-
 ////////////////////////////////////////
 auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
@@ -139,11 +137,13 @@ auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptVal
 			break;
 		
 		vm_.evaluate(incrementExpr);
-		if(vm_.breakLevel) {
+		if(vm_.breakLevel) 
+		{
 			vm_.breakLevel--;
 			break;
 		}
-		else if(vm_.continueTriggered) {
+		else if(vm_.continueTriggered) 
+		{
 			vm_.continueTriggered = false;
 			continue;
 		}
@@ -151,6 +151,4 @@ auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptVal
 
 	return {};
 }
-
-
 }

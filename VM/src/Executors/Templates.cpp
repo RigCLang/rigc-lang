@@ -5,7 +5,6 @@
 
 namespace rigc::vm 
 {
-
 ////////////////////////////////////////
 auto getTemplateParamList(rigc::ParserNode const& expr_) -> Vec<Pair<std::string, TypeConstraint>>
 {
