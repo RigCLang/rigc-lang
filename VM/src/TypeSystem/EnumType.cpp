@@ -38,11 +38,11 @@ auto EnumType::postInitialize(Instance& vm) -> void {
 			"=",
 			Operator::Infix,
 			Function{
-				[](Instance& vm_, Function::Args& args_, size_t argCount_) -> OptValue
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					auto self = args_[0].safeRemoveRef();
 					auto const rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
-				
+
 					self.view<EnumValue>() = rhsEnumValue;
 
 					return vm_.allocateReference(self);
@@ -65,7 +65,7 @@ auto EnumType::postInitialize(Instance& vm) -> void {
 			"==",
 			Operator::Infix,
 			Function{
-				[](Instance& vm_, Function::Args& args_, size_t argCount_) -> OptValue
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					auto const selfEnumValue = args_[0].safeRemoveRef().view<EnumValue>();
 					auto const rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();

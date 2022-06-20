@@ -234,7 +234,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		if (auto const enumType = sourceType->as<EnumType>())
 		{
 			if(enumType->fields.contains(memberName))
-				return vm.allocateReference(enumType->fields[memberName]);
+				return vm.allocateReference(enumType->fields.at(memberName));
 			else
 			 return {};
 		}
