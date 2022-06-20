@@ -87,6 +87,10 @@ auto Instance::run(std::string_view moduleName_) -> int
 		throw std::runtime_error(fmt::format("Failed to run module \"{}\"", moduleName_));
 	}
 
+	// Use its parent path as the working directory
+	// This is important for modules to work properly.
+	fs::current_path(entryPoint.module_->absolutePath.parent_path());
+
 	stack.container.resize(StackSize);
 	scopes[nullptr] = makeUniverseScope(*this);
 	Scope& scope = *scopes[nullptr];
