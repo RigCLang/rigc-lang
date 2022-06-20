@@ -7,10 +7,8 @@
 
 namespace rigc::vm
 {
-
-
-struct FuncType
-	: IType
+//todo: refactor maybe use template?
+struct FuncType : IType
 {
 	InnerType result;
 	std::vector<InnerType> parameters;
@@ -32,12 +30,10 @@ struct FuncType
 
 	auto decay() const -> InnerType override { return nullptr; }
 
-	void postInitialize(Instance& vm_) override;
+	auto postInitialize(Instance& vm_) -> void override;
 };
 
-
-struct MethodType
-	: IType
+struct MethodType : IType
 {
 	InnerType result;
 	InnerType classType;
@@ -61,6 +57,4 @@ struct MethodType
 };
 
 Value allocateMethodOverloads(Instance& vm_, Value self_, FunctionOverloads const* overloads_);
-
-
 }

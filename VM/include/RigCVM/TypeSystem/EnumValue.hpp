@@ -5,8 +5,8 @@
 #include <RigCVM/TypeSystem/IType.hpp>
 #include <RigCVM/Value.hpp>
 
-namespace rigc::vm {
-
+namespace rigc::vm 
+{
 struct EnumValue : IType {
 	EnumValue() = default;
 	EnumValue(std::string name, Value val)
@@ -21,5 +21,4 @@ struct EnumValue : IType {
 	auto size() const -> size_t override { return value.type->size(); }
 	auto decay() const -> InnerType override { return nullptr; }
 };
-
 }

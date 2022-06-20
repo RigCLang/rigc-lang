@@ -7,13 +7,11 @@
 
 namespace rigc::vm
 {
-
 struct Instance;
 struct DataMember;
 
 template <typename T>
 using Ptr = T*;
-
 struct ValueBase
 {
 	DeclType	type;
@@ -28,23 +26,25 @@ struct ValueBase
 	}
 };
 
-struct Value
-	: ValueBase
+struct Value : ValueBase
 {
 	void* data = nullptr;
 
 	template <typename T>
-	T& view() {
+	auto view() -> T& 
+	{
 		return *reinterpret_cast<T*>(data);
 	}
 
 	template <typename T>
-	T const& view() const {
+	auto view() const -> T const& 
+	{
 		return *reinterpret_cast<T*>(data);
 	}
 
 	// Temp:
-	auto blob() const -> void* {
+	auto blob() const -> void* 
+	{
 		return data;
 	}
 
@@ -60,19 +60,18 @@ struct Value
 
 auto dump(Instance& vm_, Value const& value_)-> std::string;
 
-struct CompileTimeValue
-	: ValueBase
+struct CompileTimeValue : ValueBase
 {
 	std::vector<std::byte> buffer;
 
 	template <typename T>
-	T& view() 
+	auto view() -> T& 
 	{
 		return *reinterpret_cast<T*>(this->blob());
 	}
 
 	template <typename T>
-	T const& view() const 
+	auto view() const -> T const&
 	{
 		return *reinterpret_cast<T const*>(this->blob());
 	}
@@ -88,24 +87,23 @@ struct CompileTimeValue
 	}
 };
 
-struct FrameBasedValue
-	: ValueBase
+struct FrameBasedValue : ValueBase
 {
 	size_t stackOffset;
 
 	template <typename T>
-	T& view(StackFrame const& frame_) 
+	auto view(StackFrame const& frame_) -> T&
 	{
 		return *reinterpret_cast<T*>(this->blob(frame_));
 	}
 
 	template <typename T>
-	T const& view(StackFrame const& frame_) const 
+	auto view(StackFrame const& frame_) const -> T const&
 	{
 		return *reinterpret_cast<T*>(this->blob(frame_));
 	}
 
-	// Temp:
+	// Temp: ??
 	auto blob(StackFrame const& frame_) const -> void const* 
 	{
 		return static_cast<void const*>(frame_.stack->data() + frame_.initialStackSize + stackOffset);
@@ -125,5 +123,4 @@ template <typename T>
 auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_) -> void;
 template <typename T>
 auto addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_) -> void;
-
 }

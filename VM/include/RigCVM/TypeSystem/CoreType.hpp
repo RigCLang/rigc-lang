@@ -6,9 +6,7 @@
 
 namespace rigc::vm
 {
-
-class CoreType
-	: public IType
+class CoreType : public IType
 {
 public:
 	enum Kind : uint8_t
@@ -22,7 +20,6 @@ public:
 	};
 
 private:
-
 	static constexpr auto Num = static_cast<size_t>(Kind::MAX);
 
 	static constexpr auto Sizes = std::to_array({
@@ -41,9 +38,6 @@ private:
 			"Bool"
 		});
 public:
-
-
-
 	template <typename T>
 	static auto fromCppType() -> Kind
 	{
@@ -94,6 +88,4 @@ public:
 
 	Kind kind;
 };
-
-
 }

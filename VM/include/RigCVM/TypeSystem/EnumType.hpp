@@ -9,11 +9,7 @@
 
 namespace rigc::vm
 {
-
-class EnumType
-
-	:
-	public StructuralType
+class EnumType : public StructuralType
 {
 public:
 	DeclType underlyingType;
@@ -22,5 +18,4 @@ public:
 	auto add(DataMember mem, OptValue const& val) -> void;
 	auto postInitialize(Instance& vm) -> void;
 };
-
 }

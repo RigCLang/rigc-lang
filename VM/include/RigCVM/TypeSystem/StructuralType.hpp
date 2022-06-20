@@ -9,11 +9,7 @@
 
 namespace rigc::vm
 {
-
-class StructuralType
-
-	:
-	public IType
+class StructuralType : public IType
 {
 	std::string_view	_name;
 protected:
@@ -26,19 +22,21 @@ public:
 		return std::string(_name);
 	}
 
-	auto size() const -> size_t override {
+	auto size() const -> size_t override 
+	{
 		return _size;
 	}
 
-	auto decay() const -> InnerType override {
+	auto decay() const -> InnerType override 
+	{
 		return const_cast<StructuralType*>(this)->shared_from_this();
 	}
 
-	auto parse(rigc::ParserNode const& node_) -> void {
+	auto parse(rigc::ParserNode const& node_) -> void 
+	{
 		declaration = &node_;
 
 		_name = findElem<rigc::Name>(node_)->string_view();
 	}
 };
-
 }

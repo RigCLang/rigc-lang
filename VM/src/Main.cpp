@@ -51,7 +51,7 @@ auto main(int argc, char* argv[]) -> int
 #endif
 }
 
-void enableColors()
+auto enableColors() -> void
 {
 	#ifdef PACC_SYSTEM_WINDOWS
 	DWORD consoleMode;
@@ -63,7 +63,7 @@ void enableColors()
 	#endif
 }
 
-void printError()
+auto printError() -> void
 {
 	using color = fmt::color;
 	using fmt::fg;
