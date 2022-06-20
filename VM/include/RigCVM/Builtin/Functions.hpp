@@ -13,10 +13,10 @@ struct Instance;
 namespace builtin
 {
 
-auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue;
-auto typeOf(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue;
-auto readInt(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue;
-auto readFloat(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue;
+auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue;
+auto typeOf(Instance &vm_, Function::ArgSpan args_) -> OptValue;
+auto readInt(Instance &vm_, Function::ArgSpan args_) -> OptValue;
+auto readFloat(Instance &vm_, Function::ArgSpan args_) -> OptValue;
 
 }
 

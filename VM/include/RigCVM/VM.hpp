@@ -34,7 +34,7 @@ struct Instance
 	auto run(std::string_view moduleName_) -> int;
 
 	auto executeFunction(Function const& func) -> OptValue;
-	auto executeFunction(Function const& func, Function::Args& args_, size_t argsCount_=0) -> OptValue;
+	auto executeFunction(Function const& func, Function::ArgSpan args_) -> OptValue;
 	auto evaluate(rigc::ParserNode const& stmt_) -> OptValue;
 
 	/// <summary>Returns the "self" reference in method context.</summary>
@@ -43,9 +43,8 @@ struct Instance
 	auto evaluateType(rigc::ParserNode const& typeNode_) -> DeclType;
 
 	auto findVariableByName(std::string_view name_) -> OptValue;
-	auto findType(std::string_view name_) -> IType*;
-	auto findFunction(std::string_view name_) -> FunctionOverloads const*;
-	auto findFunctionExpr(std::string_view name_) -> Value;
+	auto findType(std::string_view name_) -> IType const*;
+	auto findFunction(std::string_view name_) -> FunctionCandidates;
 
 	auto tryConvert(Value value_, DeclType const& to_) -> OptValue;
 
@@ -117,7 +116,7 @@ struct Instance
 	Scope*				currentScope	= nullptr;
 
 	/// Current execution scope, related to the current stack frame.
-	rigc::ParserNode const*	currentFunc	= nullptr;
+	FunctionInstance const*	currentFunc	= nullptr;
 
 	/// Currently parsed class type.
 	StructuralType*			currentClass	= nullptr;

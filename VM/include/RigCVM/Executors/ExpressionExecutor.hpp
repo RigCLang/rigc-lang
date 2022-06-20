@@ -4,17 +4,25 @@
 
 #include <RigCVM/Value.hpp>
 #include <RigCVM/ExtendedVariant.hpp>
+#include <RigCVM/Functions.hpp>
 
 namespace rigc::vm
 {
 
 struct Instance;
+struct ProcessedFunction {
+	FunctionCandidates	candidates;
+	OptValue			self={};
+	std::string_view	name={};
+};
 
 class ExpressionExecutor
 {
 public:
 	using PendingAction		= rigc::ParserNode*;
-	using ProcessedAction	= OptValue;
+	using RuntimeValue		= OptValue;
+
+	using ProcessedAction	= ExtendedVariant<RuntimeValue, ProcessedFunction>;
 	using Action			= ExtendedVariant<PendingAction, ProcessedAction>;
 
 	ExpressionExecutor(Instance& vm_, rigc::ParserNode const& ctx_)
@@ -31,11 +39,11 @@ private:
 
 	auto evaluateAction(Action &action_, size_t actionIndex_) -> void;
 
-	auto evalSingleAction(Action& lhs_) -> OptValue;
+	auto evalSingleAction(Action& lhs_) -> ProcessedAction;
 
-	auto evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> OptValue;
-	auto evalPrefixOperator(std::string_view op_, Action& rhs_) -> Value;
-	auto evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> OptValue;
+	auto evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> ProcessedAction;
+	auto evalPrefixOperator(std::string_view op_, Action& rhs_) -> ProcessedAction;
+	auto evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction;
 
 	std::vector<Action> actions;
 };

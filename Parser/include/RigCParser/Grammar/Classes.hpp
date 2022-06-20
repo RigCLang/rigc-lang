@@ -17,7 +17,7 @@ struct DataMemberDef
 {};
 
 struct MethodDef
-	: p::seq< p::opt< OverrideKeyword, Ws >, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
+	: p::seq< p::opt< OverrideKeyword, Ws >, p::opt<TemplateDefPreamble, OptWs>, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
 {};
 
 struct MemberDef
@@ -35,9 +35,9 @@ struct ClassCodeBlock
 
 struct ClassDefinition
 	: p::seq<
-			p::opt<ExportKeyword, Ws>, 
-			p::opt<TemplateDefPreamble, Ws>,
-			p::if_must< ClassKeyword, Ws, Name, OptWs, ClassCodeBlock > >
+			p::opt<ExportKeyword, Ws>,
+			p::opt<TemplateDefPreamble, OptWs>,
+			p::if_must< ClassKeyword, Ws, Name, OptWs, ClassCodeBlock> >
 {
 };
 

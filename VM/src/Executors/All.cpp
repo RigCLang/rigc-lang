@@ -17,34 +17,34 @@ namespace rigc::vm
 #define MAKE_EXECUTOR(ClassName, Executor) { #ClassName, Executor }
 
 std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
-	MAKE_EXECUTOR(ImportStatement,		executeImportStatement),
-	MAKE_EXECUTOR(CodeBlock,			executeCodeBlock),
-	MAKE_EXECUTOR(IfStatement,			executeIfStatement),
-	MAKE_EXECUTOR(WhileStatement,		executeWhileStatement),
-	MAKE_EXECUTOR(ForStatement,		executeForStatement),
-	MAKE_EXECUTOR(ReturnStatement,		executeReturnStatement),
-	MAKE_EXECUTOR(BreakStatement,		evaluateBreakStatement),
-	MAKE_EXECUTOR(ContinueStatement,		evaluateContinueStatement),
-	MAKE_EXECUTOR(SingleBlockStatement,	executeSingleStatement),
-	MAKE_EXECUTOR(Expression,			evaluateExpression),
-	MAKE_EXECUTOR(Name,					evaluateName),
-	MAKE_EXECUTOR(IntegerLiteral,		evaluateIntegerLiteral),
-	MAKE_EXECUTOR(BoolLiteral,			evaluateBoolLiteral),
-	MAKE_EXECUTOR(StringLiteral,		evaluateStringLiteral),
-	MAKE_EXECUTOR(CharLiteral,			evaluateCharLiteral),
-	MAKE_EXECUTOR(Float32Literal,		evaluateFloat32Literal),
-	MAKE_EXECUTOR(Float64Literal,		evaluateFloat64Literal),
-	// MAKE_EXECUTOR(ArrayLiteral,			evaluateArrayLiteral),
-	// MAKE_EXECUTOR(ArrayElement,			evaluateArrayElement),
-	MAKE_EXECUTOR(VariableDefinition,	evaluateVariableDefinition),
-	MAKE_EXECUTOR(FunctionDefinition,	evaluateFunctionDefinition),
-	MAKE_EXECUTOR(InitializerValue,		evaluateExpression),
-	MAKE_EXECUTOR(FunctionArg,			evaluateExpression),
-	MAKE_EXECUTOR(ClassDefinition,		evaluateClassDefinition),
-	MAKE_EXECUTOR(UnionDefinition,		executeUnionDefinition),
-	MAKE_EXECUTOR(EnumDefinition,		executeEnumDefinition),
-	MAKE_EXECUTOR(MethodDef,			evaluateMethodDefinition),
-	MAKE_EXECUTOR(DataMemberDef,		evaluateDataMemberDefinition),
+	MAKE_EXECUTOR(ImportStatement,					executeImportStatement),
+	MAKE_EXECUTOR(CodeBlock,						executeCodeBlock),
+	MAKE_EXECUTOR(IfStatement,						executeIfStatement),
+	MAKE_EXECUTOR(WhileStatement,					executeWhileStatement),
+	MAKE_EXECUTOR(ForStatement,						executeForStatement),
+	MAKE_EXECUTOR(ReturnStatement,					executeReturnStatement),
+	MAKE_EXECUTOR(SingleBlockStatement,				executeSingleStatement),
+	MAKE_EXECUTOR(Expression,						evaluateExpression),
+	MAKE_EXECUTOR(BreakStatement,					evaluateBreakStatement),
+	MAKE_EXECUTOR(ContinueStatement,				evaluateContinueStatement),
+	MAKE_EXECUTOR(PossiblyTemplatedSymbol,			evaluateSymbol),
+	MAKE_EXECUTOR(PossiblyTemplatedSymbolNoDisamb,	evaluateSymbol),
+	MAKE_EXECUTOR(Name,								evaluateName),
+	MAKE_EXECUTOR(IntegerLiteral,					evaluateIntegerLiteral),
+	MAKE_EXECUTOR(BoolLiteral,						evaluateBoolLiteral),
+	MAKE_EXECUTOR(StringLiteral,					evaluateStringLiteral),
+	MAKE_EXECUTOR(CharLiteral,						evaluateCharLiteral),
+	MAKE_EXECUTOR(Float32Literal,					evaluateFloat32Literal),
+	MAKE_EXECUTOR(Float64Literal,					evaluateFloat64Literal),
+	// MAKE_EXECUTOR(ArrayLiteral,					evaluateArrayLiteral),
+	// MAKE_EXECUTOR(ArrayElement,					evaluateArrayElement),
+	MAKE_EXECUTOR(VariableDefinition,				evaluateVariableDefinition),
+	MAKE_EXECUTOR(FunctionDefinition,				evaluateFunctionDefinition),
+	MAKE_EXECUTOR(InitializerValue,					evaluateExpression),
+	MAKE_EXECUTOR(FunctionArg,						evaluateExpression),
+	MAKE_EXECUTOR(ClassDefinition,					evaluateClassDefinition),
+	MAKE_EXECUTOR(MethodDef,						evaluateMethodDefinition),
+	MAKE_EXECUTOR(DataMemberDef,					evaluateDataMemberDefinition),
 };
 
 #undef MAKE_EXECUTOR
@@ -115,13 +115,34 @@ auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValu
 }
 
 ////////////////////////////////////////
+auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	// Either "PossiblyTemplatedSymbol" or "PossiblyTemplatedSymbolNoDisamb"
+	auto& name	= *findElem<rigc::Name>(expr_, false);
+	auto opt	= vm_.findVariableByName(name.string_view());
+
+	// if (!opt) {
+	// 	opt = vm_.findFunctionExpr(actualExpr.string_view());
+	// }
+
+	if (!opt) {
+		throw std::runtime_error("Unrecognized identifier with name \"" + name.string() + "\"");
+	}
+
+	if (auto ref = opt->type->as<RefType>())
+		return opt;
+
+	return vm_.allocateReference(opt.value());
+}
+
+////////////////////////////////////////
 auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	auto opt = vm_.findVariableByName(expr_.string_view());
 
-	if (!opt) {
-		opt = vm_.findFunctionExpr(expr_.string_view());
-	}
+	// if (!opt) {
+	// 	opt = vm_.findFunctionExpr(expr_.string_view());
+	// }
 
 	if (!opt) {
 		throw std::runtime_error("Unrecognized identifier with name \"" + expr_.string() + "\"");
@@ -176,7 +197,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 				{
 					Function::Args args;
 					args[0] = vm_.allocateReference(value);
-					ctor->invoke(vm_, args, 1);
+					vm_.executeFunction(*ctor, Function::ArgSpan{ args.data(), 1 } );
 				}
 			}
 		}
@@ -206,7 +227,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 ////////////////////////////////////////
 auto executeUnionDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
-	// auto const templateParamList = getTemplateParamList(expr_); 
+	// auto const templateParamList = getTemplateParamList(expr_);
 	// std::pair<std::string, TypeConstraint>, string is a name,
 	// TypeConstraint is, for now, a struct with just a name (std::string)
 	// TODO: actually do something with the template parameter list
@@ -268,7 +289,7 @@ auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 ////////////////////////////////////////
 auto evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
-	// auto const templateParamList = getTemplateParamList(expr_); 
+	// auto const templateParamList = getTemplateParamList(expr_);
 	// std::pair<std::string, TypeConstraint>, string is a name,
 	// TypeConstraint is, for now, a struct with just a name (std::string)
 	// TODO: actually do something with the template parameter list
@@ -331,11 +352,11 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 	// 	type = value.type;
 	// else
 	{
-		auto declType = findElem<rigc::Type>(*typeExpr, false)->string_view();
-		if (auto t = vm_.findType(declType))
-			type = t->shared_from_this();
-		else
-			throw std::runtime_error(fmt::format("Type {} not found", declType));
+		auto& declType = *findElem<rigc::Type>(*typeExpr, false);
+
+		type = vm_.evaluateType(declType);
+		if (!type)
+			throw std::runtime_error(fmt::format("Type {} not found", declType.string_view()));
 
 		// if (!valueExpr)
 		// {

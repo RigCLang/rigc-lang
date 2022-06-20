@@ -39,6 +39,7 @@ DECLARE_EXECUTOR(evaluateContinueStatement);
 DECLARE_EXECUTOR(evaluateFunctionDefinition);
 DECLARE_EXECUTOR(evaluateExpression);
 
+DECLARE_EXECUTOR(evaluateSymbol);
 DECLARE_EXECUTOR(evaluateName);
 DECLARE_EXECUTOR(evaluateIntegerLiteral);
 DECLARE_EXECUTOR(evaluateBoolLiteral);

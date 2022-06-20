@@ -8,9 +8,9 @@ namespace rigc::vm
 {
 
 ///////////////////////////////////////////////////
-auto Function::invoke(Instance& vm_, Args& args_, size_t argCount_) const -> OptValue
+auto Function::invoke(Instance& vm_, ArgSpan args_) const -> OptValue
 {
-	return vm_.executeFunction(*this, args_, argCount_);
+	return vm_.executeFunction(*this, args_);
 }
 
 }

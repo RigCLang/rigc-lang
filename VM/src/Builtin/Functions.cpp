@@ -11,9 +11,9 @@ namespace rigc::vm::builtin
 {
 
 ////////////////////////////////////////
-auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
+auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
-	if (argCount_ == 0)
+	if (args_.size() == 0)
 		return {};
 
 	auto format = args_[0];
@@ -24,7 +24,7 @@ auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 	auto fmtView = std::string_view(chars, format.getType()->size());
 
 	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
-	for (size_t c = 1; c < argCount_; ++c)
+	for (size_t c = 1; c < args_.size(); ++c)
 	{
 		Value val = args_[c].safeRemoveRef();
 
@@ -34,6 +34,8 @@ auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 		auto decayedTypeName = val.typeName();
 		if (typeName == "Int32")
 			store.push_back(val.view<int>());
+		if (typeName == "Char")
+			store.push_back(val.view<char>());
 		else if (typeName == "Float32")
 			store.push_back(val.view<float>());
 		else if (typeName == "Float64")
@@ -58,10 +60,10 @@ auto print(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
 }
 
 ////////////////////////////////////////
-auto typeOf(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
+auto typeOf(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
-	auto name = args_[0].type->name();
-	auto t = wrap<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
+	auto name = args_[0].safeRemoveRef().type->name();
+	auto t = constructTemplateType<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
 
 	return vm_.allocateOnStack( t, name.data(), name.size() );
 }
@@ -84,23 +86,23 @@ auto executeRead(Instance &vm_, std::string_view rigcTypeName) -> OptValue
 {
 	auto data = CppType();
 	std::cin >> data; // scanf?
-	
+
 	return vm_.allocateOnStack(rigcTypeName, data);
 }
 
 ////////////////////////////////////////
-auto readInt(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
+auto readInt(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
-	if(argCount_ != 0) 
+	if(args_.size() != 0)
 		printMessage(args_[0]);
 
 	return executeRead<int>(vm_, "Int32");
 }
 
 ////////////////////////////////////////
-auto readFloat(Instance &vm_, Function::Args& args_, size_t argCount_) -> OptValue
+auto readFloat(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
-	if(argCount_ != 0) 
+	if(args_.size() != 0)
 		printMessage(args_[0]);
 
 	return executeRead<double>(vm_, "Float64");

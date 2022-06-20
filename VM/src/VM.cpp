@@ -138,25 +138,24 @@ auto Instance::run(std::string_view moduleName_) -> int
 //////////////////////////////////////////
 auto Instance::allocateReference(Value const& toValue_) -> Value
 {
-	return this->allocateOnStack<void const*>(wrap<RefType>(universalScope(), toValue_.type), toValue_.blob());
+	return this->allocateOnStack<void const*>(constructTemplateType<RefType>(universalScope(), toValue_.type), toValue_.blob());
 }
 
 //////////////////////////////////////////
 auto Instance::allocatePointer(Value const& toRef_) -> Value
 {
 	auto deref = toRef_.safeRemoveRef();
-	return this->allocateOnStack<void const*>(wrap<AddrType>(universalScope(), deref.type), deref.blob());
+	return this->allocateOnStack<void const*>(constructTemplateType<AddrType>(universalScope(), deref.type), deref.blob());
 }
 
 //////////////////////////////////////////
 auto Instance::executeFunction(Function const& func) -> OptValue
 {
-	Function::Args args;
-	return this->executeFunction(func, args, 0);
+	return this->executeFunction(func, {});
 }
 
 //////////////////////////////////////////
-auto Instance::executeFunction(Function const& func_, Function::Args& args_, size_t argsCount_) -> OptValue
+auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -> OptValue
 {
 	OptValue retVal;
 
@@ -165,9 +164,8 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 	if (func_.outerType && func_.outerType->is<ClassType>())
 		classContext = func_.outerType->as<ClassType>();
 
-	bool rawFn = std::holds_alternative<Function::RawFn>(func_.impl);
 	// Raw function:
-	if (rawFn)
+	if (func_.isRaw())
 	{
 		// Process parameters (conversions)
 		for (size_t i = 0; i < func_.paramCount; ++i)
@@ -178,15 +176,16 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 				args_[i] = args_[i].removeRef();
 		}
 
-		auto const& fn = std::get<Function::RawFn>(func_.impl);
-		retVal = fn(*this, args_, argsCount_);
+		auto const& fn = func_.rawImpl();
+		retVal = fn(*this, args_);
 	}
 	else
 	{
-		size_t prevStackFrames = stack.frames.size();
-		Scope& fnScope = this->pushStackFrameOf(func_.addr());
-		StackFrame& frame = stack.frames.back();
-		fnScope.func = true;
+		auto prevStackFrames	= stack.frames.size();
+		auto& fnScope			= this->pushStackFrameOf(func_.addr());
+		auto& frame				= stack.frames.back();
+
+		fnScope.func = &func_;
 
 		// Process parameters (conversions)
 		for (size_t i = 0; i < func_.paramCount; ++i)
@@ -209,20 +208,21 @@ auto Instance::executeFunction(Function const& func_, Function::Args& args_, siz
 			}
 		}
 		// Runtime function:
-		auto const& fn = *std::get<Function::RuntimeFn>(func_.impl);
+		auto const& fn = *func_.runtimeImpl().node;
 
 		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>())
 		{
 			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
-		else if(fn.is_type<rigc::ClosureDefinition>())
-		{
-			auto body = findElem<rigc::CodeBlock>(fn);
-			if (!body)
-				body = findElem<rigc::Expression>(fn);
+		// TODO: support closures
+		// else if(fn.is_type<rigc::ClosureDefinition>())
+		// {
+		// 	auto body = findElem<rigc::CodeBlock>(fn);
+		// 	if (!body)
+		// 		body = findElem<rigc::Expression>(fn);
 
-			retVal = this->evaluate( *body );
-		}
+		// 	retVal = this->evaluate( *body );
+		// }
 
 		while (stack.frames.size() > prevStackFrames)
 			this->popStackFrame();
@@ -280,7 +280,7 @@ auto Instance::tryConvert(Value value_, DeclType const& to_) -> OptValue
 
 	Function::Args args;
 	args[0] = value_;
-	return this->executeFunction(*cvt, args, 1);
+	return this->executeFunction(*cvt, Function::ArgSpan{ args.data(), 1 });
 }
 
 //////////////////////////////////////////
@@ -308,6 +308,14 @@ auto Instance::findVariableByName(std::string_view name_) -> OptValue
 		if (varIt != vars.end())
 		{
 			return varIt->second.toAbsolute(*it);
+		}
+
+		auto& templArgs = it->scope->templateArguments;
+		auto templConstantIt = templArgs.find(name_);
+		if (templConstantIt != templArgs.end())
+		{
+			if (templConstantIt->second.is<int>())
+				return this->allocateOnStack( "Int32", templConstantIt->second.as<int>() );
 		}
 
 		if (it->scope->func)
@@ -345,15 +353,20 @@ auto Instance::lineAt(rigc::ParserNode const& node_) const -> size_t
 auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 {
 	DeclType evaluatedType;
-	auto typeName		= findElem<rigc::Name>(typeNode_)->string_view();
-	auto templateParams = findElem<rigc::TemplateParams>(typeNode_);
+	// Note:
+	// "Type" node might be either disambiguated ("name::<Params>") or not ("name<Params>")
+	// Sometimes not disambiguated notation is acceptable.
+	auto& actualTypeNode = *typeNode_.children.front();
+
+	auto typeName		= findElem<rigc::Name>(actualTypeNode)->string_view();
+	auto templateParams = findElem<rigc::TemplateParams>(actualTypeNode);
 
 	if (templateParams)
 	{
 		if (typeName == "Ref")
 		{
 			auto inner = findElem<rigc::TemplateParam>(*templateParams);
-			return wrap<RefType>(
+			return constructTemplateType<RefType>(
 					this->universalScope(),
 					this->evaluateType(*findElem<rigc::Type>(*inner))
 				);
@@ -361,7 +374,7 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 		else if (typeName == "Addr")
 		{
 			auto inner = findElem<rigc::TemplateParam>(*templateParams);
-			return wrap<AddrType>(
+			return constructTemplateType<AddrType>(
 					this->universalScope(),
 					this->evaluateType(*findElem<rigc::Type>(*inner))
 				);
@@ -370,13 +383,13 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 		{
 			// ensure 2 template params
 			if (templateParams->children.size() != 2)
-				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, Int32 N>");
+				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, N: Int32>");
 
 			auto inner	= this->evaluateType(*findElem<rigc::Type>(*templateParams->children[0]));
 			// TEMP:
 			auto size	= std::stoi(templateParams->children[1]->string());
 
-			return wrap<ArrayType>(this->universalScope(), inner, size);
+			return constructTemplateType<ArrayType>(this->universalScope(), inner, size);
 		}
 	}
 
@@ -385,13 +398,16 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 
 
 //////////////////////////////////////////
-auto Instance::findType(std::string_view name_) -> IType*
+auto Instance::findType(std::string_view name_) -> IType const*
 {
 	auto scope = currentScope;
 	while (scope)
 	{
 		if (auto type = scope->types.find(name_))
 			return type.get();
+
+		if (auto type = scope->findType(name_))
+			return type;
 
 		scope = scope->parent;
 	}
@@ -400,40 +416,28 @@ auto Instance::findType(std::string_view name_) -> IType*
 }
 
 //////////////////////////////////////////
-auto Instance::findFunction(std::string_view name_) -> FunctionOverloads const*
+auto Instance::findFunction(std::string_view name_) -> FunctionCandidates
 {
+	auto candidates = FunctionCandidates{};
+	candidates.reserve(10);
 	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
 	{
-		auto& funcs = it->scope->functions;
-		auto funcIt = funcs.find(name_);
+		auto overloads = it->scope->findFunction(name_);
+		if (overloads)
+			candidates.push_back( { it->scope, overloads } );
 
-		if (funcIt != funcs.end())
-			return &funcIt->second;
-
-	}
-
-	return nullptr;
-}
-
-//////////////////////////////////////////
-auto Instance::findFunctionExpr(std::string_view name_) -> Value
-{
-	FunctionOverloads const* overloads = nullptr;
-	IType* type = nullptr;
-
-	if (auto constructed = this->findType(name_))
-	{
-		if (auto c = constructed->as<ClassType>())
+		if (auto type = it->scope->types.find(name_))
 		{
-			overloads	= c->constructors();
-			return allocateMethodOverloads(*this, {}, overloads);
+			if (auto classType = type->as<ClassType>())
+			{
+				if (auto ctors = classType->constructors())
+					candidates.push_back( { it->scope, ctors } );
+			}
 		}
+
 	}
 
-	overloads	= this->findFunction(name_);
-	type		= this->findType(BuiltinTypes::OverloadedFunction);
-
-	return this->allocateOnStack<void const*>(type->shared_from_this(), overloads);
+	return candidates;
 }
 
 //////////////////////////////////////////
@@ -496,7 +500,8 @@ auto Instance::scopeOf(void const *addr_) -> Scope&
 		return scopeRef;
 	}
 
-	return *scopes[addr_];
+	auto& s = *it->second;
+	return s;
 }
 
 //////////////////////////////////////////

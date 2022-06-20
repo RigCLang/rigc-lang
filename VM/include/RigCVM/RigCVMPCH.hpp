@@ -3,6 +3,7 @@
 #include <RigCParser/Grammar.hpp>
 #include <RigCParser/Parser.hpp>
 
+#include <span>
 #include <array>
 #include <vector>
 #include <memory>
@@ -43,3 +44,14 @@ using UMap = std::unordered_map<TKey, TValue>;
 // pair
 template <typename TFirst, typename TSecond>
 using Pair = std::pair<TFirst, TSecond>;
+
+
+template <typename T, size_t N>
+inline auto viewArray(std::array<T, N>& array_, size_t offset_ = 0, std::optional<size_t> c = std::nullopt)
+{
+	size_t maxSize = array_.size() - offset_;
+	return std::span{
+		array_.data() + offset_,
+		c ? (std::min(*c, maxSize)) : maxSize
+	};
+}

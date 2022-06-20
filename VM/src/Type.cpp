@@ -108,21 +108,21 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 	infixParams[1] = { "rhs", t };
 
 	Function::Params infixAssignParams;
-	infixAssignParams[0] = { "lhs", wrap<RefType>(universeScope_, t) };
+	infixAssignParams[0] = { "lhs", constructTemplateType<RefType>(universeScope_, t) };
 	infixAssignParams[1] = { "rhs", t };
 
 	Function::Params prePostfixParams;
-	prePostfixParams[0] = { "lhs", wrap<RefType>(universeScope_, t) };
+	prePostfixParams[0] = { "lhs", constructTemplateType<RefType>(universeScope_, t) };
 
 	#define MAKE_INFIX_OP(Name, Incantation) \
-		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
 			{ \
 				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
 			}; \
 		universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2));
 
 	#define MAKE_INFIX_ASSIGN_OP(Name, Incantation) \
-		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
 			{ \
 				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
 			}; \
@@ -132,14 +132,14 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 		}
 
 	#define MAKE_POSTFIX_OP(Name, Incantation) \
-		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
 			{ \
 				return builtin##Name##Operator<T>(vm_, args_[0]); \
 			}; \
 		universeScope_.registerOperator(vm_, Incantation, Operator::Postfix, Function(OPERATOR_##Name, prePostfixParams, 1));
 
 	#define MAKE_PREFIX_OP(Name, Incantation) \
-		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::Args args_, size_t argCount_) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
 			{ \
 				return builtin##Name##Operator<T>(vm_, args_[0]); \
 			}; \
@@ -206,7 +206,7 @@ auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& fro
 	Function::Params convertParams;
 	convertParams[0] = { "from", from_ };
 
-	auto const& OPERATOR_Convert = [&func_](Instance &vm_, Function::Args args_, size_t argCount_)
+	auto const& OPERATOR_Convert = [&func_](Instance &vm_, Function::ArgSpan args_)
 		{
 			return func_(vm_, args_[0]);
 		};

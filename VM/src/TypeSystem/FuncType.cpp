@@ -30,7 +30,7 @@ void FuncType::postInitialize(Instance& vm_)
 
 	// 			return vm_.executeFunction(args_[0].view<Function*>(), innerArgs, argCount_ - 1);
 	// 		},
-	// 		{ { "self", wrap<RefType>(vm_.universalScope(), this->shared_from_this()) } },
+	// 		{ { "self", constructTemplateType<RefType>(vm_.universalScope(), this->shared_from_this()) } },
 	// 		1
 	// 	}
 	// );

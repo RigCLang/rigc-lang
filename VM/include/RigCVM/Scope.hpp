@@ -8,6 +8,7 @@
 #include <RigCVM/StaticString.hpp>
 #include <RigCVM/StackFrame.hpp>
 #include <RigCVM/TypeSystem/TypeRegistry.hpp>
+#include <RigCVM/TypeSystem/TypeConstraint.hpp>
 
 namespace rigc::vm
 {
@@ -15,15 +16,24 @@ namespace rigc::vm
 struct Instance;
 
 using FunctionParamTypes	= std::array<DeclType, Function::MAX_PARAMS>;
+using FunctionParamTypeSpan	= std::span<DeclType>;
 
 
 auto findOverload(
-		FunctionOverloads const&	funcs_,
-		FunctionParamTypes const&	paramTypes_,
-		size_t						numArgs_,
-		bool						method = false,
+		FunctionCandidates		const&	funcs_,
+		FunctionParamTypeSpan	paramTypes_,
+		bool					method_ = false,
+		Function::ReturnType	returnType_ = std::nullopt
+	) -> Function const*;
+
+auto findOverload(
+		FunctionOverloads const&	overloads_,
+		FunctionParamTypeSpan		paramTypes_,
+		bool						method_ = false,
 		Function::ReturnType		returnType_ = std::nullopt
 	) -> Function const*;
+
+using TemplateParameters = std::map<std::string, TypeConstraint, std::less<> >;
 
 struct Scope
 {
@@ -38,7 +48,7 @@ struct Scope
 
 	// Whether the scope belongs to a function
 	// (contains parameters and local variables)
-	bool func = false;
+	Function const* func = nullptr;
 
 	Scope* parent = nullptr;
 
@@ -48,7 +58,10 @@ struct Scope
 
 	std::vector< std::unique_ptr<Function> >					functionStorage;
 	std::map<std::string, FunctionOverloads, std::less<> >		functions;
+	std::map<std::string, FunctionOverloads, std::less<> >		functionTemplates;
 	std::map<std::string, FrameBasedValue, std::less<> >		variables;
+	TemplateParameters											templateParams;
+	TemplateArguments											templateArguments;
 	TypeRegistry												types;
 
 
@@ -57,7 +70,7 @@ struct Scope
 	/// </summary>
 	static auto formatOperatorName(std::string_view opName_, Operator::Type type_) -> StaticString<char, 512>;
 
-	auto addType(DeclType type_) -> void;
+	auto addType(MutDeclType type_) -> void;
 
 	/// <summary>
 	/// Returns a function converting type `from_` to type `to_`,
@@ -70,6 +83,17 @@ struct Scope
 	/// or `nullptr` if no such function exist within this scope.
 	/// </summary>
 	auto findFunction(std::string_view funcName_) const -> FunctionOverloads const*;
+
+
+	/// <summary>
+	/// Tries to generate a function with name `funcName_` and parameter types `paramTypes_`
+	/// out of the function templates registered in this scope.
+	/// </summary>
+	auto tryGenerateFunction(
+			Instance&					vm_,
+			std::string_view			funcName_,
+			FunctionParamTypeSpan		paramTypes_
+		) -> Function const*;
 
 	/// <summary>
 	/// Returns type with name `typeName_`,
@@ -95,6 +119,11 @@ struct Scope
 	/// Registers a function within this scope.
 	/// </summary>
 	auto registerFunction(Instance& vm_, std::string_view name_, Function func_) -> Function&;
+
+	/// <summary>
+	/// Registers a function template within this scope.
+	/// </summary>
+	auto registerFunctionTemplate(Instance& vm_, std::string_view name_, Function func_) -> Function&;
 
 	/// <summary>
 	/// Registers an operator within this scope.

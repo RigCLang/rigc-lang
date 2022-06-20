@@ -31,7 +31,7 @@ auto Value::safeRemoveRef() const -> Value
 	if (auto ref = type->as<RefType>())
 	{
 		Value val;
-		val.type = ref->inner;
+		val.type = ref->inner();
 		val.data = this->view<void*>();
 		return val;
 	}
@@ -44,7 +44,7 @@ auto Value::safeRemovePtr() const -> Value
 	if (auto ptr = type->as<AddrType>())
 	{
 		Value val;
-		val.type = ptr->inner;
+		val.type = ptr->inner();
 		val.data = this->view<void*>();
 		return val;
 	}
@@ -57,7 +57,7 @@ auto Value::removeRef() const -> Value
 	if (auto ref = type->as<RefType>())
 	{
 		Value val;
-		val.type = ref->inner;
+		val.type = ref->inner();
 		val.data = this->view<void*>();
 		return val;
 	}
@@ -70,7 +70,7 @@ auto Value::removePtr() const -> Value
 	if (auto ptr = type->as<AddrType>())
 	{
 		Value val;
-		val.type = ptr->inner;
+		val.type = ptr->inner();
 		val.data = this->view<void*>();
 		return val;
 	}

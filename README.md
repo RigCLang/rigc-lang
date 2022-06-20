@@ -23,7 +23,7 @@ Consider helping us by contributing.
   - [ ] Operator overloading
   - [ ] Conversions
 - [ ] Implement advanced language constructs
-  - [ ] Basic templates
+  - [x] Basic templates
   - [ ] Basic concepts
 - [ ] First public alpha release
 

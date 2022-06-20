@@ -12,17 +12,39 @@ namespace rigc::vm
 
 
 ////////////////////////////////////////
-auto evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_) -> void
+bool isTemplatedType(rigc::ParserNode const& typeNode_, TemplateParameters const& templateParams_)
+{
+	auto templParamsNode = findElem<rigc::TemplateParams>(typeNode_);
+
+	if (!templParamsNode) {
+		return templateParams_.find(typeNode_.string_view()) != templateParams_.end();
+	}
+
+	for (auto const& t : templParamsNode->children)
+	{
+		// fmt::print(" $ testing {} (type: {})\n", t->string_view(), t->type);
+		if (isTemplatedType(*t, templateParams_))
+			return true;
+	}
+	return false;
+}
+
+////////////////////////////////////////
+auto evaluateFunctionParams(Instance& vm_, rigc::ParserNode const& paramsNode_, Function::Params& params_, size_t& numParams_, TemplateParameters& templateParams_) -> void
 {
 	for (auto const& param : paramsNode_.children)
 	{
 		auto paramName	= findElem<rigc::Name>(*param)->string_view();
 		auto type		= findElem<rigc::Type>(*param);
 
-		params_[numParams_++] = { paramName, vm_.evaluateType(*type) };
+		if (isTemplatedType(*type, templateParams_))
+			params_[numParams_] = { paramName, nullptr, type }; // Later evaluation
+		else
+			params_[numParams_] = { paramName, vm_.evaluateType(*type) };
+
+		numParams_++;
 	}
 }
-
 
 ////////////////////////////////////////
 auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
@@ -31,11 +53,17 @@ auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
 
-	// auto const templateParamList = getTemplateParamList(expr_); 
-	// std::pair<std::string, TypeConstraint>, string is a name,
-	// TypeConstraint is, for now, a struct with just a name (std::string)
-	// TODO: actually do something with the template parameter list
+	auto templateParamList = getTemplateParamList(expr_);
+	auto isTemplate = !templateParamList.empty();
 
+	auto templateParams = TemplateParameters();
+	for (auto& tp : templateParamList)
+	{
+		templateParams[tp.first] = tp.second;
+		// fmt::print("{} is constrained with {}\n", tp.first, tp.second.name);
+	}
+
+	// TODO: Properly parse return type
 	bool returnsRef = false;
 	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
 	{
@@ -49,10 +77,18 @@ auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
 	if (paramList)
-		evaluateFunctionParams(vm_, *paramList, params, numParams);
+		evaluateFunctionParams(vm_, *paramList, params, numParams, templateParams);
 
-	auto& func = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
-	func.returnsRef = returnsRef;
+	Function* func = nullptr;
+	if (isTemplate)
+		func = &scope.registerFunctionTemplate(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+	else
+		func = &scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+
+	func->returnsRef = returnsRef;
+	auto& funcScope = vm_.scopeOf(func);
+	funcScope.templateParams = std::move(templateParams);
+
 
 	return {};
 }
@@ -65,6 +101,7 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
 
+	// TODO: Properly parse return type
 	bool returnsRef = false;
 	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
 	{
@@ -77,17 +114,39 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 	size_t numParams = 0;
 	params[numParams++] = {
 		"self",
-		wrap<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
+		constructTemplateType<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
 	};
+
+	auto templateParamList = getTemplateParamList(expr_);
+	auto isTemplate = !templateParamList.empty();
+
+	auto templateParams = TemplateParameters();
+	for (auto& tp : templateParamList)
+	{
+		templateParams[tp.first] = tp.second;
+		// fmt::print("{} is constrained with {}\n", tp.first, tp.second.name);
+	}
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
 	if (paramList)
-		evaluateFunctionParams(vm_, *paramList, params, numParams);
+		evaluateFunctionParams(vm_, *paramList, params, numParams, templateParams);
 
-	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
-	method.returnsRef = returnsRef;
-	vm_.currentClass->methods[name].push_back(&method);
-	method.outerType = vm_.currentClass;
+	Function* method = nullptr;
+	if (isTemplate)
+		method = &scope.registerFunctionTemplate(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+	else
+		method = &scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+
+	method->returnsRef = returnsRef;
+
+	vm_.currentClass->methods[name].push_back(method);
+	method->outerType = vm_.currentClass;
+
+	auto& methodScope = vm_.scopeOf(method);
+	methodScope.templateParams = std::move(templateParams);
+
+	if (name == "construct")
+		method->isConstructor = true;
 
 	return {};
 }

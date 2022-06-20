@@ -13,14 +13,15 @@ struct TemplateDefParamKind
 };
 
 
-using TemplateDefParamListElem =
-	p::seq<
-		WsWrapped<
-			Name, // name is a type constraint here, either a type itself or a genuine constraint, C++ concept like
-			WsWrapped<p::one<':'>>, 
-			TemplateDefParamKind 
-		>
-	>;
+struct TemplateDefParamListElem
+	:
+	WsWrapped<
+		Name, // name is a type constraint here, either a type itself or a genuine constraint, C++ concept like
+		WsWrapped<p::one<':'>>,
+		TemplateDefParamKind
+	>
+{
+};
 
 struct TemplateDefParamList
 	:

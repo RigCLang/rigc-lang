@@ -21,6 +21,13 @@ auto TypeRegistry::find(std::string_view hashBasis_) const
 }
 
 //////////////////////////////////////////
+auto TypeRegistry::find(std::string_view hashBasis_)
+	-> MutDeclType
+{
+	return this->find(Hasher{}(hashBasis_));
+}
+
+//////////////////////////////////////////
 auto TypeRegistry::find(std::size_t hash_) const
 	-> DeclType
 {
@@ -31,7 +38,17 @@ auto TypeRegistry::find(std::size_t hash_) const
 }
 
 //////////////////////////////////////////
-auto TypeRegistry::add(DeclType type_)
+auto TypeRegistry::find(std::size_t hash_)
+	-> MutDeclType
+{
+	auto it = types.find(hash_);
+	if (it == types.end())
+		return nullptr;
+	return it->second;
+}
+
+//////////////////////////////////////////
+auto TypeRegistry::add(MutDeclType type_)
 	-> bool
 {
 	auto it = types.find(type_->hash());

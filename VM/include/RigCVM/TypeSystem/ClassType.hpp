@@ -18,8 +18,8 @@ class ClassType
 public:
 	Vec< DataMember > dataMembers;
 
-	auto constructors() const -> FunctionOverloads const*;
 	auto defaultConstructor() const -> Function*;
+	auto constructors() const -> FunctionOverloads const*;
 
 	auto add(DataMember mem, ParserNode const* initExpr) -> void;
 };
