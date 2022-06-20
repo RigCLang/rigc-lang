@@ -269,11 +269,11 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 	// 	type = value.type;
 	// else
 	{
-		auto declType = findElem<rigc::Type>(*typeExpr, false)->string_view();
-		if (auto t = vm_.findType(declType))
-			type = t->shared_from_this();
-		else
-			throw std::runtime_error(fmt::format("Type {} not found", declType));
+		auto& declType = *findElem<rigc::Type>(*typeExpr, false);
+
+		type = vm_.evaluateType(declType);
+		if (!type)
+			throw std::runtime_error(fmt::format("Type {} not found", declType.string_view()));
 
 		// if (!valueExpr)
 		// {

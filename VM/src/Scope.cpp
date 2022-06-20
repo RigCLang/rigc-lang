@@ -170,6 +170,8 @@ auto tryDeduceFromSingleParamType(
 	if (!reqTemplArgs)
 	{
 		auto name = reqTypeName.string();
+		if (templateParams.find(name) == templateParams.end())
+			return DeductionResult::Failed;
 
 		auto existing = deduced.find(name);
 		if (existing != deduced.end())
@@ -218,8 +220,8 @@ auto tryDeduceFromSingleParamType(
 		{
 			auto res = tryDeduceFromSingleParamType(subTemplArg.as<DeclType>(), reqTemplArg, templateParams, deduced);
 			// Skip if deduction failed
-			if (res != DeductionResult::Succeeded)
-				return res;
+			// if (res != DeductionResult::Succeeded)
+			// 	return res;
 		}
 		else // NTTP:
 		{
@@ -316,7 +318,7 @@ auto Scope::tryGenerateFunction(
 		// 	}
 		// }
 
-		if (deduced.size() != fnScope.templateParams.size())
+		if (deduced.size() < fnScope.templateParams.size())
 			continue;
 
 		// if (testFunctionOverload(*templ, paramTypes_))

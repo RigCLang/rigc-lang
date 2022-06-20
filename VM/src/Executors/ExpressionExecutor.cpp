@@ -345,11 +345,12 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 		if (lhs_.is<PendingAction>()) // lhs is yet to be processed
 		{
-			// Supports automatic function overload resultion
-			// because name is provided directly before `()` operator.
+			// Supports automatic function overload resolution
+			// because a symbol is provided directly before `()` operator.
 			// Valid code:
 			//
 			//    funcWithOverloads(param1, param2);
+			//    func::< Int32, 32 >(param1, param2);
 			//
 			// Not matching example:
 			//
@@ -421,8 +422,16 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 				}
 
 			}
+
 			if (!fnName.empty())
-				fn = vm.currentScope->tryGenerateFunction(vm, fnName, reqParamTypes);
+			{
+				if (auto classType = self->type->as<ClassType>())
+				{
+					fn = vm.scopeOf(classType->declaration).tryGenerateFunction(vm, fnName, reqParamTypes);
+				}
+				if (!fn)
+					fn = vm.currentScope->tryGenerateFunction(vm, fnName, reqParamTypes);
+			}
 		}
 
 		//

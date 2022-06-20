@@ -17,7 +17,7 @@ struct DataMemberDef
 {};
 
 struct MethodDef
-	: p::seq< p::opt< OverrideKeyword, Ws >, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
+	: p::seq< p::opt< OverrideKeyword, Ws >, p::opt<TemplateDefPreamble, OptWs>, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
 {};
 
 struct MemberDef

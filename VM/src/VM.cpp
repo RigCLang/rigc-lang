@@ -500,7 +500,8 @@ auto Instance::scopeOf(void const *addr_) -> Scope&
 		return scopeRef;
 	}
 
-	return *scopes[addr_];
+	auto& s = *it->second;
+	return s;
 }
 
 //////////////////////////////////////////

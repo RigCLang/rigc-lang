@@ -47,8 +47,8 @@ public:
 
 	Vec< DataMember > dataMembers;
 
-	auto constructors() const -> FunctionOverloads const*;
 	auto defaultConstructor() const -> Function*;
+	auto constructors() const -> FunctionOverloads const*;
 
 	auto parse(rigc::ParserNode const& node_) -> void;
 };

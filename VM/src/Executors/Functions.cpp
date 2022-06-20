@@ -117,23 +117,36 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 		constructTemplateType<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
 	};
 
+	auto templateParamList = getTemplateParamList(expr_);
+	auto isTemplate = !templateParamList.empty();
+
 	auto templateParams = TemplateParameters();
+	for (auto& tp : templateParamList)
+	{
+		templateParams[tp.first] = tp.second;
+		// fmt::print("{} is constrained with {}\n", tp.first, tp.second.name);
+	}
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
 	if (paramList)
 		evaluateFunctionParams(vm_, *paramList, params, numParams, templateParams);
 
-	auto& method = scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
-	method.returnsRef = returnsRef;
+	Function* method = nullptr;
+	if (isTemplate)
+		method = &scope.registerFunctionTemplate(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
+	else
+		method = &scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 
-	vm_.currentClass->methods[name].push_back(&method);
-	method.outerType = vm_.currentClass;
+	method->returnsRef = returnsRef;
 
-	auto& methodScope = vm_.scopeOf(&method);
+	vm_.currentClass->methods[name].push_back(method);
+	method->outerType = vm_.currentClass;
+
+	auto& methodScope = vm_.scopeOf(method);
 	methodScope.templateParams = std::move(templateParams);
 
 	if (name == "construct")
-		method.isConstructor = true;
+		method->isConstructor = true;
 
 	return {};
 }
