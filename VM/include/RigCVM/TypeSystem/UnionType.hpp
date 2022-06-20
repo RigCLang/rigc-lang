@@ -9,7 +9,6 @@
 
 namespace rigc::vm
 {
-
 class UnionType
 
 	:
@@ -21,5 +20,4 @@ class UnionType
 		_size = rg::max(mem.type->size(), _size);
 	}
 };
-
 }

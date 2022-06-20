@@ -10,10 +10,7 @@
 namespace rigc::vm
 {
 
-class ClassType
-
-	:
-	public StructuralType
+class ClassType : public StructuralType
 {
 public:
 	Vec< DataMember > dataMembers;
@@ -23,5 +20,4 @@ public:
 
 	auto add(DataMember mem, ParserNode const* initExpr) -> void;
 };
-
 }

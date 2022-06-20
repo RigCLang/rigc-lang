@@ -55,5 +55,4 @@ private:
 };
 
 using TemplateParameterValue = rigc::ParserNode const*;
-
 }

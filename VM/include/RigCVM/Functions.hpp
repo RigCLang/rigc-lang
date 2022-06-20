@@ -7,7 +7,6 @@
 
 namespace rigc::vm
 {
-
 struct Instance;
 struct Scope;
 class ClassType;
@@ -57,7 +56,7 @@ struct Function
 	// func name -> Ref
 	bool				returnsRef = false;
 
-	OptValue invoke(Instance& vm_, ArgSpan args_) const;
+	auto invoke(Instance& vm_, ArgSpan args_) const -> OptValue;
 
 	Function(Impl impl_, Params params_, size_t paramCount_)
 		:
@@ -99,5 +98,4 @@ struct Function
 
 using FunctionOverloads		= std::vector<Function*>;
 using FunctionCandidates	= std::vector< std::pair<Scope const*, FunctionOverloads const*> >;
-
 }

@@ -25,6 +25,4 @@ struct TypeRegistry
 
 	auto add(MutDeclType type_) -> bool;
 };
-
-
 }

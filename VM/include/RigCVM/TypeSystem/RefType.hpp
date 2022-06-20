@@ -7,9 +7,7 @@
 
 namespace rigc::vm
 {
-
-struct RefType
-	: TemplateType
+struct RefType : TemplateType
 {
 	using TemplateType::TemplateType;
 
@@ -39,8 +37,7 @@ struct RefType
 	auto postInitialize(Instance& vm_) -> void override;
 };
 
-struct AddrType
-	: TemplateType
+struct AddrType : TemplateType
 {
 	using TemplateType::TemplateType;
 
@@ -69,6 +66,4 @@ struct AddrType
 
 	auto postInitialize(Instance& vm_) -> void override;
 };
-
-
 }

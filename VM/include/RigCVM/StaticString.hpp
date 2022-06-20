@@ -6,8 +6,7 @@ namespace rigc::vm
 {
 
 template <typename T, size_t MaxLength>
-struct StaticString
-	 : std::array<T, MaxLength>
+struct StaticString : std::array<T, MaxLength>
 {
 	size_t numChars = 0;
 

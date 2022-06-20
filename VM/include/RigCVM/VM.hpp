@@ -9,7 +9,6 @@
 
 #include <RigCVM/Functions.hpp>
 
-
 namespace rigc::vm
 {
 class ClassType;
@@ -28,8 +27,7 @@ struct EntryPoint
 
 struct Instance
 {
-	constexpr static auto StackSize			= std::size_t(2 * 1024 * 1024); // 2MB
-
+	constexpr static auto StackSize	= std::size_t(2 * 1024 * 1024); // 2MB
 
 	auto run(std::string_view moduleName_) -> int;
 
@@ -135,8 +133,6 @@ struct Instance
 	/// Whether currently executed loop has triggered a return statement.
 	bool				continueTriggered	= false;
 
-
-
 	/// Maps memory address to a related scope.
 	/// Address might come from a parsed code (ParserNode)
 	std::map<void const*, std::unique_ptr<Scope>>	scopes;
@@ -190,5 +186,4 @@ inline auto findNthElem(rigc::ParserNode const& node_, std::size_t nth_) -> rigc
 
 	return it->get();
 }
-
 }

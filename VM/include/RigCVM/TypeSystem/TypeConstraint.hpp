@@ -12,5 +12,4 @@ struct TypeConstraint // TODO: ???
 public:
 	std::string name;
 };
-
 }

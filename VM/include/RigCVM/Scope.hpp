@@ -12,12 +12,10 @@
 
 namespace rigc::vm
 {
-
 struct Instance;
 
 using FunctionParamTypes	= std::array<DeclType, Function::MAX_PARAMS>;
 using FunctionParamTypeSpan	= std::span<DeclType>;
-
 
 auto findOverload(
 		FunctionCandidates		const&	funcs_,
@@ -44,7 +42,7 @@ struct Scope
 
 	Instance* vm = nullptr;
 
-	using Impls				= std::vector<TypeImpl*>;
+	using Impls	= std::vector<TypeImpl*>;
 
 	// Whether the scope belongs to a function
 	// (contains parameters and local variables)
@@ -63,7 +61,6 @@ struct Scope
 	TemplateParameters											templateParams;
 	TemplateArguments											templateArguments;
 	TypeRegistry												types;
-
 
 	/// <summary>
 	/// Formats the name of an operator to get an unique name used to search for it.
@@ -132,5 +129,4 @@ struct Scope
 };
 
 std::unique_ptr<Scope> makeUniverseScope(Instance &vm_);
-
 }

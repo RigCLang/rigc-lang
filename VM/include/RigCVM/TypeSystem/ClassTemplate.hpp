@@ -21,5 +21,4 @@ public:
 
 	auto instantiate(vm::Instance& vm_, Vec<TemplateParameterValue> const& params_) const -> DeclType;
 };
-
 };

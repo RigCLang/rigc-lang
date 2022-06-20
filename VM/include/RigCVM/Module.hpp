@@ -6,9 +6,7 @@
 
 namespace rigc::vm
 {
-
-class Module
-	: public Scope
+class Module : public Scope
 {
 public:
 	enum class State {
@@ -30,6 +28,4 @@ public:
 
 	State state = State::Unresolved;
 };
-
-
 }

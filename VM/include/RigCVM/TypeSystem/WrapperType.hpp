@@ -7,9 +7,7 @@
 
 namespace rigc::vm
 {
-
-struct TemplateType
-	: IType
+struct TemplateType : IType
 {
 	Vec<TemplateArgument> args;
 
@@ -36,7 +34,7 @@ struct TemplateType
 };
 
 template <std::derived_from<TemplateType> Wrapper, typename... CtorTypes>
-inline MutDeclType constructTemplateType(Scope& ownerScope_, DeclType decl, CtorTypes&&... ctorArgs)
+inline auto constructTemplateType(Scope& ownerScope_, DeclType decl, CtorTypes&&... ctorArgs) -> MutDeclType
 {
 	auto hash = Wrapper::hashWrapped(decl, std::as_const(ctorArgs)...);
 
@@ -47,5 +45,4 @@ inline MutDeclType constructTemplateType(Scope& ownerScope_, DeclType decl, Ctor
 	ownerScope_.addType(wrapper);
 	return wrapper;
 }
-
 }

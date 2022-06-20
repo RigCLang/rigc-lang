@@ -9,8 +9,7 @@
 namespace rigc::vm
 {
 
-struct ArrayType
-	: TemplateType
+struct ArrayType : TemplateType
 {
 	ArrayType() = default;
 	ArrayType(InnerType inner_, size_t size_)
@@ -54,7 +53,4 @@ struct ArrayType
 
 	auto postInitialize(Instance& vm_) -> void override;
 };
-
-
-
 }

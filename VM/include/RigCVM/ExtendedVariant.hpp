@@ -4,10 +4,8 @@
 
 namespace rigc::vm
 {
-
 template <typename... Types>
-struct ExtendedVariant
-	: std::variant<Types...>
+struct ExtendedVariant : std::variant<Types...>
 {
 	using BaseType = std::variant<Types...>;
 
@@ -19,14 +17,15 @@ struct ExtendedVariant
 	}
 
 	template <typename T>
-	T const& as() const {
+	auto as() const -> T const&
+	{
 		return std::get<T>(*this);
 	}
 
 	template <typename T>
-	T& as() {
+	auto as() -> T& 
+	{
 		return std::get<T>(*this);
 	}
 };
-
 }

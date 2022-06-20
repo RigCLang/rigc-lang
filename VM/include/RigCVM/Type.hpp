@@ -7,10 +7,8 @@
 #include <RigCVM/TypeSystem/CoreType.hpp>
 #include <RigCVM/TypeSystem/TypeRegistry.hpp>
 
-
 namespace rigc::vm
 {
-
 // // Forward declarations:
 struct Function;
 struct ArrayType;
@@ -19,10 +17,8 @@ struct RefType;
 
 namespace BuiltinTypes
 {
-
 constexpr std::string_view OverloadedFunction = "<ovf>";
 constexpr std::string_view OverloadedMethod = "<ovm>";
-
 }
 
 struct Operator
@@ -39,6 +35,4 @@ struct TypeImpl
 {
 	std::map<std::string_view, Function*>	methods;
 };
-
-
 }

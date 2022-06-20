@@ -6,8 +6,6 @@
 
 namespace rigc::vm
 {
-
-
 struct Instance;
 struct Scope;
 struct Function;
@@ -26,8 +24,7 @@ using TemplateArguments	= std::map<std::string, TemplateArgument, std::less<>>;
 /// <summary>
 ///		An interface for each type.
 /// </summary>
-struct IType
-	: public std::enable_shared_from_this<IType>
+struct IType : public std::enable_shared_from_this<IType>
 {
 	inline static auto const EmptyTemplateArguments = std::vector<TemplateArgument>{};
 
@@ -79,17 +76,17 @@ struct IType
 	MethodsMap methods;
 
 	template <std::derived_from<IType> T>
-	bool is() const {
+	auto is() const -> bool{
 		return dynamic_cast<T const*>(this) != nullptr;
 	}
 
 	template <std::derived_from<IType> T>
-	T const* as() const {
+	auto as() const -> T const* {
 		return dynamic_cast<T const*>(this);
 	}
 
 	template <std::derived_from<IType> T>
-	T* as() {
+	auto as() -> T* {
 		return dynamic_cast<T*>(this);
 	}
 
@@ -105,5 +102,4 @@ struct IType
 
 template <typename T>
 auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_ = sizeof(T)) -> IType*;
-
 }
