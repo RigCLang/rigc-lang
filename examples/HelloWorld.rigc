@@ -1,0 +1,4 @@
+// A simple program that prints "Hello, World!" message.
+func main {
+	print("Hello, World!\n");
+}

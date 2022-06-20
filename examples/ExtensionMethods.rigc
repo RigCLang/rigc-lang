@@ -1,0 +1,37 @@
+// A program that shows basics of extension methods
+// ### Expected output: ###
+// Length of ((2.f, 3.f) plus 1.f) = 5.000
+
+import "helper/Math"; // For sqrt, since there is no standard library yet.
+
+class Vector2 {
+	x: Float32;
+	y: Float32;
+	construct {
+		x = 0.f;
+		y = 0.f;
+	}
+
+	construct(x: Float32, y: Float32) {
+		self.x = x;
+		self.y = y;
+	}
+
+	length {
+		ret sqrt(x*x + y*y);
+	}
+}
+
+
+// `self` is a keyword that makes this an extension method
+// That means you can call it with a dot. Example:
+// vec.plus(30.f)
+func plus(self: Vector2, scalar: Float32)
+{
+	ret Vector2( self.x + scalar, self.y + scalar);
+}
+
+func main {
+	var len = Vector2(2.f, 3.f).plus(1.f).length();
+	print( "Length of ((2.f, 3.f) plus 1.f) = {:.3f}", len);
+}

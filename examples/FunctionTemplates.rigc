@@ -1,0 +1,25 @@
+// A program with a basic function template.
+// ### Expected output: ###
+// min(10, 20) = 10
+// min(70.5f, 50.5f) = 50.5
+// min('z', 'c') = c
+
+template <T: type_name>
+func min(a: T, b: T)
+{
+	if (a < b)
+		ret a;
+	ret b;
+}
+
+func main {
+	// T = Int32
+	print("min(10, 20) = {}\n", min(10, 20));
+	// T = Float32
+	print("min(70.5f, 50.5f) = {:.1f}\n", min(70.5f, 50.5f));
+	// T = Char
+	print("min('z', 'c') = {}\n", min('z', 'c'));
+
+	// 🔴 Error, cannot deduce T
+	// print("min('z', 10) = {}\n", min('z', 10));
+}

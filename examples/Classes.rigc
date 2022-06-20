@@ -1,0 +1,59 @@
+// A class implementing 2D vector class and some basic methods
+//
+// ### Expected output ###
+// v1 = (3.00, 4.00)
+// Length: 5.000
+// increased by (3, 3) = (6.00, 7.00)
+// decreased by (5, 5) = (-2.00, -1.00)
+
+import "helper/Math"; // For sqrt, since there is no standard library yet.
+
+class Vector2
+{
+	x: Float32;
+	y: Float32;
+
+	construct {
+		x = 0.f;
+		y = 0.f;
+	}
+
+	construct(x: Float32, y: Float32)
+	{
+		self.x = x;
+		self.y = y;
+	}
+
+	length {
+		ret sqrt(x*x + y*y);
+	}
+
+	plus (other: Vector2) {
+		ret Vector2(x + other.x, y + other.y);
+	}
+
+	plus (scalar: Float32) {
+		ret Vector2(x + scalar, y + scalar);
+	}
+
+	minus (other: Vector2) {
+		ret Vector2(x - other.x, y - other.y);
+	}
+
+	minus (scalar: Float32) {
+		ret Vector2(x - scalar, y - scalar);
+	}
+}
+
+func main
+{
+	var v1 = Vector2(3.f, 4.f);
+	var v2 = v1.plus(3.f);
+	var v3 = v1.minus(5.f);
+
+	print("v1 = ({:.2f}, {:.2f})\n", v1.x, v1.y);
+	print("Length: {:.3f}\n", v1.length());
+
+	print("increased by (3, 3) = ({:.2f}, {:.2f})\n", v2.x, v2.y);
+	print("decreased by (5, 5) = ({:.2f}, {:.2f})\n", v3.x, v3.y);
+}

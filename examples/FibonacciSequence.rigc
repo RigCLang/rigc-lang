@@ -1,0 +1,20 @@
+// A program that prints the fibonacci sequence
+func fib(iterations: Int32)
+{
+	var prev = 0;
+	var curr = 1;
+	for (var i = 0; i < iterations; ++i) {
+		var next = prev + curr;
+
+		if (i > 0)
+			print(" ");
+		print("{}", curr);
+
+		prev = curr;
+		curr = next;
+	}
+}
+
+func main {
+	fib(10);
+}

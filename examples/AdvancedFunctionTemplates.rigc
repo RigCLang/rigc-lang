@@ -1,0 +1,118 @@
+// Program that shows capabilities of RigC's function template system.
+// ### Expected output: ###
+// Searching within: "The quick brown fox jumps over a lazy dog."
+// - contains 'a': true
+// - count of 'o': 4
+// - found 's' at: 24
+// - length of the text: 42
+// With replaced each space with an underscore:
+// - "The_quick_brown_fox_jumps_over_a_lazy_dog."
+// Reversed:
+// - ".god yzal a revo spmuj xof nworb kciuq ehT"
+
+export
+template <Range: type_name, Elem: type_name>
+func indexOf(self: Range, elem: Elem)
+{
+	for (var i = 0; i < self.size(); ++i)
+	{
+		if (self[i] == elem)
+			ret i;
+	}
+	ret -1;
+}
+
+export
+template <Range: type_name, Elem: type_name>
+func count(self: Range, elem: Elem)
+{
+	var c = 0;
+	for (var i = 0; i < self.size(); ++i)
+	{
+		if (self[i] == elem)
+			++c;
+	}
+	ret c;
+}
+
+export
+template <Range: type_name, Elem: type_name>
+func contains(self: Range, elem: Elem)
+{
+	for (var i = 0; i < self.size(); ++i)
+	{
+		if (self[i] == elem)
+			ret true;
+	}
+	ret false;
+}
+
+export
+template <T: type_name, N: Int32>
+func length(self: Ref<StaticArray<T, N>>)
+{
+	ret N;
+}
+
+template <T: type_name>
+func squared(self: T) { ret self * self; }
+
+template <T: type_name>
+func square(number: Ref<T>) {
+	number *= number;
+}
+
+template <Range: type_name, From: type_name, To: type_name>
+func replace(self: Ref<Range>, from: From, to: To)
+{
+	for (var i = 0; i < self.size(); ++i)
+	{
+		if (self[i] == from)
+			self[i] = to;
+	}
+}
+
+template <Range: type_name, From: type_name, To: type_name>
+func replaced(self: Range, from: From, to: To)
+{
+	for (var i = 0; i < self.size(); ++i)
+	{
+		if (self[i] == from)
+			self[i] = to;
+	}
+	ret self;
+}
+
+template <T: type_name>
+func swap(a: Ref<T>, b: Ref<T>)
+{
+	var temp = a;
+	a = b;
+	b = temp;
+}
+
+template <Range: type_name>
+func reversed(self: Range)
+{
+	for (var i = 0; i < self.size() / 2; ++i)
+	{
+		swap(self[i], self[self.size() - i - 1]);
+	}
+	ret self;
+}
+
+
+func main
+{
+	var text = "The quick brown fox jumps over a lazy dog.";
+	print("Searching within: \"{}\"\n", text);
+
+	print("- contains 'a': {}\n", text.contains('a'));
+	print("- count of 'o': {}\n", text.count('o'));
+	print("- found 's' at: {}\n", text.indexOf('s'));
+	print("- length of the text: {}\n", text.length());
+	print("With replaced each space with an underscore:\n");
+	print("- \"{}\"\n", text.replaced(' ', '_'));
+	print("Reversed:\n");
+	print("- \"{}\"\n", text.reversed());
+}
