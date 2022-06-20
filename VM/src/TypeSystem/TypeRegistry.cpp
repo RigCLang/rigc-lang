@@ -2,10 +2,8 @@
 
 #include <RigCVM/TypeSystem/TypeRegistry.hpp>
 
-
 namespace rigc::vm
 {
-
 //////////////////////////////////////////
 auto TypeRegistry::exists(std::string_view hash_) const
 	-> bool
@@ -58,5 +56,4 @@ auto TypeRegistry::add(MutDeclType type_)
 	types.insert({ type_->hash(), type_ });
 	return true;
 }
-
 }

@@ -400,7 +400,6 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 	return this->findType(typeName)->shared_from_this();
 }
 
-
 //////////////////////////////////////////
 auto Instance::findType(std::string_view name_) -> IType const*
 {
@@ -529,6 +528,4 @@ auto Instance::popStackFrame() -> void
 	stack.popFrame();
 	currentScope = stack.frames.back().scope;
 }
-
-
 }

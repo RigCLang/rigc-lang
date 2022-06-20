@@ -9,9 +9,8 @@
 
 namespace rigc::vm
 {
-
 //////////////////////////////////////
-void FuncType::postInitialize(Instance& vm_)
+auto FuncType::postInitialize(Instance& vm_) -> void
 {
 	// Function::Params params;
 	// for (size_t i = 0; i < parameters.size(); ++i) {
@@ -39,7 +38,7 @@ void FuncType::postInitialize(Instance& vm_)
 }
 
 //////////////////////////////////////
-std::string FuncType::name() const
+auto FuncType::name() const -> std::string
 {
 	if (!result && parameters.empty())
 		return std::string(BuiltinTypes::OverloadedFunction);
@@ -54,7 +53,7 @@ std::string FuncType::name() const
 }
 
 //////////////////////////////////////
-std::string MethodType::name() const
+auto MethodType::name() const -> std::string
 {
 	if (!result && parameters.empty())
 		return std::string(BuiltinTypes::OverloadedMethod);
@@ -69,7 +68,7 @@ std::string MethodType::name() const
 }
 
 //////////////////////////////////////
-Value allocateMethodOverloads(Instance& vm_, Value self_, FunctionOverloads const* overloads_)
+auto allocateMethodOverloads(Instance& vm_, Value self_, FunctionOverloads const* overloads_) -> Value
 {
 	using PtrType = void const*;
 
@@ -81,5 +80,4 @@ Value allocateMethodOverloads(Instance& vm_, Value self_, FunctionOverloads cons
 	auto type = vm_.findType(BuiltinTypes::OverloadedMethod);
 	return vm_.allocateOnStack(type->shared_from_this(), (void const*)buf, sizeof(buf));
 }
-
 }

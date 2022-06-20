@@ -7,16 +7,15 @@
 
 namespace rigc::vm
 {
-
 //////////////////////////////////////
-void RefType::postInitialize(Instance& vm_)
+auto RefType::postInitialize(Instance& vm_) -> void
 {
 	// Setup template arguments
 	assert((args.size() == 1) && "RefType::postInitialize: AddrType must have 1 template argument");
 }
 
 //////////////////////////////////////
-void AddrType::postInitialize(Instance& vm_)
+auto AddrType::postInitialize(Instance& vm_) -> void
 {
 	assert((args.size() == 1) && "AddrType::postInitialize: AddrType must have 1 template argument");
 
@@ -83,6 +82,4 @@ void AddrType::postInitialize(Instance& vm_)
 		);
 	}
 }
-
-
 }

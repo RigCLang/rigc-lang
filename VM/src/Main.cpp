@@ -7,8 +7,8 @@
 	#include <Windows.h>
 #endif
 
-void enableColors();
-void printError();
+auto enableColors() -> void;
+auto printError() -> void;
 
 auto main(int argc, char* argv[]) -> int
 {

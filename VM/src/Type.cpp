@@ -9,7 +9,6 @@
 
 namespace rigc::vm
 {
-
 #define DEFINE_BUILTIN_MATH_OP(Name, Symbol) \
 	template <typename T> \
 	auto builtin##Name##Operator(Instance &vm_, Value const& lhs_, Value const& rhs_) -> OptValue \
@@ -99,7 +98,6 @@ DEFINE_BUILTIN_PREFIX_OP(PreDecrement, --);
 #undef DEFINE_BUILTIN_POSTFIX_OP
 #undef DEFINE_BUILTIN_PREFIX_OP
 
-
 //////////////////////////////////////
 template <typename T>
 auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_) -> IType*
@@ -150,7 +148,6 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Prefix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
 			op.returnsRef = true; \
 		}
-
 
 	if constexpr (!std::is_same_v<T, bool>)
 	{
@@ -207,7 +204,6 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 	#undef MAKE_INFIX_ASSIGN_OP
 	#undef MAKE_POSTFIX_OP
 	#undef MAKE_PREFIX_OP
-
 }
 
 template <typename T>
@@ -292,5 +288,4 @@ LINK_BUILTIN_TYPE(double);
 
 // 	return lhs_.as<UnitDeclType>() == rhs_.as<UnitDeclType>();
 // }
-
 }
