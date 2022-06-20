@@ -29,8 +29,14 @@ Consider helping us by contributing.
 
 ## 🚀 Getting started
 
-This language is pre-alpha version. You can download the source code and compile it using [pacc](https://github.com/PoetaKodu/pacc) package manager with:
+This language is pre-alpha version. You can download the source code and compile it using [pacc](https://github.com/PoetaKodu/pacc) package manager.
 
+First let it automatically **install** the dependencies:
+```bash
+pacc install
+```
+
+Then run the **build** command (see [build command flags](https://github.com/PoetaKodu/pacc/blob/main/docs/Actions/Build.md), you might want to run it with multiple cores, or in different configuration)
 ```bash
 pacc build
 ```
