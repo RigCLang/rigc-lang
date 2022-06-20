@@ -83,8 +83,8 @@ struct BitShRightEqOp	: p::string	<'>','>','='> {};
 struct LogicalNegateOp	: p::one	<'!'> {};
 
 //// Infix
-struct LogicalAndOp		: p::string<'&','&'> {};
-struct LogicalOrOp		: p::string<'|','|'> {};
+struct LogicalAndOp		: p::string<'a','n','d'> {};
+struct LogicalOrOp		: p::string<'o','r'> {};
 
 // Relational operators
 //// Infix

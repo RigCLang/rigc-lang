@@ -77,6 +77,9 @@ DEFINE_BUILTIN_RELATIONAL_OP(GreaterEqThan,	>=);
 DEFINE_BUILTIN_RELATIONAL_OP(Equal,			==);
 DEFINE_BUILTIN_RELATIONAL_OP(NotEqual,		!=);
 
+DEFINE_BUILTIN_RELATIONAL_OP(LogicalAnd,	&&);
+DEFINE_BUILTIN_RELATIONAL_OP(LogicalOr,		||);
+
 DEFINE_BUILTIN_ASSIGN_OP	(Assign,		=);
 DEFINE_BUILTIN_ASSIGN_OP	(AddAssign,		+=);
 DEFINE_BUILTIN_ASSIGN_OP	(SubAssign,		-=);
@@ -182,6 +185,13 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 		MAKE_INFIX_OP(GreaterThan,		">");
 		MAKE_INFIX_OP(LowerEqThan,		"<=");
 		MAKE_INFIX_OP(GreaterEqThan,	">=");
+	}
+
+	if constexpr (std::is_same_v<T, bool>)
+	{
+		// Logical
+		MAKE_INFIX_OP(LogicalAnd,	"and");
+		MAKE_INFIX_OP(LogicalOr,	"or");
 	}
 
 	// Relational

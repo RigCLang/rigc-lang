@@ -39,8 +39,8 @@ auto operatorPriority(rigc::ParserNode const& node_) -> int
 	if (op == "as") return 17;
 	if (op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "%=")
 		return 16;
-	if (op == "||") return 15;
-	if (op == "&&") return 14;
+	if (op == "or") return 15;
+	if (op == "and") return 14;
 	if (op == "|") return 13;
 	if (op == "^") return 12;
 	if (op == "&") return 11;
