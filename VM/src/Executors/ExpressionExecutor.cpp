@@ -470,9 +470,11 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 			if (!fnName.empty())
 			{
-				if (auto classType = self->type->as<ClassType>())
-				{
-					fn = vm.scopeOf(classType->declaration).tryGenerateFunction(vm, fnName, reqParamTypes);
+				if (self) {
+					if (auto classType = self->type->as<ClassType>())
+					{
+						fn = vm.scopeOf(classType->declaration).tryGenerateFunction(vm, fnName, reqParamTypes);
+					}
 				}
 				if (!fn)
 					fn = vm.currentScope->tryGenerateFunction(vm, fnName, reqParamTypes);
