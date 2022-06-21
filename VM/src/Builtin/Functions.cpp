@@ -34,7 +34,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 		auto decayedTypeName = val.typeName();
 		if (typeName == "Int32")
 			store.push_back(val.view<int>());
-		if (typeName == "Char")
+		else if (typeName == "Char")
 			store.push_back(val.view<char>());
 		else if (typeName == "Float32")
 			store.push_back(val.view<float>());
