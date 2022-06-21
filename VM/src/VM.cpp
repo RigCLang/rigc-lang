@@ -33,20 +33,28 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 //////////////////////////////////////////
 auto Instance::findModulePath(std::string_view name_) const -> fs::path
 {
-	fs::path path = std::string(name_);
+	auto relativeTo	= fs::current_path();
+	auto path		= fs::path(std::string(name_));
+
+	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
+	{
+		relativeTo = currentModule->absolutePath.parent_path();
+	}
+
+	path = relativeTo / path;
 
 	if (!path.has_extension())
 	{
-		path += ".rigc";
+		path.replace_extension(".rigc");
 		if (!fs::exists(path))
 		{
-			path = std::string(name_) + ".rigcz";
+			path.replace_extension(".rigcz");
 			if (!fs::exists(path))
 				return fs::path{};
 		}
 	}
 
-	return fs::absolute(path);
+	return path;
 }
 
 //////////////////////////////////////////
@@ -72,10 +80,14 @@ auto Instance::parseModule(std::string_view name_) -> Module*
 //////////////////////////////////////////
 auto Instance::evaluateModule(Module& module_) -> void
 {
+	auto prevModule = currentModule;
+	currentModule = &module_;
+
 	for (auto const& stmt : module_.root->children)
 	{
 		this->evaluate(*stmt);
 	}
+	currentModule = prevModule;
 }
 
 //////////////////////////////////////////

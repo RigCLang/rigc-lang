@@ -115,6 +115,8 @@ struct Instance
 	/// Current execution scope, related to the current stack frame.
 	Scope*				currentScope	= nullptr;
 
+	Module*				currentModule	= nullptr;
+
 	/// Current execution scope, related to the current stack frame.
 	FunctionInstance const*	currentFunc	= nullptr;
 
