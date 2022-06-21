@@ -70,7 +70,7 @@ auto EnumType::postInitialize(Instance& vm) -> void
 					auto const& selfEnumValue = args_[0].safeRemoveRef().view<EnumValue>();
 					auto const& rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
 
-					return vm_.allocateOnStack("Bool", selfEnumValue.fieldName == selfEnumValue.fieldName);
+					return vm_.allocateOnStack("Bool", selfEnumValue.fieldName == rhsEnumValue.fieldName);
 				},
 				std::move(params),
 				2
