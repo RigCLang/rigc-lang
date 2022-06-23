@@ -124,7 +124,7 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 	// 	opt = vm_.findFunctionExpr(actualExpr.string_view());
 	// }
 
-	if (!opt) 
+	if (!opt)
 	{
 		throw std::runtime_error("Unrecognized identifier with name \"" + name.string() + "\"");
 	}
@@ -144,7 +144,7 @@ auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 	// 	opt = vm_.findFunctionExpr(expr_.string_view());
 	// }
 
-	if (!opt) 
+	if (!opt)
 	{
 		throw std::runtime_error("Unrecognized identifier with name \"" + expr_.string() + "\"");
 	}
@@ -165,7 +165,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	bool deduceType = (declType == "var" || declType == "const");
 
 	Value value;
-	if (valueExpr) 
+	if (valueExpr)
 	{
 		value = vm_.evaluate(*valueExpr).value();
 		if (auto ref = value.type->as<RefType>())
@@ -173,7 +173,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 			value = value.removeRef();
 		}
 	}
-	else if (deduceType) 
+	else if (deduceType)
 	{
 		throw std::runtime_error(
 				fmt::format("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
@@ -213,7 +213,6 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 			value = converted.value();
 		}
 	}
-
 
 	value = vm_.cloneValue(value);
 

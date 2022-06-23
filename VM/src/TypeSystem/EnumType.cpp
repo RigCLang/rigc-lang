@@ -8,28 +8,30 @@
 
 namespace rigc::vm
 {
-auto EnumType::add(DataMember mem, OptValue const& val) -> void 
+auto EnumType::add(DataMember mem, OptValue const& val) -> void
 {
-	_size = mem.type->size();
+	_size = underlyingType->size();
 
 	if(!val) {
 		throw std::runtime_error("Automatic enum indexing not implemented yet.");
 	}
 
-	auto staticEnumValue = allocateStaticValue(this->shared_from_this(), EnumValue(mem.name, *val));
-	auto const[it, insertionHappened] = fields.try_emplace( mem.name, staticEnumValue );
+	// TODO: use a proper constructor
+	auto staticValue = allocateStaticValue( this->shared_from_this(), val->data, 4 );
+	auto const[it, insertionHappened] = fields.try_emplace( mem.name, staticValue );
 
 	if(!insertionHappened)
 		throw std::runtime_error(fmt::format("Member {} already present in the enum.\n", mem.name));
 }
 
 
-auto EnumType::postInitialize(Instance& vm) -> void 
+auto EnumType::postInitialize(Instance& vm) -> void
 {
 	// assignment operator
 	{
+		auto selfRef = constructTemplateType<RefType>(vm.scopeOf(nullptr), this->shared_from_this());
 		auto params = Function::Params {{
-			{ "self", this->shared_from_this() },
+			{ "self", selfRef },
 			{ "rhs", this->shared_from_this() }
 		}};
 
@@ -40,12 +42,27 @@ auto EnumType::postInitialize(Instance& vm) -> void
 			Function{
 				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
-					auto self = args_[0].safeRemoveRef();
-					auto const& rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
+					auto const& self	= args_[0].removeRef();
+					auto const& rhs		= args_[1];
+					auto enumType		= self.type->as<EnumType>();
+					auto overloads		= vm_.universalScope().findOperator("=", Operator::Infix);
+					auto selfRef		= vm_.allocateReference( Value{ enumType->underlyingType, self.data } );
 
-					self.view<EnumValue>() = rhsEnumValue;
+					auto types = FunctionParamTypes{
+							selfRef.type,
+							enumType->underlyingType
+						};
+					auto fn = findOverload(*overloads, viewArray(types, 0, 2));
 
-					return vm_.allocateReference(self);
+					if (!fn) {
+						throw std::runtime_error("No overload found for == operator.");
+					}
+
+					auto args = Function::Args{
+						selfRef,
+						Value{ enumType->underlyingType, rhs.data }
+					};
+					return vm_.executeFunction(*fn, args);
 				},
 				std::move(params),
 				2
@@ -67,10 +84,26 @@ auto EnumType::postInitialize(Instance& vm) -> void
 			Function{
 				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
-					auto const& selfEnumValue = args_[0].safeRemoveRef().view<EnumValue>();
-					auto const& rhsEnumValue = args_[1].safeRemoveRef().view<EnumValue>();
+					auto const& self	= args_[0];
+					auto const& rhs		= args_[1];
+					auto enumType		= args_[0].type->as<EnumType>();
+					auto overloads		= vm_.universalScope().findOperator("==", Operator::Infix);
 
-					return vm_.allocateOnStack("Bool", selfEnumValue.fieldName == selfEnumValue.fieldName);
+					auto types = FunctionParamTypes{
+						enumType->underlyingType,
+						enumType->underlyingType
+					};
+					auto fn = findOverload(*overloads, viewArray(types, 0, 2));
+
+					if (!fn) {
+						throw std::runtime_error("No overload found for == operator.");
+					}
+
+					auto args = Function::Args{
+						Value{ enumType->underlyingType, self.data },
+						Value{ enumType->underlyingType, rhs.data }
+					};
+					return vm_.executeFunction(*fn, args);
 				},
 				std::move(params),
 				2
