@@ -1,0 +1,14 @@
+// A program that displays FizzBuzz from 1 to 100.
+
+func main {
+	for(var i = 1; i <= 100; i++) {
+		if(i % 3 == 0 and i % 5 == 0)
+			print("FizzBuzz\n");
+		else if(i % 3 == 0)
+			print("Fizz\n");
+		else if(i % 5 == 0)
+			print("Buzz\n");
+		else
+			print("{}\n", i);
+	}
+}

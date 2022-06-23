@@ -1,0 +1,48 @@
+// A program that shows basics of enums
+// ### Expected output: ###
+
+
+enum Direction{
+	North = 1;
+	South = 2;
+	West = 3;
+	East = 4;
+}
+
+func toString(self: Direction) {
+	if(self == Direction::North)
+		ret "North";
+
+	else if(self == Direction::South)
+		ret "South";
+
+	else if(self == Direction::West)
+		ret "West";
+
+	else
+		ret "East";
+}
+
+func getOppositeDirection(direction: Direction) {
+	if(direction == Direction::North)
+		ret Direction::South;
+
+	else if(direction == Direction::South)
+		ret Direction::North;
+
+	else if(direction == Direction::West)
+		ret Direction::East;
+
+	else
+		ret Direction::West;
+}
+
+func main {
+	var direction = Direction::North;
+	print("Let's begin our journey. Firstly, let's go {}.\n", direction.toString());
+
+	direction = Direction::East;
+
+	print("Now a bit to the {}.\n", direction.toString());
+	print("And now to the opposite direction, {} that is.", getOppositeDirection(direction).toString());
+}

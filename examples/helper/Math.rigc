@@ -51,3 +51,13 @@ export func sqrt(self: Float64)
 	}
 	ret x;
 }
+
+export func pow(self: Float64, exponent: Int32)
+{
+	var result = 1.0;
+	for(var i = 0; i < exponent; i++) {
+		result *= self;
+	}
+
+	ret result;
+}

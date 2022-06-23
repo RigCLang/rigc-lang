@@ -1,0 +1,21 @@
+// A simple game of guessing.
+// User continuously inputs a number trying to guess it.
+
+func main {
+	const randomNumber = 17; // a fairly random number
+
+	print("Welcome to the number guesser!\n");
+	print("Guess a number: ");
+	var userGuess = readInt();
+
+	var totalGuesses = 1;
+	while(userGuess != randomNumber) {
+		print("Your guess is wrong! :(\n");
+		print("Try again: ");
+
+		userGuess = readInt();
+		totalGuesses++;
+	}
+
+	print("You guessed right! The number was {}! Your total of guesses: {}\n", randomNumber, totalGuesses);
+}

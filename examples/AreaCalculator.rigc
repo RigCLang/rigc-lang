@@ -1,0 +1,39 @@
+import "helper/Math"; // For pow, since there is no standard library yet.
+
+func main {
+	print("Choose the figure you want to calculate an area for: \n");
+	print("1) Rectangle\n");
+	print("2) Square\n");
+	print("3) Triangle\n");
+	print("4) Circle\n");
+
+	const userChoice = readInt("Choice: ");
+
+	if(userChoice == 1) 
+	{
+		const firstSideLength = readFloat("Enter the first side length: ");
+		const secondSideLength = readFloat("Enter the second side length: ");
+
+		print("The area of the rectangle is {}j^2\n", firstSideLength * secondSideLength);
+	} 
+	else if(userChoice == 2) 
+	{
+		const sideLength = readFloat("Enter the side length: ");
+
+		print("The area of the square is {}j^2\n", sideLength * sideLength);
+	} 
+	else if(userChoice == 3) 
+	{
+		const baseLength = readFloat("Enter the base length: ");
+		const height = readFloat("Enter the height length: ");
+
+		print("The area of the triangle is {}j^2", (baseLength * height) / 2.0);
+	} 
+	else 
+	{
+		const PI = 3.14159;
+		const circleRadius = readFloat("Enter the radius: ");
+
+		print("The area of the circle is {}j^2", PI * circleRadius.pow(2));
+	}
+}
