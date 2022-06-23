@@ -42,6 +42,7 @@ jobs:
       
       - name: Install and build
         run: |
+          export LD_LIBRARY_PATH=${{GITHUB_WORKSPACE}}/pacc/bin/libstdc++.so.6:$LD_LIBRARY_PATH
           ../pacc/bin/pacc install
           ../pacc/bin/pacc build --verbose -c=Release
         working-directory: rigc-lang
