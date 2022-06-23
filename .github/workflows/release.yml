@@ -1,0 +1,53 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "release" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          path: 'rigc-lang'
+
+      - name: Setup GCC
+        uses: egor-tensin/setup-gcc@v1
+        with:
+          version: latest
+          platform: x64
+      
+      - name: Download pacc
+        uses: robinraju/release-downloader@v1.4
+        with:
+          latest: true
+          repository: "PoetaKodu/pacc"
+          fileName: "*-linux-x64.zip"
+          
+      - run: unzip '*-linux-x64.zip'
+      
+      - name: Install and build
+        run: |
+          ../pacc/bin/pacc install
+          ../pacc/bin/pacc build --verbose -c=Release
+        working-directory: rigc-lang
+        
+      - name: Upload VM artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: RigCVM
+          path: rigc-lang/bin/x64/Release/VM
