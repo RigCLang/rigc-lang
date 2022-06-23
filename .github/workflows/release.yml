@@ -50,7 +50,7 @@ jobs:
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: RigCVM
+          name: rigc-linux-x64
           path: rigc-lang/bin/x64/Release/VM
 
   Build-on-Windows:
@@ -83,5 +83,5 @@ jobs:
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: RigCVM
+          name: rigc-windows-x64
           path: rigc-lang/bin/x64/Release/VM.exe
