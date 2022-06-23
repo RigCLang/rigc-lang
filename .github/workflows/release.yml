@@ -26,15 +26,6 @@ jobs:
         with:
           path: 'rigc-lang'
 
-      - name: Extract tag name
-        id: tag
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const tagName = context.payload.ref.replace(/refs\/tags\//, '');
-            return tagName.substring(1, tagName.length - 1);
-  
       - name: Setup GCC
         uses: egor-tensin/setup-gcc@v1
         with:
@@ -60,7 +51,7 @@ jobs:
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: rigc-${{ steps.tag.outputs.result }}-linux-x64
+          name: ${{ format('rigc-{0}-linux-x64', github.ref_name) }}
           path: rigc-lang/bin/x64/Release/VM
 
   Build-on-Windows:
@@ -73,15 +64,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           path: 'rigc-lang'
-
-      - name: Extract tag name
-        id: tag
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const tagName = context.payload.ref.replace(/refs\/tags\//, '');
-            return tagName.substring(1, tagName.length - 1);
 
       - name: Download pacc
         uses: robinraju/release-downloader@v1.4
@@ -102,7 +84,7 @@ jobs:
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: rigc-${{ steps.tag.outputs.result }}-windows-x64
+          name: ${{ format('rigc-{0}-windows-x64', github.ref_name) }}
           path: rigc-lang/bin/x64/Release/VM.exe
           
   release:
