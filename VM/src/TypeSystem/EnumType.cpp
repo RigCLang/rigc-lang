@@ -103,6 +103,7 @@ auto EnumType::postInitialize(Instance& vm) -> void
 						Value{ enumType->underlyingType, self.data },
 						Value{ enumType->underlyingType, rhs.data }
 					};
+
 					return vm_.executeFunction(*fn, args);
 				},
 				std::move(params),
