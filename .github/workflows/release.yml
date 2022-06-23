@@ -14,7 +14,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  Build-on-Linux:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -52,3 +52,36 @@ jobs:
         with:
           name: RigCVM
           path: rigc-lang/bin/x64/Release/VM
+
+  Build-on-Windows:
+    # The type of runner that the job will run on
+    runs-on: windows-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          path: 'rigc-lang'
+
+      - name: Download pacc
+        uses: robinraju/release-downloader@v1.4
+        with:
+          latest: true
+          repository: "PoetaKodu/pacc"
+          fileName: "*-windows-x64.zip"
+          
+      - shell: pwsh
+        run: Get-ChildItem '.' -Filter *-windows-x64.zip | Expand-Archive -DestinationPath '.' -Force
+      
+      - name: Install and build
+        run: |
+          ..\pacc\bin\pacc install
+          ..\pacc\bin\pacc build --verbose -c=Release
+        working-directory: rigc-lang
+        
+      - name: Upload VM artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: RigCVM
+          path: rigc-lang/bin/x64/Release/VM.exe
