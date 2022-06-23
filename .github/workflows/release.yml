@@ -44,7 +44,7 @@ jobs:
         run: |
           export LD_PRELOAD=$GITHUB_WORKSPACE/pacc/bin/libstdc++.so.6
           ../pacc/bin/pacc install
-          ../pacc/bin/pacc build --verbose -c=Release
+          ../pacc/bin/pacc build --verbose -c=Release --cores=2
         working-directory: rigc-lang
         
       - name: Upload VM artifact
@@ -77,7 +77,7 @@ jobs:
       - name: Install and build
         run: |
           ..\pacc\bin\pacc install
-          ..\pacc\bin\pacc build --verbose -c=Release
+          ..\pacc\bin\pacc build --verbose -c=Release --cores=2
         working-directory: rigc-lang
         
       - name: Upload VM artifact
