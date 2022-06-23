@@ -25,11 +25,7 @@ jobs:
         with:
           path: 'rigc-lang'
 
-      - name: Setup GCC
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: 11
-          platform: x64
+      - uses: johelegp/gcc-snapshot@v1
       
       - name: Download pacc
         uses: robinraju/release-downloader@v1.4
