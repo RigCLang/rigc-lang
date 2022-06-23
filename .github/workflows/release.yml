@@ -32,7 +32,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            return context.payload.ref.replace(/\/refs\/tags\//, '');
+            const tagName = context.payload.ref.replace(/refs\/tags\//, '');
+            return tagName.substring(1, tagName.length - 1);
   
       - name: Setup GCC
         uses: egor-tensin/setup-gcc@v1
@@ -79,7 +80,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            return context.payload.ref.replace(/\/refs\/tags\//, '');
+            const tagName = context.payload.ref.replace(/refs\/tags\//, '');
+            return tagName.substring(1, tagName.length - 1);
 
       - name: Download pacc
         uses: robinraju/release-downloader@v1.4
