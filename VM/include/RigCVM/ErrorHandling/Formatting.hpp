@@ -49,12 +49,6 @@ inline Styles const& s() {
 		return fmt::arg(argName, Val); \
 	}
 
-#define FMT_INLINE_ARG(argName, style, content) \
-	([&]{ \
-		static auto Val = fmt::format(style, content); \
-		return fmt::arg(argName, Val); \
-	})()
-
 DEFINE_FMT_ARG(error, 	"Error", 	s().Bold | s().Red, 	"[Error]");
 DEFINE_FMT_ARG(help, 	"Help", 	s().Bold | s().Yellow, 	"[Help]");
 DEFINE_FMT_ARG(details, "Details", 	s().Bold, 				"Details");
