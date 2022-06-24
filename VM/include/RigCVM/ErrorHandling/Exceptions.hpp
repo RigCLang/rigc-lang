@@ -5,8 +5,10 @@
 #include <stdexcept>
 #include <cstdint>
 
-struct RigcException : std::runtime_error
+struct RigcException : std::exception
 {
+	std::string basicMessage;
+
 	std::string helpMessage;
 	std::size_t lineNum = 0;
 
@@ -14,18 +16,22 @@ public:
 	template <typename... Args>
 	explicit RigcException(fmt::format_string<Args...> fmt_string_, Args&&... args)
 		:
-		std::runtime_error(fmt::format(fmt_string_, std::forward<Args>(args)...).c_str())
+		basicMessage(fmt::format(fmt_string_, std::forward<Args>(args)...))
 	{
 	}
 
+	auto what() const noexcept -> const char* override { 
+		return basicMessage.c_str(); 
+	}
+
 	template <typename... Args>
-	auto withHelp(fmt::format_string<Args...> fmt_string_, Args&&... args) -> RigcException const&
+	auto withHelp(fmt::format_string<Args...> fmt_string_, Args&&... args) -> RigcException&
 	{
 		helpMessage = fmt::format(fmt_string_, std::forward<Args>(args)...);
 		return *this;
 	}
 
-	auto withLineNumber(std::size_t lineNumber) -> RigcException const&
+	auto withLineNumber(std::size_t lineNumber) -> RigcException&
 	{
 		lineNum = lineNumber;
 		return *this;
@@ -36,7 +42,5 @@ public:
 };
 
 
-
-auto dumpException(std::exception const& exception_) -> void;
 
 auto dumpException(RigcException const& exception_) -> void;

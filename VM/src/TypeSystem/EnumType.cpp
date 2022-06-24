@@ -5,6 +5,7 @@
 #include <RigCVM/TypeSystem/WrapperType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/Alloc.hpp>
+#include <RigCVM/ErrorHandling/Exceptions.hpp>
 
 namespace rigc::vm
 {
@@ -13,7 +14,9 @@ auto EnumType::add(DataMember mem, OptValue const& val) -> void
 	_size = underlyingType->size();
 
 	if(!val) {
-		throw std::runtime_error("Automatic enum indexing not implemented yet.");
+		throw RigcException("Automatic enum indexing not implemented yet.")
+						.withHelp("Add manual indexes for now.");
+						// .withLineNumber(15);
 	}
 
 	// TODO: use a proper constructor
@@ -21,7 +24,8 @@ auto EnumType::add(DataMember mem, OptValue const& val) -> void
 	auto const[it, insertionHappened] = fields.try_emplace( mem.name, staticValue );
 
 	if(!insertionHappened)
-		throw std::runtime_error(fmt::format("Member {} already present in the enum.\n", mem.name));
+		throw RigcException("Member {} already present in the enum.\n", mem.name)
+						.withHelp("Change the name.");
 }
 
 

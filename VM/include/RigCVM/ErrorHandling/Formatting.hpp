@@ -34,8 +34,11 @@ struct Styles {
 	fmt::text_style Red		= fmt::fg(fmt::color::red);
 	fmt::text_style Green	= fmt::fg(fmt::color::green);
 	fmt::text_style Blue	= fmt::fg(fmt::color::blue);
+	fmt::text_style LightBlue	= fmt::fg(fmt::color::light_blue);
 	fmt::text_style Yellow	= fmt::fg(fmt::color::yellow);
 };
+
+using ArgPair = std::pair<char const*, std::string>;
 
 inline Styles const& s() {
 	static auto instance = Styles{};
@@ -52,6 +55,26 @@ inline Styles const& s() {
 DEFINE_FMT_ARG(error, 	"Error", 	s().Bold | s().Red, 	"[Error]");
 DEFINE_FMT_ARG(help, 	"Help", 	s().Bold | s().Yellow, 	"[Help]");
 DEFINE_FMT_ARG(details, "Details", 	s().Bold, 				"Details");
+
+// FIXME: quickfix until I figure out how to do it sensibly
+inline auto errorWithLineArgPair(std::size_t line) -> ArgPair
+{
+	using namespace fmt;
+
+	auto constexpr boldRedFmt = emphasis::bold | fg(color::red);
+	auto constexpr reset = "\x1b[m";
+
+	auto const value = format(
+		"{}{}{}{}{}",
+		format(boldRedFmt, "[Error"),
+		reset,
+		" on line ",
+		format(s().LightBlue, "{}", line),
+		format(boldRedFmt, "]")
+	);
+
+	return {"ErrorWithLine", value};
+}
 
 #undef DEFINE_FMT_ARG
 

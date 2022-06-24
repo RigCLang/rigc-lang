@@ -3,22 +3,37 @@
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 #include <RigCVM/ErrorHandling/Formatting.hpp>
 
-auto dumpException(std::exception const& exception_) -> void
+auto dumpExceptionWithLine(RigcException const& exception_) -> void 
 {
+	auto const [argName, argValue] = fmt_args::errorWithLineArgPair(exception_.lineNumber());
+
 	fmt::printErr(
-			"{Error} {Details}:\n\t{}\n",
-			exception_.what(),
-			fmt_args::error(),
-			fmt_args::details()
+		"{ErrorWithLine}. {Details}:\n\t{}\n",
+		exception_.what(),
+		fmt::arg(argName, argValue),
+		fmt_args::details()
 	);
 }
 
-//////////////////////////////////////////////////
-void dumpException(RigcException const& exception_)
+auto dumpExceptionWithoutLine(RigcException const& exception_) -> void 
 {
-	dumpException(static_cast<std::exception const&>(exception_));
+	fmt::printErr(
+		"{Error} {Details}:\n\t{}\n",
+		exception_.what(),
+		fmt_args::error(),
+		fmt_args::details()
+	);
+}
 
-	if(exception_.help().empty())	 return;
+auto dumpException(RigcException const& exception_) -> void
+{
+	if(exception_.lineNumber() == 0) 
+		dumpExceptionWithoutLine(exception_);
+	else 
+		dumpExceptionWithLine(exception_);
 
-	fmt::printErr("{Help}\n\t{}\n", exception_.help(), fmt_args::help());
+	if(!exception_.help().empty())
+	{
+		fmt::printErr("{Help}\n\t{}\n", exception_.help(), fmt_args::help());
+	}
 }
