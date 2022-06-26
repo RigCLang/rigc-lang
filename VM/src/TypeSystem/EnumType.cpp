@@ -14,7 +14,7 @@ auto EnumType::add(DataMember mem, OptValue const& val) -> void
 	_size = underlyingType->size();
 
 	if(!val) {
-		throw RigcException("Automatic enum indexing not implemented yet.")
+		throw RigCError("Automatic enum indexing not implemented yet.")
 						.withHelp("Add manual indexes for now.");
 						// .withLineNumber(15);
 	}
@@ -24,7 +24,7 @@ auto EnumType::add(DataMember mem, OptValue const& val) -> void
 	auto const[it, insertionHappened] = fields.try_emplace( mem.name, staticValue );
 
 	if(!insertionHappened)
-		throw RigcException("Member {} already present in the enum.\n", mem.name)
+		throw RigCError("Member {} already present in the enum.\n", mem.name)
 						.withHelp("Change the name.");
 }
 
@@ -59,7 +59,7 @@ auto EnumType::postInitialize(Instance& vm) -> void
 					auto fn = findOverload(*overloads, viewArray(types, 0, 2));
 
 					if (!fn) {
-						throw RigcException("No overload found for = operator and enum \"{}\".", enumType->name())
+						throw RigCError("No overload found for = operator and enum \"{}\".", enumType->name())
 										.withLine(vm_.lastEvaluatedLine);
 					}
 
@@ -101,7 +101,7 @@ auto EnumType::postInitialize(Instance& vm) -> void
 					auto fn = findOverload(*overloads, viewArray(types, 0, 2));
 
 					if (!fn) {
-						throw RigcException("No overload found for == operator and enum \"{}\".", enumType->name())
+						throw RigCError("No overload found for == operator and enum \"{}\".", enumType->name())
 										.withLine(vm_.lastEvaluatedLine);
 					}
 

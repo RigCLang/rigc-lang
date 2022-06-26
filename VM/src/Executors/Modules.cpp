@@ -28,7 +28,7 @@ auto executeImportStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 		vm_.evaluateModule(*mod);
 		return {};
 	}
-	throw RigcException("Module {} not found", moduleName)
+	throw RigCError("Module {} not found", moduleName)
 					.withHelp("Try checking the name of the module, the path of the module or try declaring it.")
 					.withLine(vm_.lastEvaluatedLine);
 }

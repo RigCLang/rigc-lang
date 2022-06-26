@@ -3,7 +3,7 @@
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 #include <RigCVM/ErrorHandling/Formatting.hpp>
 
-auto dumpRigcExceptionWithLine(RigcException const& exception_) -> void
+auto dumpRigCErrorWithLine(RigCError const& exception_) -> void
 {
 	auto const [argName, argValue] = fmt_args::errorWithLineArgPair(exception_.lineNumber());
 
@@ -30,12 +30,12 @@ auto dumpException(std::runtime_error const& exception_) -> void
 	dumpPlainException(exception_);
 }
 
-auto dumpException(RigcException const& exception_) -> void
+auto dumpException(RigCError const& exception_) -> void
 {
 	if(exception_.lineNumber() == 0) 
 		dumpPlainException(exception_);
 	else 
-		dumpRigcExceptionWithLine(exception_);
+		dumpRigCErrorWithLine(exception_);
 
 	if(!exception_.help().empty())
 	{

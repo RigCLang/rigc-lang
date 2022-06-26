@@ -119,7 +119,7 @@ auto ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_) ->
 	if (oper.is_type<rigc::InfixOperator>() || oper.is_type<rigc::InfixOperatorNoComma>())
 	{
 		if (actionIndex_ == 0 || actionIndex_ == actions.size() - 1)
-			throw RigcException("Invalid infix operator position: {}", actionIndex_)
+			throw RigCError("Invalid infix operator position: {}", actionIndex_)
 							.withLine(vm.lastEvaluatedLine);
 
 		action_ = this->evalInfixOperator(
@@ -133,7 +133,7 @@ auto ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_) ->
 	else if (oper.is_type<rigc::PrefixOperator>())
 	{
 		if (actionIndex_ == actions.size() - 1)
-			throw RigcException("Invalid prefix operator position: {}", actionIndex_)
+			throw RigCError("Invalid prefix operator position: {}", actionIndex_)
 							.withLine(vm.lastEvaluatedLine);
 
 		action_ = this->evalPrefixOperator(
@@ -146,7 +146,7 @@ auto ExpressionExecutor::evaluateAction(Action &action_, size_t actionIndex_) ->
 	else if (oper.is_type<rigc::PostfixOperator>())
 	{
 		if (actionIndex_ == 0)
-			throw RigcException("Invalid postfix operator position: {}", actionIndex_)
+			throw RigCError("Invalid postfix operator position: {}", actionIndex_)
 							.withLine(vm.lastEvaluatedLine);
 
 		action_ = this->evalPostfixOperator(
@@ -214,20 +214,20 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 			return ProcessedFunction{ candidates, lhs, memberName };
 		}
 		else
-			throw RigcException("Invalid expression.")
+			throw RigCError("Invalid expression.")
 							.withLine(vm.lastEvaluatedLine);
 	}
 	else if(op_ == "::")
 	{
 		auto const rhs = rhs_.as<PendingAction>();
 		if(!isSymbol(*rhs))
-			throw RigcException("Rhs of the :: operator should be a valid identifier.")
+			throw RigCError("Rhs of the :: operator should be a valid identifier.")
 							.withHelp("Check the spelling of the right side of the operator.")
 							.withLine(vm.lastEvaluatedLine);
 
 		auto const source = lhs_.as<PendingAction>();
 		if(!isSymbol(*source))
-			throw RigcException("Lhs of the :: operator should be a valid identifier.")
+			throw RigCError("Lhs of the :: operator should be a valid identifier.")
 							.withHelp("Check the spelling of the right side of the operator.")
 							.withLine(vm.lastEvaluatedLine);
 
@@ -237,7 +237,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		auto const sourceType = vm.evaluateType(*source);
 
 		if(!sourceType)
-			throw RigcException("Type {} not found", sourceName)
+			throw RigCError("Type {} not found", sourceName)
 							.withHelp("Check the spelling of the type.")
 							.withLine(vm.lastEvaluatedLine);
 
@@ -250,7 +250,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		}
 		else
 		{
-			throw RigcException("Infix :: operator not implemented for anything else than enums for now.")
+			throw RigCError("Infix :: operator not implemented for anything else than enums for now.")
 							.withHelp("Cope.")
 							.withLine(vm.lastEvaluatedLine);
 		}
@@ -265,13 +265,13 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 
 		// FIXME: this is a qufickfix, need to figure out how to properly handle templated types
 		if(!rhsName)
-			throw RigcException("Rhs of the conversion operator should be a valid identifier.")
+			throw RigCError("Rhs of the conversion operator should be a valid identifier.")
 							.withHelp("Check the spelling of the rhs.")
 							.withLine(vm.lastEvaluatedLine);
 
 		auto const rhsType = vm.findType(rhs->string_view());
 		if(!rhsType)
-			throw RigcException("Rhs of the conversion operator should be a type.")
+			throw RigCError("Rhs of the conversion operator should be a type.")
 							.withHelp("Check the spelling of the rhs and if the type is in scope.")
 							.withLine(vm.lastEvaluatedLine);
 
@@ -299,7 +299,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 			}
 		}
 
-		throw RigcException("No matching operator \"{}\" found for argument types: ( {}, {} )", op_, lhs.type->name(), rhs.type->name())
+		throw RigCError("No matching operator \"{}\" found for argument types: ( {}, {} )", op_, lhs.type->name(), rhs.type->name())
 						.withHelp("Try declaring that operator or check the types.")
 						.withLine(vm.lastEvaluatedLine);
 	}
@@ -320,7 +320,7 @@ auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand
 		}
 	}
 
-	throw RigcException(
+	throw RigCError(
 		"No matching {} operator \"{}\" for argument type: {}.",
 		operatorType == Operator::Type::Postfix ? "postfix" : "prefix",
 		op,
@@ -351,7 +351,7 @@ auto ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_) 
 		return executeIncrementDecrement(vm, op_, rhs, Operator::Prefix);
 	}
 	else
-		throw RigcException("Invalid prefix operator \"{}\".", op_)
+		throw RigCError("Invalid prefix operator \"{}\".", op_)
 						.withLine(vm.lastEvaluatedLine);
 
 	return {};
@@ -508,7 +508,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 				paramsString += paramTypes[i]->name();
 			}
 
-			throw RigcException("Not matching function to call with params: {}.", paramsString)
+			throw RigCError("Not matching function to call with params: {}.", paramsString)
 							.withHelp("Check the function name and arguments' arity and types.")
 							.withLine(vm.lastEvaluatedLine);
 		}

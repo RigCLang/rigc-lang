@@ -126,7 +126,7 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 
 	if (!opt)
 	{
-		throw RigcException("Unrecognized identifier with name \"{}\"", name.string())
+		throw RigCError("Unrecognized identifier with name \"{}\"", name.string())
 						.withHelp("Check the spelling of the identifier.")
 						.withLine(vm_.lastEvaluatedLine);
 	}
@@ -148,7 +148,7 @@ auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 
 	if (!opt)
 	{
-		throw RigcException("Unrecognized identifier with name \"{}\"", expr_.string())
+		throw RigCError("Unrecognized identifier with name \"{}\"", expr_.string())
 						.withHelp("Check the spelling of the identifier.")
 						.withLine(vm_.lastEvaluatedLine);
 	}
@@ -179,7 +179,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	}
 	else if (deduceType)
 	{
-		throw RigcException("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
+		throw RigCError("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
 						.withHelp("Provide an initializer for the variable.")
 						.withLine(vm_.lastEvaluatedLine);
 	}
@@ -192,7 +192,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		if (auto t = vm_.findType(declType))
 			type = t->shared_from_this();
 		else
-			throw RigcException("Type {} not found", declType)
+			throw RigCError("Type {} not found", declType)
 							.withHelp("Check the spelling of the type.")
 							.withLine(vm_.lastEvaluatedLine);
 
@@ -214,7 +214,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		{
 			auto converted = vm_.tryConvert(value, type);
 			if (!converted)
-				throw RigcException("Cannot convert {} to {}", value.type->name(), type->name())
+				throw RigCError("Cannot convert {} to {}", value.type->name(), type->name())
 								.withLine(vm_.lastEvaluatedLine);
 
 			value = converted.value();
@@ -274,7 +274,7 @@ auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 
 		auto const underlying = vm_.findType(typeExpr->string_view());
 		if(!underlying) 
-			throw RigcException("Unknown type \"{}\" for enum.", typeExpr->string_view())
+			throw RigCError("Unknown type \"{}\" for enum.", typeExpr->string_view())
 							.withHelp("Check the spelling of the type.")
 							.withLine(vm_.lastEvaluatedLine);
 
@@ -368,7 +368,7 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 
 		type = vm_.evaluateType(declType);
 		if (!type)
-			throw RigcException("Type {} not found", declType.string_view())
+			throw RigCError("Type {} not found", declType.string_view())
 							.withHelp("Check the spelling of the type.")
 							.withLine(vm_.lastEvaluatedLine);
 

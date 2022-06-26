@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <cstdint>
 
-struct RigcException : std::exception
+struct RigCError : std::exception
 {
 	std::string basicMessage;
 
@@ -15,7 +15,7 @@ struct RigcException : std::exception
 
 public:
 	template <typename... Args>
-	explicit RigcException(fmt::format_string<Args...> fmt_string_, Args&&... args)
+	explicit RigCError(fmt::format_string<Args...> fmt_string_, Args&&... args)
 		:
 		basicMessage(fmt::format(fmt_string_, std::forward<Args>(args)...))
 	{
@@ -26,13 +26,13 @@ public:
 	}
 
 	template <typename... Args>
-	auto withHelp(fmt::format_string<Args...> fmt_string_, Args&&... args) -> RigcException&
+	auto withHelp(fmt::format_string<Args...> fmt_string_, Args&&... args) -> RigCError&
 	{
 		helpMessage = fmt::format(fmt_string_, std::forward<Args>(args)...);
 		return *this;
 	}
 
-	auto withLine(std::size_t lineNumber) -> RigcException&
+	auto withLine(std::size_t lineNumber) -> RigCError&
 	{
 		lineNum = lineNumber;
 		return *this;
@@ -42,6 +42,5 @@ public:
 	auto lineNumber() const -> std::size_t{ return lineNum; }
 };
 
-
 auto dumpException(std::runtime_error const& exception_) -> void;
-auto dumpException(RigcException const& exception_) -> void;
+auto dumpException(RigCError const& exception_) -> void;

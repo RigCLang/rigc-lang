@@ -43,15 +43,10 @@ auto main(int argc, char* argv[]) -> int
 		dumpException(exc);
 		return -1;
 	}
-	catch(RigcException const& exc)
+	catch(RigCError const& exc)
 	{
 		dumpException(exc);
 		return -2;
-	}
-	catch(InternalException const& exc)
-	{
-		dumpException(exc);
-		return -3;
 	}
 	catch(...)
 	{

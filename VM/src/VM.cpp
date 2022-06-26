@@ -98,7 +98,7 @@ auto Instance::run(std::string_view moduleName_) -> int
 	entryPoint.module_ = this->parseModule(moduleName_);
 	if (!entryPoint.module_)
 	{
-		throw RigcException("Failed to run module \"{}\".", moduleName_);
+		throw RigCError("Failed to run module \"{}\".", moduleName_);
 	}
 
 	// Use its parent path as the working directory
@@ -143,12 +143,12 @@ auto Instance::run(std::string_view moduleName_) -> int
 	auto mainFuncOv = this->universalScope().findFunction(entryPoint.functionName);
 
 	if (!mainFuncOv)
-		throw RigcException("Cannot execute script. Function \"{}\" not found.", entryPoint.functionName)
+		throw RigCError("Cannot execute script. Function \"{}\" not found.", entryPoint.functionName)
 						.withHelp("Define the \"{}\" function.", entryPoint.functionName)
 						.withLine(lastEvaluatedLine);
 
 	if (mainFuncOv->size() > 1)
-		throw RigcException("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName)
+		throw RigCError("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName)
 						.withLine(lastEvaluatedLine);
 
 	this->executeFunction(*(*mainFuncOv)[0]);
@@ -404,7 +404,7 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 		{
 			// ensure 2 template params
 			if (templateParams->children.size() != 2)
-				throw RigcException("StaticArray requires 2 template params: StaticArray<T, N: Int32>")
+				throw RigCError("StaticArray requires 2 template params: StaticArray<T, N: Int32>")
 								.withHelp("Provide the needed arguments correctly.")
 								.withLine(lastEvaluatedLine);
 
