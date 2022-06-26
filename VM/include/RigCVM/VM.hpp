@@ -92,7 +92,7 @@ struct Instance
 	auto allocateOnStack(std::string_view typeName_, T const& value_) -> Value
 	{
 		auto type = this->findType(typeName_);
-		assert(("Unknown type.", type));
+		assert(type && "Unknown type.");
 
 		return this->allocateOnStack<T>( type->shared_from_this(), value_ );
 	}

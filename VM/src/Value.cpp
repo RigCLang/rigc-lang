@@ -57,7 +57,7 @@ auto Value::safeRemovePtr() const -> Value
 auto Value::removeRef() const -> Value
 {
 	auto ref = type->as<RefType>();
-	assert(("Cannot deref a non-ref type.", ref));
+	assert(ref && "Cannot deref a non-ref type.");
 
 	return Value{
 		ref->inner(),
@@ -69,7 +69,7 @@ auto Value::removeRef() const -> Value
 auto Value::removePtr() const -> Value
 {
 	auto ptr = type->as<AddrType>();
-	assert(("Cannot deref a non-ref type.", ptr));
+	assert(ptr && "Cannot deref a non-ref type.");
 
 	return Value{
 		ptr->inner(),
