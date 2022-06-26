@@ -32,7 +32,7 @@ public:
 		return *this;
 	}
 
-	auto withLineNumber(std::size_t lineNumber) -> RigcException&
+	auto withLine(std::size_t lineNumber) -> RigcException&
 	{
 		lineNum = lineNumber;
 		return *this;
