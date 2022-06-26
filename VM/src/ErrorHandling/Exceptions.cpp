@@ -42,19 +42,3 @@ auto dumpException(RigcException const& exception_) -> void
 		fmt::printErr("{Help}\n\t{}\n", exception_.help(), fmt_args::help());
 	}
 }
-
-auto dumpException(InternalException const& exception_) -> void
-{
-	auto const sourceLocation = exception_.location();
-
-	fmt::printErr(
-		"{InternalError} in {File}({Line}:{Col}) [`{Function}`] {Details}:\n\t{}\n",
-		exception_.what(),
-		fmt_args::internalError(),
-		fmt::arg("File", sourceLocation.file_name()),
-		fmt::arg("Line", sourceLocation.line()),
-		fmt::arg("Col", sourceLocation.column()),
-		fmt::arg("Function", sourceLocation.function_name()),
-		fmt_args::details()
-	);
-}

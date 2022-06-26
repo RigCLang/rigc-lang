@@ -494,8 +494,8 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 		toCopy = toAlloc;
 
 	size_t newSize = stack.size + toAlloc;
-	if (newSize > StackSize)
-		throw InternalException("Stack overflow");
+
+	assert(("Stack overflow.", newSize > StackSize));
 
 	size_t prevSize = stack.size;
 	stack.size = newSize;

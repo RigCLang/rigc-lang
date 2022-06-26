@@ -55,7 +55,6 @@ inline Styles const& s() {
 	}
 
 DEFINE_FMT_ARG(error, 	"Error", 	s().Bold | s().Red, 	"[Error]");
-DEFINE_FMT_ARG(internalError, "InternalError", s().Bold | s().Underline | s().DarkRed, "[InternalError]");
 DEFINE_FMT_ARG(help, 	"Help", 	s().Bold | s().Yellow, 	"[Help]");
 DEFINE_FMT_ARG(details, "Details", 	s().Bold, 				"Details");
 

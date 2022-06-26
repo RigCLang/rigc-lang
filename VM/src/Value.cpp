@@ -63,7 +63,7 @@ auto Value::removeRef() const -> Value
 		return val;
 	}
 
-	throw InternalException("Cannot deref a non-ref type.");
+	assert(("Cannot deref a non-ref type.", false));
 }
 
 /////////////////////////////////////
@@ -76,7 +76,8 @@ auto Value::removePtr() const -> Value
 		val.data = this->view<void*>();
 		return val;
 	}
-	throw InternalException("Cannot deptr a non-ptr type.");
+
+	assert(("Cannot deptr a non-ptr type.", false));
 }
 
 /////////////////////////////////////

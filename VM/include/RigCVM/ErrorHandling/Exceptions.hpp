@@ -42,21 +42,6 @@ public:
 	auto lineNumber() const -> std::size_t{ return lineNum; }
 };
 
-struct InternalException : std::exception
-{
-	std::string message;
-	std::source_location loc;
-
-public:
-	explicit InternalException(std::string message, std::source_location const location = std::source_location::current())
-		: message(std::move(message)), loc(location)
-	{
-	}
-
-	auto location() const -> std::source_location { return loc; }
-	auto what() const noexcept -> const char* override { return message.c_str(); }
-};
 
 auto dumpException(std::runtime_error const& exception_) -> void;
 auto dumpException(RigcException const& exception_) -> void;
-auto dumpException(InternalException const& exception_) -> void;
