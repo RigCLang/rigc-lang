@@ -261,7 +261,10 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		auto lhs = evalSide(lhs_);
 
 		auto const rhs = rhs_.as<PendingAction>();
-		if(!rhs->is_type<rigc::Name>())
+		auto const rhsName = findElem<rigc::Name>(*rhs, false);
+
+		// FIXME: this is a qufickfix, need to figure out how to properly handle templated types
+		if(!rhsName)
 			throw RigcException("Rhs of the conversion operator should be a valid identifier.")
 							.withHelp("Check the spelling of the rhs.")
 							.withLine(vm.lastEvaluatedLine);
@@ -269,7 +272,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 		auto const rhsType = vm.findType(rhs->string_view());
 		if(!rhsType)
 			throw RigcException("Rhs of the conversion operator should be a type.")
-							.withHelp("Check the spelling of the rhs.")
+							.withHelp("Check the spelling of the rhs and if the type is in scope.")
 							.withLine(vm.lastEvaluatedLine);
 
 		return vm.tryConvert(lhs, rhsType->shared_from_this());
