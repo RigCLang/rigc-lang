@@ -7,6 +7,8 @@
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 
+#include <RigCVM/ErrorHandling/Exceptions.hpp>
+
 namespace rigc::vm
 {
 /////////////////////////////////////
@@ -60,7 +62,8 @@ auto Value::removeRef() const -> Value
 		val.data = this->view<void*>();
 		return val;
 	}
-	throw std::runtime_error("Cannot deref non-ref type");
+
+	throw InternalException("Cannot deref a non-ref type.");
 }
 
 /////////////////////////////////////
@@ -73,7 +76,7 @@ auto Value::removePtr() const -> Value
 		val.data = this->view<void*>();
 		return val;
 	}
-	throw std::runtime_error("Cannot deptr non-ptr type");
+	throw InternalException("Cannot deptr a non-ptr type.");
 }
 
 /////////////////////////////////////

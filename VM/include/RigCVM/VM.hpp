@@ -9,6 +9,8 @@
 
 #include <RigCVM/Functions.hpp>
 
+#include <RigCVM/ErrorHandling/Exceptions.hpp>
+
 namespace rigc::vm
 {
 class ClassType;
@@ -91,7 +93,7 @@ struct Instance
 	{
 		auto type = this->findType(typeName_);
 		if (!type)
-			throw std::runtime_error("Unknown type " + std::string(typeName_));
+			throw InternalException("Unknown type " + std::string(typeName_));
 
 		return this->allocateOnStack<T>( type->shared_from_this(), value_ );
 	}

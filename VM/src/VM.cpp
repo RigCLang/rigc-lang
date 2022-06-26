@@ -10,6 +10,8 @@
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 
+#include <RigCVM/ErrorHandling/Exceptions.hpp>
+
 namespace rigc::vm
 {
 
@@ -96,7 +98,7 @@ auto Instance::run(std::string_view moduleName_) -> int
 	entryPoint.module_ = this->parseModule(moduleName_);
 	if (!entryPoint.module_)
 	{
-		throw std::runtime_error(fmt::format("Failed to run module \"{}\"", moduleName_));
+		throw RigcException("Failed to run module \"{}\".", moduleName_);
 	}
 
 	// Use its parent path as the working directory
@@ -141,10 +143,13 @@ auto Instance::run(std::string_view moduleName_) -> int
 	auto mainFuncOv = this->universalScope().findFunction(entryPoint.functionName);
 
 	if (!mainFuncOv)
-		throw std::runtime_error(fmt::format("Cannot execute script. Function \"{}\" not found.", entryPoint.functionName));
+		throw RigcException("Cannot execute script. Function \"{}\" not found.", entryPoint.functionName)
+						.withHelp("Define the \"{}\" function.", entryPoint.functionName)
+						.withLine(lastEvaluatedLine);
 
 	if (mainFuncOv->size() > 1)
-		throw std::runtime_error(fmt::format("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName));
+		throw RigcException("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName)
+						.withLine(lastEvaluatedLine);
 
 	this->executeFunction(*(*mainFuncOv)[0]);
 
@@ -399,7 +404,9 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 		{
 			// ensure 2 template params
 			if (templateParams->children.size() != 2)
-				throw std::runtime_error("StaticArray requires 2 template params: StaticArray<T, N: Int32>");
+				throw RigcException("StaticArray requires 2 template params: StaticArray<T, N: Int32>")
+								.withHelp("Provide the needed arguments correctly.")
+								.withLine(lastEvaluatedLine);
 
 			auto inner	= this->evaluateType(*findElem<rigc::Type>(*templateParams->children[0]));
 			// TEMP:
@@ -488,7 +495,7 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 
 	size_t newSize = stack.size + toAlloc;
 	if (newSize > StackSize)
-		throw std::runtime_error("Stack overflow");
+		throw InternalException("Stack overflow");
 
 	size_t prevSize = stack.size;
 	stack.size = newSize;

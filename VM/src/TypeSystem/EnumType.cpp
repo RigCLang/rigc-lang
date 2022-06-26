@@ -59,7 +59,8 @@ auto EnumType::postInitialize(Instance& vm) -> void
 					auto fn = findOverload(*overloads, viewArray(types, 0, 2));
 
 					if (!fn) {
-						throw std::runtime_error("No overload found for == operator.");
+						throw RigcException("No overload found for = operator and enum \"{}\".", enumType->name())
+										.withLine(vm_.lastEvaluatedLine);
 					}
 
 					auto args = Function::Args{
@@ -100,7 +101,8 @@ auto EnumType::postInitialize(Instance& vm) -> void
 					auto fn = findOverload(*overloads, viewArray(types, 0, 2));
 
 					if (!fn) {
-						throw std::runtime_error("No overload found for == operator.");
+						throw RigcException("No overload found for == operator and enum \"{}\".", enumType->name())
+										.withLine(vm_.lastEvaluatedLine);
 					}
 
 					auto args = Function::Args{
