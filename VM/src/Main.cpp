@@ -38,15 +38,20 @@ auto main(int argc, char* argv[]) -> int
 		rigc::vm::Instance instance;
 		return instance.run(argv[1]);
 	}
+	catch(std::runtime_error const& exc)
+	{
+		dumpException(exc);
+		return -1;
+	}
 	catch(RigcException const& exc)
 	{
 		dumpException(exc);
-		return 1;
+		return -2;
 	}
 	catch(InternalException const& exc)
 	{
 		dumpException(exc);
-		return 2;
+		return -3;
 	}
 	catch(...)
 	{
@@ -59,7 +64,7 @@ auto main(int argc, char* argv[]) -> int
 			fmt_args::error()
 		);
 
-		return 3;
+		return -4;
 	}
 #endif
 }

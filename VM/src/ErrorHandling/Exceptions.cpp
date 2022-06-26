@@ -25,6 +25,11 @@ auto dumpPlainException(std::exception const& exception_) -> void
 	);
 }
 
+auto dumpException(std::runtime_error const& exception_) -> void
+{
+	dumpPlainException(exception_);
+}
+
 auto dumpException(RigcException const& exception_) -> void
 {
 	if(exception_.lineNumber() == 0) 
