@@ -31,7 +31,9 @@ namespace fmt_args
 
 struct Styles {
 	fmt::text_style Bold	= fmt::emphasis::bold;
+	fmt::text_style Underline	= fmt::emphasis::underline;
 	fmt::text_style Red		= fmt::fg(fmt::color::red);
+	fmt::text_style DarkRed		= fmt::fg(fmt::color::dark_red);
 	fmt::text_style Green	= fmt::fg(fmt::color::green);
 	fmt::text_style Blue	= fmt::fg(fmt::color::blue);
 	fmt::text_style LightBlue	= fmt::fg(fmt::color::light_blue);
@@ -53,6 +55,7 @@ inline Styles const& s() {
 	}
 
 DEFINE_FMT_ARG(error, 	"Error", 	s().Bold | s().Red, 	"[Error]");
+DEFINE_FMT_ARG(internalError, "InternalError", s().Bold | s().Underline | s().DarkRed, "[InternalError]");
 DEFINE_FMT_ARG(help, 	"Help", 	s().Bold | s().Yellow, 	"[Help]");
 DEFINE_FMT_ARG(details, "Details", 	s().Bold, 				"Details");
 

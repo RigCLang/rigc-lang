@@ -2,6 +2,7 @@
 
 #include RIGCVM_PCH
 
+#include <source_location>
 #include <stdexcept>
 #include <cstdint>
 
@@ -41,6 +42,21 @@ public:
 	auto lineNumber() const -> std::size_t{ return lineNum; }
 };
 
+struct InternalException : std::exception
+{
+	char const* message;
+	std::source_location loc;
 
+public:
+	explicit InternalException(char const* message, std::source_location const location = std::source_location::current())
+		: message(message), loc(location)
+	{
+	}
 
+	auto location() const -> std::source_location { return loc; }
+	auto what() const noexcept -> const char* override { return message; }
+};
+
+auto dumpException(std::runtime_error const& exception_) -> void;
 auto dumpException(RigcException const& exception_) -> void;
+auto dumpException(InternalException const& exception_) -> void;

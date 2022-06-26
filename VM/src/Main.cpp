@@ -43,6 +43,11 @@ auto main(int argc, char* argv[]) -> int
 		dumpException(exc);
 		return 1;
 	}
+	catch(InternalException const& exc)
+	{
+		dumpException(exc);
+		return 2;
+	}
 	catch(...)
 	{
 		fmt::printErr(

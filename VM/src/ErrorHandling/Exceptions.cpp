@@ -3,7 +3,7 @@
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 #include <RigCVM/ErrorHandling/Formatting.hpp>
 
-auto dumpExceptionWithLine(RigcException const& exception_) -> void 
+auto dumpRigcExceptionWithLine(RigcException const& exception_) -> void
 {
 	auto const [argName, argValue] = fmt_args::errorWithLineArgPair(exception_.lineNumber());
 
@@ -15,7 +15,7 @@ auto dumpExceptionWithLine(RigcException const& exception_) -> void
 	);
 }
 
-auto dumpExceptionWithoutLine(RigcException const& exception_) -> void 
+auto dumpPlainException(std::exception const& exception_) -> void
 {
 	fmt::printErr(
 		"{Error} {Details}:\n\t{}\n",
@@ -28,12 +28,28 @@ auto dumpExceptionWithoutLine(RigcException const& exception_) -> void
 auto dumpException(RigcException const& exception_) -> void
 {
 	if(exception_.lineNumber() == 0) 
-		dumpExceptionWithoutLine(exception_);
+		dumpPlainException(exception_);
 	else 
-		dumpExceptionWithLine(exception_);
+		dumpRigcExceptionWithLine(exception_);
 
 	if(!exception_.help().empty())
 	{
 		fmt::printErr("{Help}\n\t{}\n", exception_.help(), fmt_args::help());
 	}
+}
+
+auto dumpException(InternalException const& exception_) -> void
+{
+	auto const sourceLocation = exception_.location();
+
+	fmt::printErr(
+		"{InternalError} in {File}({Line}:{Col}) [`{Function}`] {Details}:\n\t{}\n",
+		exception_.what(),
+		fmt_args::internalError(),
+		fmt::arg("File", sourceLocation.file_name()),
+		fmt::arg("Line", sourceLocation.line()),
+		fmt::arg("Col", sourceLocation.column()),
+		fmt::arg("Function", sourceLocation.function_name()),
+		fmt_args::details()
+	);
 }
