@@ -126,7 +126,9 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 
 	if (!opt)
 	{
-		throw std::runtime_error("Unrecognized identifier with name \"" + name.string() + "\"");
+		throw RigCError("Unrecognized identifier with name \"{}\"", name.string())
+						.withHelp("Check the spelling of the identifier.")
+						.withLine(vm_.lastEvaluatedLine);
 	}
 
 	if (auto ref = opt->type->as<RefType>())
@@ -146,7 +148,9 @@ auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 
 	if (!opt)
 	{
-		throw std::runtime_error("Unrecognized identifier with name \"" + expr_.string() + "\"");
+		throw RigCError("Unrecognized identifier with name \"{}\"", expr_.string())
+						.withHelp("Check the spelling of the identifier.")
+						.withLine(vm_.lastEvaluatedLine);
 	}
 
 	if (auto ref = opt->type->as<RefType>())
@@ -175,9 +179,9 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	}
 	else if (deduceType)
 	{
-		throw std::runtime_error(
-				fmt::format("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
-			);
+		throw RigCError("Variable {} requires an initializer, because of type deduction using \"{}\"", varName, declType)
+						.withHelp("Provide an initializer for the variable.")
+						.withLine(vm_.lastEvaluatedLine);
 	}
 
 	DeclType type;
@@ -188,7 +192,9 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		if (auto t = vm_.findType(declType))
 			type = t->shared_from_this();
 		else
-			throw std::runtime_error(fmt::format("Type {} not found", declType));
+			throw RigCError("Type {} not found", declType)
+							.withHelp("Check the spelling of the type.")
+							.withLine(vm_.lastEvaluatedLine);
 
 		if (!valueExpr)
 		{
@@ -208,7 +214,8 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		{
 			auto converted = vm_.tryConvert(value, type);
 			if (!converted)
-				throw std::runtime_error(fmt::format("Cannot convert {} to {}", value.type->name(), type->name()));
+				throw RigCError("Cannot convert {} to {}", value.type->name(), type->name())
+								.withLine(vm_.lastEvaluatedLine);
 
 			value = converted.value();
 		}
@@ -266,7 +273,10 @@ auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 		if(!typeExpr) return vm_.findType("Int32");
 
 		auto const underlying = vm_.findType(typeExpr->string_view());
-		if(!underlying) throw std::runtime_error(fmt::format("Unknown type \"{}\" for enum.", typeExpr->string_view()));
+		if(!underlying) 
+			throw RigCError("Unknown type \"{}\" for enum.", typeExpr->string_view())
+							.withHelp("Check the spelling of the type.")
+							.withLine(vm_.lastEvaluatedLine);
 
 		return underlying;
 	}()->shared_from_this();
@@ -358,7 +368,9 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 
 		type = vm_.evaluateType(declType);
 		if (!type)
-			throw std::runtime_error(fmt::format("Type {} not found", declType.string_view()));
+			throw RigCError("Type {} not found", declType.string_view())
+							.withHelp("Check the spelling of the type.")
+							.withLine(vm_.lastEvaluatedLine);
 
 		// if (!valueExpr)
 		// {

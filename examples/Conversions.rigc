@@ -1,0 +1,9 @@
+// A program showing the basics of conversions
+// ### Expected output: ###
+// We can convert floating points numbers to integers: 3.
+// ... and vice versa: 1.5.
+
+func main {
+	print("We can convert floating points numbers to integers: {}.\n", 3.14159 as Int32);
+	print("... and vice versa: {}.\n", (3 as Float32) / (2 as Float32)); 
+}

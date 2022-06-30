@@ -1,6 +1,8 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/VM.hpp>
+#include <RigCVM/ErrorHandling/Exceptions.hpp>
+#include <RigCVM/ErrorHandling/Formatting.hpp>
 #include <fmt/color.h>
 
 #ifdef PACC_SYSTEM_WINDOWS
@@ -12,8 +14,6 @@ auto printError() -> void;
 
 auto main(int argc, char* argv[]) -> int
 {
-	namespace pt = pegtl::parse_tree;
-
 	enableColors();
 
 	if (argc < 2)
@@ -38,15 +38,28 @@ auto main(int argc, char* argv[]) -> int
 		rigc::vm::Instance instance;
 		return instance.run(argv[1]);
 	}
-	catch (const std::exception &e)
+	catch(std::runtime_error const& exc)
 	{
-		printError();
-		std::cerr << e.what() << '\n';
+		dumpException(exc);
+		return -1;
+	}
+	catch(RigCError const& exc)
+	{
+		dumpException(exc);
+		return -2;
 	}
 	catch(...)
 	{
-		printError();
-		std::cerr << "Unknown exception occurred.\n";
+		fmt::printErr(
+			"{Error}\n"
+			"    An unknown error occurred.\n"
+			"    No details available\n"
+			"    Please refer to https://github.com/PoetaKodu/pacc/issues\n",
+
+			fmt_args::error()
+		);
+
+		return -4;
 	}
 #endif
 }

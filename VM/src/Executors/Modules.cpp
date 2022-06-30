@@ -3,6 +3,8 @@
 #include <RigCVM/Executors/All.hpp>
 #include <RigCVM/VM.hpp>
 
+#include <RigCVM/ErrorHandling/Exceptions.hpp>
+
 namespace rigc::vm
 {
 
@@ -26,7 +28,9 @@ auto executeImportStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 		vm_.evaluateModule(*mod);
 		return {};
 	}
-	throw std::runtime_error(fmt::format("Module {} not found", moduleName));
+	throw RigCError("Module {} not found", moduleName)
+					.withHelp("Try checking the name of the module, the path of the module or try declaring it.")
+					.withLine(vm_.lastEvaluatedLine);
 }
 
 }

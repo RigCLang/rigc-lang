@@ -7,6 +7,8 @@
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 
+#include <RigCVM/ErrorHandling/Exceptions.hpp>
+
 namespace rigc::vm
 {
 /////////////////////////////////////
@@ -18,62 +20,61 @@ auto Value::member(DataMember const& dm_) const -> Value
 /////////////////////////////////////
 auto Value::member(size_t offset_, DeclType type_) const -> Value
 {
-	Value mem;
-	mem.type = std::move(type_);
-	mem.data = reinterpret_cast<char*>(data) + offset_;
-	return mem;
+	return Value {
+		std::move(type_),
+		reinterpret_cast<char*>(data) + offset_
+	};
 }
 
 /////////////////////////////////////
 auto Value::safeRemoveRef() const -> Value
 {
-	if (auto ref = type->as<RefType>())
-	{
-		Value val;
-		val.type = ref->inner();
-		val.data = this->view<void*>();
-		return val;
-	}
-	return *this;
+	auto ref = type->as<RefType>();
+	if(!ref)
+		return *this;
+	else
+		return Value{
+			ref->inner(),
+			this->view<void*>()
+		};
 }
 
 /////////////////////////////////////
 auto Value::safeRemovePtr() const -> Value
 {
-	if (auto ptr = type->as<AddrType>())
-	{
-		Value val;
-		val.type = ptr->inner();
-		val.data = this->view<void*>();
-		return val;
-	}
-	return *this;
+	auto ptr = type->as<AddrType>();
+
+	if(!ptr) 
+		return *this;
+	else
+		return Value{
+			ptr->inner(),
+			this->view<void*>()
+		};
 }
 
 /////////////////////////////////////
 auto Value::removeRef() const -> Value
 {
-	if (auto ref = type->as<RefType>())
-	{
-		Value val;
-		val.type = ref->inner();
-		val.data = this->view<void*>();
-		return val;
-	}
-	throw std::runtime_error("Cannot deref non-ref type");
+	auto ref = type->as<RefType>();
+	assert(ref && "Cannot deref a non-ref type.");
+
+	return Value{
+		ref->inner(),
+		this->view<void*>()
+	};
 }
 
 /////////////////////////////////////
 auto Value::removePtr() const -> Value
 {
-	if (auto ptr = type->as<AddrType>())
-	{
-		Value val;
-		val.type = ptr->inner();
-		val.data = this->view<void*>();
-		return val;
-	}
-	throw std::runtime_error("Cannot deptr non-ptr type");
+	auto ptr = type->as<AddrType>();
+	assert(ptr && "Cannot deref a non-ref type.");
+
+	return Value{
+		ptr->inner(),
+		this->view<void*>()
+	};
 }
 
 /////////////////////////////////////
