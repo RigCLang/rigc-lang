@@ -66,7 +66,7 @@ inline auto errorWithLineArgPair(std::size_t line) -> ArgPair
 	auto constexpr boldRedFmt = emphasis::bold | fg(color::red);
 	auto constexpr reset = "\x1b[m";
 
-	auto const value = format(
+	auto const value = fmt::format(
 		"{}{}{}{}{}",
 		format(boldRedFmt, "[Error"),
 		reset,
