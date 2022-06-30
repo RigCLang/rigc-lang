@@ -507,6 +507,12 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 	Value val;
 	val.type = std::move(type_);
 	val.data = bytes;
+
+	if (val.type->is<ClassType>())
+	{
+		stack.frames.back().allocatedValues.push_back(val);
+	}
+
 	return val;
 }
 
@@ -543,6 +549,13 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 auto Instance::popStackFrame() -> void
 {
 	assert(stack.frames.size() > 1 && "Tried to pop a universe scope-related stack frame.");
+
+	// Destroy from the back to the front
+	auto& allocated = stack.frames.back().allocatedValues;
+	for (auto it = allocated.rbegin(); it != allocated.rend(); ++it)
+	{
+		it->destroy(*this);
+	}
 
 	stack.popFrame();
 	currentScope = stack.frames.back().scope;

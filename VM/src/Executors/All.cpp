@@ -4,6 +4,7 @@
 #include <RigCVM/Executors/ExpressionExecutor.hpp>
 #include <RigCVM/Executors/Templates.hpp>
 #include <RigCVM/VM.hpp>
+#include <RigCVM/StackFrame.hpp>
 
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
@@ -48,20 +49,6 @@ std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 };
 
 #undef MAKE_EXECUTOR
-
-////////////////////////////////////////
-StackFramePusher::StackFramePusher(Instance& vm_, ParserNode const& stmt_)
-	: vm(vm_)
-{
-	vm.pushStackFrameOf(&stmt_);
-}
-
-////////////////////////////////////////
-StackFramePusher::~StackFramePusher()
-{
-	if (!vm.returnTriggered)
-		vm.popStackFrame();
-}
 
 ////////////////////////////////////////
 auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptValue
@@ -221,7 +208,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		}
 	}
 
-	value = vm_.cloneValue(value);
+	// value = vm_.cloneValue(value);
 
 	if (!vm_.currentScope->variables.contains(varName))
 	{
@@ -273,7 +260,7 @@ auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 		if(!typeExpr) return vm_.findType("Int32");
 
 		auto const underlying = vm_.findType(typeExpr->string_view());
-		if(!underlying) 
+		if(!underlying)
 			throw RigCError("Unknown type \"{}\" for enum.", typeExpr->string_view())
 							.withHelp("Check the spelling of the type.")
 							.withLine(vm_.lastEvaluatedLine);

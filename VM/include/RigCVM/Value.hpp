@@ -3,12 +3,13 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/Type.hpp>
-#include <RigCVM/Stack.hpp>
 
 namespace rigc::vm
 {
 struct Instance;
 struct DataMember;
+
+struct StackFrame;
 
 template <typename T>
 using Ptr = T*;
@@ -31,22 +32,29 @@ struct Value : ValueBase
 	void* data = nullptr;
 
 	template <typename T>
-	auto view() -> T& 
+	auto view() -> T&
 	{
 		return *reinterpret_cast<T*>(data);
 	}
 
 	template <typename T>
-	auto view() const -> T const& 
+	auto view() const -> T const&
 	{
 		return *reinterpret_cast<T*>(data);
 	}
 
 	// Temp:
-	auto blob() const -> void* 
+	auto blob() const -> void*
 	{
 		return data;
 	}
+
+	// Calls destructor on it.
+	// Precondition: its type has to be a class type
+	// If you want to first ensure that this is a class type, use tryDestroy
+	auto destroy(Instance& vm_, bool destroyMembers_ = true) -> void;
+
+	auto tryDestroy(Instance& vm_, bool destroyMembers_ = true) -> void;
 
 	auto member(DataMember const& dm_) const-> Value;
 
@@ -65,7 +73,7 @@ struct CompileTimeValue : ValueBase
 	std::vector<std::byte> buffer;
 
 	template <typename T>
-	auto view() -> T& 
+	auto view() -> T&
 	{
 		return *reinterpret_cast<T*>(this->blob());
 	}
@@ -76,12 +84,12 @@ struct CompileTimeValue : ValueBase
 		return *reinterpret_cast<T const*>(this->blob());
 	}
 
-	auto blob() -> void* 
+	auto blob() -> void*
 	{
 		return reinterpret_cast<void*>(buffer.data());
 	}
 
-	auto blob() const -> void const* 
+	auto blob() const -> void const*
 	{
 		return reinterpret_cast<void const*>(buffer.data());
 	}
@@ -92,27 +100,15 @@ struct FrameBasedValue : ValueBase
 	size_t stackOffset;
 
 	template <typename T>
-	auto view(StackFrame const& frame_) -> T&
-	{
-		return *reinterpret_cast<T*>(this->blob(frame_));
-	}
+	auto view(StackFrame const& frame_) -> T&;
 
 	template <typename T>
-	auto view(StackFrame const& frame_) const -> T const&
-	{
-		return *reinterpret_cast<T*>(this->blob(frame_));
-	}
+	auto view(StackFrame const& frame_) const -> T const&;
 
 	// Temp: ??
-	auto blob(StackFrame const& frame_) const -> void const* 
-	{
-		return static_cast<void const*>(frame_.stack->data() + frame_.initialStackSize + stackOffset);
-	}
+	auto blob(StackFrame const& frame_) const -> void const*;
 
-	auto toAbsolute(StackFrame const& frame_) const -> Value
-	{
-		return Value{ type, const_cast<void*>(this->blob(frame_)) };
-	}
+	auto toAbsolute(StackFrame const& frame_) const -> Value;
 };
 
 using OptValue = std::optional<Value>;

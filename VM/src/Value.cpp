@@ -3,6 +3,7 @@
 #include <RigCVM/Value.hpp>
 
 #include <RigCVM/VM.hpp>
+#include <RigCVM/Stack.hpp>
 #include <RigCVM/TypeSystem/ClassType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
@@ -44,7 +45,7 @@ auto Value::safeRemovePtr() const -> Value
 {
 	auto ptr = type->as<AddrType>();
 
-	if(!ptr) 
+	if(!ptr)
 		return *this;
 	else
 		return Value{
@@ -76,6 +77,47 @@ auto Value::removePtr() const -> Value
 		this->view<void*>()
 	};
 }
+
+
+auto Value::destroy(Instance& vm_, bool destroyMembers_) -> void
+{
+	assert(type->is<ClassType>() && "Cannot destruct a non-class type. Use tryDestroy() instead if not sure.");
+
+	auto classType = type->as<ClassType>();
+
+	auto dtor = classType->methods.find("destruct");
+	if (dtor != classType->methods.end())
+	{
+		auto& overloads = dtor->second;
+		assert(!overloads.empty() && "Overloads for \"destruct\" exist but are empty.");
+
+		auto fn = overloads.front();
+		auto args = Function::Args{
+			vm_.allocateReference(*this)
+		};
+		vm_.executeFunction(*fn, viewArray(args, 0, 1));
+	}
+
+	if (destroyMembers_)
+	{
+		auto& dms = classType->dataMembers;
+		for (auto it = dms.rbegin(); it != dms.rend(); ++it)
+		{
+			auto& dm = *it;
+			auto member = this->member(dm);
+			member.tryDestroy(vm_, true);
+		}
+	}
+}
+
+auto Value::tryDestroy(Instance& vm_, bool destroyMembers_) -> void
+{
+	if (type->is<ClassType>())
+	{
+		this->destroy(vm_, destroyMembers_);
+	}
+}
+
 
 /////////////////////////////////////
 auto dump(Instance& vm_, Value const& value_) -> std::string
@@ -130,4 +172,28 @@ auto dump(Instance& vm_, Value const& value_) -> std::string
 	}
 	return "<unknown>";
 }
+
+template <typename T>
+auto FrameBasedValue::view(StackFrame const& frame_) -> T&
+{
+	return *reinterpret_cast<T*>(this->blob(frame_));
+}
+
+template <typename T>
+auto FrameBasedValue::view(StackFrame const& frame_) const -> T const&
+{
+	return *reinterpret_cast<T*>(this->blob(frame_));
+}
+
+
+auto FrameBasedValue::blob(StackFrame const& frame_) const -> void const*
+{
+	return static_cast<void const*>(frame_.stack->data() + frame_.initialStackSize + stackOffset);
+}
+
+auto FrameBasedValue::toAbsolute(StackFrame const& frame_) const -> Value
+{
+	return Value{ type, const_cast<void*>(this->blob(frame_)) };
+}
+
 }
