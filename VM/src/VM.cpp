@@ -46,8 +46,8 @@ auto Instance::findModulePath(std::string_view name_) const -> fs::path
 	}
 	else if(searchInModulePaths != modulePaths.end())
 	{
-		// .....??????
-		relativeTo = currentModule->absolutePath.parent_path();
+		// ??????
+		relativeTo = currentModule->absolutePath.relative_path();
 	}
 
 	path = relativeTo / path;
