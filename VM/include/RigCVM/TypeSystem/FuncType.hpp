@@ -7,12 +7,13 @@
 
 namespace rigc::vm
 {
-//todo: refactor maybe use template?
 struct FuncType : IType
 {
+private:
 	InnerType result;
 	std::vector<InnerType> parameters;
 
+public:
 	bool isVariadic = false;
 
 	auto name() const -> std::string override;
@@ -35,11 +36,12 @@ struct FuncType : IType
 
 struct MethodType : IType
 {
+private:
 	InnerType result;
 	InnerType classType;
 	std::vector<InnerType> parameters;
 
-
+public:
 	auto name() const -> std::string override;
 	auto symbolName() const -> std::string override {
 		return "Method";
