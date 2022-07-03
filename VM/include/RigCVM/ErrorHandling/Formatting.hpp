@@ -68,7 +68,7 @@ inline auto errorWithLineArgPair(std::size_t line) -> ArgPair
 
 	auto const value = fmt::format(
 		"{}{}{}{}{}",
-		format(boldRedFmt, "[Error"),
+		fmt::format(boldRedFmt, "[Error"),
 		reset,
 		" on line ",
 		format(s().LightBlue, "{}", line),

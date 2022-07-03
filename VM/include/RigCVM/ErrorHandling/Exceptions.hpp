@@ -8,6 +8,7 @@
 
 struct RigCError : std::exception
 {
+private:
 	std::string basicMessage;
 
 	std::string helpMessage;
