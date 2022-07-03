@@ -37,9 +37,16 @@ auto Instance::findModulePath(std::string_view name_) const -> fs::path
 {
 	auto relativeTo	= fs::current_path();
 	auto path		= fs::path(std::string(name_));
+	auto modulePaths = std::vector<fs::path>{"../lib"};
+	auto searchInModulePaths = std::find(modulePaths.begin(),modulePaths.end(), name_);
 
 	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
 	{
+		relativeTo = currentModule->absolutePath.parent_path();
+	}
+	else if(searchInModulePaths != modulePaths.end())
+	{
+		// .....??????
 		relativeTo = currentModule->absolutePath.parent_path();
 	}
 
