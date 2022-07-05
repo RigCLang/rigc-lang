@@ -501,9 +501,9 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 		//
 		if (!fn) {
 			std::string paramsString;
-			for(size_t i = 0; i < numParams; ++i)
+			for(size_t i = 1; i <= numParams; ++i)
 			{
-				if (i > 0)
+				if (i > 1)
 					paramsString += ", ";
 				paramsString += paramTypes[i]->name();
 			}
