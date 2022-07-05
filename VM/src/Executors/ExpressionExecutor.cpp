@@ -508,7 +508,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 				paramsString += paramTypes[i]->name();
 			}
 
-			throw RigCError("Not matching function to call with params: {}.", paramsString)
+			throw RigCError("No matching function \"{}\" to call with params: {}.", fnName, paramsString)
 							.withHelp("Check the function name and arguments' arity and types.")
 							.withLine(vm.lastEvaluatedLine);
 		}
