@@ -51,7 +51,7 @@ auto Instance::findModulePath(std::string_view name_) const -> fs::path
         if(separatorPos == std::string_view::npos) 
         {
             std::cerr << "Error";
-            return 1;
+            // return 1;
         }
         else
         {
@@ -70,20 +70,20 @@ auto Instance::findModulePath(std::string_view name_) const -> fs::path
         }
     }
 
-	path = relativeTo / path;
+	modulePath = relativeTo / modulePath;
 
-	if (!path.has_extension())
+	if (!modulePath.has_extension())
 	{
-		path.replace_extension(".rigc");
-		if (!fs::exists(path))
+		modulePath.replace_extension(".rigc");
+		if (!fs::exists(modulePath))
 		{
-			path.replace_extension(".rigcz");
-			if (!fs::exists(path))
+			modulePath.replace_extension(".rigcz");
+			if (!fs::exists(modulePath))
 				return fs::path{};
 		}
 	}
 
-	return path;
+	return modulePath;
 }
 
 //////////////////////////////////////////
