@@ -9,7 +9,6 @@
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
-
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
 namespace rigc::vm
@@ -36,19 +35,40 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 auto Instance::findModulePath(std::string_view name_) const -> fs::path
 {
 	auto relativeTo	= fs::current_path();
-	auto path		= fs::path(std::string(name_));
-	auto modulePaths = std::vector<fs::path>{"../lib"};
-	auto searchInModulePaths = std::find(modulePaths.begin(),modulePaths.end(), name_);
+	auto modulePath		= fs::path(std::string(name_));
+	auto aliasesPaths = std::unordered_map<std::string,fs::path>{
+		{"root",relativeTo},
+		{"std","../lib/std"}
+	};
 
 	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
 	{
 		relativeTo = currentModule->absolutePath.parent_path();
 	}
-	else if(searchInModulePaths != modulePaths.end())
-	{
-		// ??????
-		relativeTo = currentModule->absolutePath.relative_path();
-	}
+	if(name_.starts_with('@')) {
+        auto const separatorPos = name_.find(fs::path::preferred_separator);
+
+        if(separatorPos == std::string_view::npos) 
+        {
+            std::cerr << "Error";
+            return 1;
+        }
+        else
+        {
+            auto const alias = std::string(name_.substr(0, separatorPos));
+            auto const mappedPath = aliasesPaths.find(alias);
+
+            if(mappedPath == aliasesPaths.end())
+            {
+                std::cerr << "Error";
+            }
+            else
+            {
+                name_.remove_prefix(alias.size() + 1);
+                relativeTo = mappedPath->second;
+            }
+        }
+    }
 
 	path = relativeTo / path;
 
