@@ -11,22 +11,8 @@ namespace rigc
 
 struct Name;
 
-struct PackageImportNames
-	: p::seq<
-			Name,
-			p::opt<
-				p::seq< p::one<'.'>, PackageImportNames>
-			>
-		>
-{
-};
-
 struct PackageImportFullName
-	:
-	p::sor<
-		StringLiteral,
-		PackageImportNames
-	>
+	: StringLiteral
 {
 };
 
