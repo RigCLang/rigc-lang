@@ -32,6 +32,17 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 
 #undef DEFINE_BUILTIN_CONVERT_OP
 
+auto getSeparatorPos(std::string_view name_)
+{
+	return name_.find(fs::path::preferred_separator);
+}
+
+auto getAlias(std::string_view name_)
+{	
+	auto separatorPos = getSeparatorPos(name_);
+	return std::string(name_.substr(0,separatorPos));
+}
+
 auto Instance::getPathFromAlias(std::string_view alias_) const
 {
 	auto const relativeStdPath = fs::path("lib/std").make_preferred();	
@@ -41,7 +52,7 @@ auto Instance::getPathFromAlias(std::string_view alias_) const
 		{"root",fs::current_path()},
 		{"std",stdPath}
 	};
-	auto const separatorPos = alias_.find(fs::path::preferred_separator);
+	auto const separatorPos = getSeparatorPos(alias_);
 
 	if(separatorPos == std::string_view::npos)
 	{
@@ -67,13 +78,26 @@ auto Instance::getPathFromAlias(std::string_view alias_) const
 	}
 }
 
-//////////////////////////////////////////
+auto modulePathExtenstionExists(fs::path modulePath)
+{
+	if (!modulePath.has_extension())
+	{
+		modulePath.replace_extension(".rigc");
+		if (!fs::exists(modulePath))
+		{
+			modulePath.replace_extension(".rigcz");
+			if (!fs::exists(modulePath))
+				return fs::path{};
+		}
+	}
+	return modulePath;
+}
+
 auto Instance::findModulePath(std::string_view name_) const -> fs::path
 {
 	auto relativeTo	= fs::current_path();
 	auto modulePath		= fs::path(std::string(name_));
-	auto separatorPos = name_.find(fs::path::preferred_separator);
-	auto alias = std::string(name_.substr(0,separatorPos));
+	auto alias = getAlias(name_);
 
 	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
 	{
@@ -86,16 +110,7 @@ auto Instance::findModulePath(std::string_view name_) const -> fs::path
 
 	modulePath = relativeTo / modulePath;
 
-	if (!modulePath.has_extension())
-	{
-		modulePath.replace_extension(".rigc");
-		if (!fs::exists(modulePath))
-		{
-			modulePath.replace_extension(".rigcz");
-			if (!fs::exists(modulePath))
-				return fs::path{};
-		}
-	}
+	modulePathExtenstionExists(modulePath);
 
 	return modulePath;
 }
