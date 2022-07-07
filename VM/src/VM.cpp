@@ -2,6 +2,7 @@
 
 #include <RigCVM/VM.hpp>
 
+#include "RigCVM/Enviroment.hpp"
 #include <RigCVM/Executors/All.hpp>
 #include <RigCVM/Value.hpp>
 #include <RigCVM/TypeSystem/ClassTemplate.hpp>
@@ -31,43 +32,56 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 
 #undef DEFINE_BUILTIN_CONVERT_OP
 
+auto Instance::getPathFromAlias(std::string_view alias_) const
+{
+	auto const relativeStdPath = fs::path("lib/std").make_preferred();	
+	auto const stdPath = getVmAppPath().parent_path().parent_path() / relativeStdPath;
+
+	auto aliasesPaths = std::unordered_map<std::string,fs::path>{
+		{"root",fs::current_path()},
+		{"std",stdPath}
+	};
+	auto const separatorPos = alias_.find(fs::path::preferred_separator);
+
+	if(separatorPos == std::string_view::npos)
+	{
+		throw RigCError("You gave too many characters - end of the string")
+								.withHelp("Provide less characters")
+								.withLine(lastEvaluatedLine);	
+	}
+	else
+	{
+		auto const alias = std::string(alias_.substr(0,separatorPos));
+		auto const mappedPath = aliasesPaths.find(alias);
+		if(mappedPath == aliasesPaths.end())
+		{
+			throw RigCError("No suitable path was found")
+							.withHelp("Provide correct path")
+							.withLine(lastEvaluatedLine);	
+		}
+		else
+		{
+			alias_.remove_prefix(alias.size() + 1);
+			return mappedPath->second;
+		}
+	}
+}
+
 //////////////////////////////////////////
 auto Instance::findModulePath(std::string_view name_) const -> fs::path
 {
 	auto relativeTo	= fs::current_path();
 	auto modulePath		= fs::path(std::string(name_));
-	auto aliasesPaths = std::unordered_map<std::string,fs::path>{
-		{"root",relativeTo},
-		{"std","../lib/std"}
-	};
+	auto separatorPos = name_.find(fs::path::preferred_separator);
+	auto alias = std::string(name_.substr(0,separatorPos));
 
 	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
 	{
 		relativeTo = currentModule->absolutePath.parent_path();
 	}
-	if(name_.starts_with('@')) {
-        auto const separatorPos = name_.find(fs::path::preferred_separator);
-
-        if(separatorPos == std::string_view::npos) 
-        {
-            std::cerr << "Error";
-            // return 1;
-        }
-        else
-        {
-            auto const alias = std::string(name_.substr(0, separatorPos));
-            auto const mappedPath = aliasesPaths.find(alias);
-
-            if(mappedPath == aliasesPaths.end())
-            {
-                std::cerr << "Error";
-            }
-            else
-            {
-                name_.remove_prefix(alias.size() + 1);
-                relativeTo = mappedPath->second;
-            }
-        }
+	if(name_.starts_with('@')) 
+	{
+		relativeTo = getPathFromAlias(alias);
     }
 
 	modulePath = relativeTo / modulePath;
