@@ -1,4 +1,4 @@
-#include "RigCVM/Enviroment.hpp"
+#include "RigCVM/Environment.hpp"
 
 namespace rigc::vm
 {

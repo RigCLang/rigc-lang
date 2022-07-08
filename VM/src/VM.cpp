@@ -2,7 +2,7 @@
 
 #include <RigCVM/VM.hpp>
 
-#include "RigCVM/Enviroment.hpp"
+#include "RigCVM/Environment.hpp"
 #include <RigCVM/Executors/All.hpp>
 #include <RigCVM/Value.hpp>
 #include <RigCVM/TypeSystem/ClassTemplate.hpp>
