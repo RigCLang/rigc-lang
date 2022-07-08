@@ -103,8 +103,8 @@ auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValu
 auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	// Either "PossiblyTemplatedSymbol" or "PossiblyTemplatedSymbolNoDisamb"
-	// auto& name	= *findElem<rigc::Name>(expr_, false);
-	auto opt	= vm_.findVariableByName(expr_.string_view());
+	auto& name	= *findElem<rigc::Name>(expr_, false);
+	auto opt	= vm_.findVariableByName(name.string_view());
 
 	// if (!opt) {
 	// 	opt = vm_.findFunctionExpr(actualExpr.string_view());
@@ -112,7 +112,7 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 
 	if (!opt)
 	{
-		throw RigCError("Unrecognized identifier with name \"{}\"", expr_.string())
+		throw RigCError("Unrecognized identifier with name \"{}\"", name.string())
 						.withHelp("Check the spelling of the identifier.")
 						.withLine(vm_.lastEvaluatedLine);
 	}
