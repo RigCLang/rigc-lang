@@ -56,8 +56,8 @@ auto Instance::getPathFromAlias(std::string_view alias_) const
 
 	if(separatorPos == std::string_view::npos)
 	{
-		throw RigCError("You gave too many characters - end of the string")
-								.withHelp("Provide less characters")
+		throw RigCError("Could not find module {} - only provided a directory alias", alias_)
+								.withHelp("Provide a module name, example: {}/Module",alias_)
 								.withLine(lastEvaluatedLine);	
 	}
 	else
@@ -66,8 +66,8 @@ auto Instance::getPathFromAlias(std::string_view alias_) const
 		auto const mappedPath = aliasesPaths.find(alias);
 		if(mappedPath == aliasesPaths.end())
 		{
-			throw RigCError("No suitable path was found")
-							.withHelp("Provide correct path")
+			throw RigCError("Could not find alias {}",alias_)
+							.withHelp("Ensure the {} alias is defined within the configuration file", alias_)
 							.withLine(lastEvaluatedLine);	
 		}
 		else
