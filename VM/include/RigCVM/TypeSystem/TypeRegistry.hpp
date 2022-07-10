@@ -3,15 +3,16 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/TypeSystem/IType.hpp>
+#include <RigCVM/Symbol.hpp>
 
 namespace rigc::vm
 {
 
 struct TypeRegistry
 {
-	std::unordered_map<std::size_t, MutDeclType> types;
-
 	using Hasher = std::hash<std::string_view>;
+
+	std::unordered_map<std::size_t, Symbol<MutDeclType>> types;
 
 	auto exists(std::string_view hash_) const -> bool;
 
@@ -23,6 +24,6 @@ struct TypeRegistry
 	auto find(std::size_t hash_) const -> DeclType;
 	auto find(std::string_view hashBasis_) const -> DeclType;
 
-	auto add(MutDeclType type_) -> bool;
+	auto add(Symbol<MutDeclType> symbol_) -> bool;
 };
 }
