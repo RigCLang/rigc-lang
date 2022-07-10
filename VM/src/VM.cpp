@@ -47,7 +47,7 @@ auto Instance::findModulePath(std::string_view name_) const -> fs::path
 
 	if (!path.has_extension())
 	{
-		path.replace_extension(".rigc");
+		path.replace_extension(".rigc");	
 		if (!fs::exists(path))
 		{
 			path.replace_extension(".rigcz");
