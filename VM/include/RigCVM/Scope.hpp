@@ -10,8 +10,6 @@
 #include <RigCVM/TypeSystem/TypeRegistry.hpp>
 #include <RigCVM/TypeSystem/TypeConstraint.hpp>
 
-#include <RigCVM/Symbol.hpp>
-
 namespace rigc::vm
 {
 struct Instance;
@@ -69,7 +67,7 @@ struct Scope
 	/// </summary>
 	static auto formatOperatorName(std::string_view opName_, Operator::Type type_) -> StaticString<char, 512>;
 
-	auto addType(Symbol<MutDeclType> type_) -> void;
+	auto addType(MutDeclType type_) -> void;
 
 	/// <summary>
 	/// Returns a function converting type `from_` to type `to_`,
