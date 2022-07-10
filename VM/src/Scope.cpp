@@ -472,10 +472,10 @@ auto Scope::registerType(Instance& vm_, std::string_view name_, IType& type_) ->
 
 
 ///////////////////////////////////////////////////////////////
-auto Scope::addType(Symbol<MutDeclType> type_) -> void
+auto Scope::addType(MutDeclType type_) -> void
 {
 	types.add(type_);
-	type_.stored->postInitialize(*vm);
+	type_->postInitialize(*vm);
 }
 
 ///////////////////////////////////////////////////////////////

@@ -30,10 +30,9 @@ auto TypeRegistry::find(std::size_t hash_) const
 	-> DeclType
 {
 	auto it = types.find(hash_);
-	if (it == types.end() || (!it->second.isExported()))
+	if (it == types.end())
 		return nullptr;
-
-	return it->second.stored;
+	return it->second;
 }
 
 //////////////////////////////////////////
@@ -41,21 +40,20 @@ auto TypeRegistry::find(std::size_t hash_)
 	-> MutDeclType
 {
 	auto it = types.find(hash_);
-	if (it == types.end() || (!it->second.isExported()))
+	if (it == types.end())
 		return nullptr;
-
-	return it->second.stored;
+	return it->second;
 }
 
 //////////////////////////////////////////
-auto TypeRegistry::add(Symbol<MutDeclType> symbol_)
+auto TypeRegistry::add(MutDeclType type_)
 	-> bool
 {
-	auto it = types.find(symbol_.stored->hash());
+	auto it = types.find(type_->hash());
 	if (it != types.end()) {
 		return false;
 	}
-	types.insert({ symbol_.stored->hash(), std::move(symbol_) });
+	types.insert({ type_->hash(), type_ });
 	return true;
 }
 }
