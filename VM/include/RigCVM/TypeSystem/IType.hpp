@@ -101,5 +101,16 @@ struct IType : public std::enable_shared_from_this<IType>
 };
 
 template <typename T>
-auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_ = sizeof(T)) -> IType*;
+struct SafeCoreTypeSize {
+	static constexpr auto value = sizeof(T);
+};
+
+template <>
+struct SafeCoreTypeSize<void> {
+	static constexpr auto value = 0;
+};
+
+template <typename T>
+auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_ = SafeCoreTypeSize<T>::value) -> IType*;
+
 }
