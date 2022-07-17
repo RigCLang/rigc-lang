@@ -9,6 +9,29 @@
 
 namespace rigc::vm::builtin
 {
+
+////////////////////////////////////////
+auto allocateMemory(Instance &vm_, Function::ArgSpan args_) -> OptValue
+{
+	if (args_.size() != 1)
+		return OptValue();
+
+	auto size = args_[0].safeRemoveRef().view<int>();
+
+	auto mem = std::malloc(size);
+	auto type = vm_.findType("Char")->shared_from_this();
+	return vm_.allocatePointer( Value { type, mem } );
+}
+
+auto freeMemory(Instance &vm_, Function::ArgSpan args_) -> OptValue
+{
+	if (args_.size() != 1)
+		return OptValue();
+
+	std::free(args_[0].safeRemoveRef().removePtr().data);
+	return {};
+}
+
 ////////////////////////////////////////
 auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
