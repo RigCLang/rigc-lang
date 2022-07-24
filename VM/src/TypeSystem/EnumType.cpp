@@ -31,6 +31,8 @@ auto EnumType::add(DataMember mem, OptValue const& val) -> void
 
 auto EnumType::postInitialize(Instance& vm) -> void
 {
+	Super::postInitialize(vm);
+
 	// assignment operator
 	{
 		auto selfRef = constructTemplateType<RefType>(vm.scopeOf(nullptr), this->shared_from_this());

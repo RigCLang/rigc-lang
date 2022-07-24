@@ -12,6 +12,7 @@ namespace rigc::vm
 //////////////////////////////////////
 auto FuncType::postInitialize(Instance& vm_) -> void
 {
+	Super::postInitialize(vm_);
 	// Function::Params params;
 	// for (size_t i = 0; i < parameters.size(); ++i) {
 	// 	params[i].type = parameters[i];

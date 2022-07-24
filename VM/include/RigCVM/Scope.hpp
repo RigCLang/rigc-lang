@@ -21,17 +21,23 @@ auto findOverload(
 		FunctionCandidates		const&	funcs_,
 		FunctionParamTypeSpan	paramTypes_,
 		bool					method_ = false,
-		Function::ReturnType	returnType_ = std::nullopt
+		Function::ReturnType	returnType_ = nullptr
 	) -> Function const*;
 
 auto findOverload(
 		FunctionOverloads const&	overloads_,
 		FunctionParamTypeSpan		paramTypes_,
 		bool						method_ = false,
-		Function::ReturnType		returnType_ = std::nullopt
+		Function::ReturnType		returnType_ = nullptr
 	) -> Function const*;
 
 using TemplateParameters = std::map<std::string, TypeConstraint, std::less<> >;
+
+template <typename T>
+struct ScopeTraceResult {
+	Scope const*	scope;
+	T				value;
+};
 
 struct Scope
 {
@@ -49,6 +55,11 @@ struct Scope
 	Function const* func = nullptr;
 
 	Scope* parent = nullptr;
+	void* addr = nullptr;
+
+#if DEBUG
+	std::string name = "";
+#endif
 
 	// Currently unused
 	std::map<IType*, Impls*>									impls;
@@ -99,6 +110,12 @@ struct Scope
 	auto findType(std::string_view typeName_) const -> IType const*;
 
 	/// <summary>
+	/// Returns type with name `typeName_`,
+	/// or `nullptr` if no such type exist within this or one of parent scopes.
+	/// </summary>
+	auto traceForType(std::string_view typeName_) const -> Opt< ScopeTraceResult<IType const*> >;
+
+	/// <summary>
 	/// Returns operator overload with name `opName_` and type `type_`,
 	/// or `nullptr` if no such operator exist within this scope.
 	/// </summary>
@@ -128,5 +145,5 @@ struct Scope
 	auto registerOperator(Instance& vm_, std::string_view name_, Operator::Type type_, Function func_) -> Function&;
 };
 
-std::unique_ptr<Scope> makeUniverseScope(Instance &vm_);
+auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void;
 }

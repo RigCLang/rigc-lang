@@ -14,7 +14,7 @@ auto isTemplatedType(rigc::ParserNode const& typeNode_, TemplateParameters const
 {
 	auto templParamsNode = findElem<rigc::TemplateParams>(typeNode_);
 
-	if (!templParamsNode) 
+	if (!templParamsNode)
 	{
 		return templateParams_.find(typeNode_.string_view()) != templateParams_.end();
 	}
@@ -65,12 +65,19 @@ auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 
 	// TODO: Properly parse return type
 	bool returnsRef = false;
+	auto returnType = DeclType();
 	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
 	{
-		auto type = findElem<rigc::Type>(*explicitReturnType)->string_view();
-		if (type == "Ref")
-			returnsRef = true;
+		if (!isTemplatedType(*findElem<rigc::Type>(*explicitReturnType), templateParams))
+		{
+			returnType = vm_.evaluateType(*findElem<rigc::Type>(*explicitReturnType));
+			if (returnType->is<RefType>())
+				returnsRef = true;
+		}
+		// else: Leave the return type empty -> it has to be resolved for each instantiation
 	}
+	else
+		returnType = vm_.findType("Void")->shared_from_this();
 
 	Function::Params params;
 	size_t numParams = 0;
@@ -86,6 +93,7 @@ auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		func = &scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 
 	func->returnsRef = returnsRef;
+	func->returnType = std::move(returnType);
 	auto& funcScope = vm_.scopeOf(func);
 	funcScope.templateParams = std::move(templateParams);
 
@@ -100,22 +108,6 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 
 	auto name = findElem<rigc::Name>(expr_, false)->string_view();
 
-	// TODO: Properly parse return type
-	bool returnsRef = false;
-	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
-	{
-		auto type = findElem<rigc::Type>(*explicitReturnType)->string_view();
-		if (type == "Ref")
-			returnsRef = true;
-	}
-
-	Function::Params params;
-	size_t numParams = 0;
-	params[numParams++] = {
-		"self",
-		constructTemplateType<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
-	};
-
 	auto templateParamList = getTemplateParamList(expr_);
 	auto isTemplate = !templateParamList.empty();
 
@@ -125,6 +117,30 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 		templateParams[tp.first] = tp.second;
 		// fmt::print("{} is constrained with {}\n", tp.first, tp.second.name);
 	}
+
+
+	// TODO: Properly parse return type
+	bool returnsRef = false;
+	auto returnType = DeclType();
+	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
+	{
+		if (!isTemplatedType(*findElem<rigc::Type>(*explicitReturnType), templateParams))
+		{
+			returnType = vm_.evaluateType(*findElem<rigc::Type>(*explicitReturnType));
+			if (returnType->is<RefType>())
+				returnsRef = true;
+		}
+		// else: Leave the return type empty -> it has to be resolved for each instantiation
+	}
+	else
+		returnType = vm_.findType("Void")->shared_from_this();
+
+	Function::Params params;
+	size_t numParams = 0;
+	params[numParams++] = {
+		"self",
+		constructTemplateType<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
+	};
 
 	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
 	if (paramList)
@@ -137,7 +153,7 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 		method = &scope.registerFunction(vm_, name, Function(Function::RuntimeFn(&expr_), params, numParams));
 
 	method->returnsRef = returnsRef;
-
+	method->returnType = std::move(returnType);
 	vm_.currentClass->methods[name].push_back(method);
 	method->outerType = vm_.currentClass;
 

@@ -50,7 +50,7 @@ auto executeIfStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValu
 
 	auto result = vm_.evaluate(expr);
 
-	if (result.has_value() && result.value().view<bool>() == true)
+	if (result.has_value() && result->safeRemoveRef().view<bool>() == true)
 	{
 		auto ret = vm_.evaluate(*body);
 		if (vm_.returnTriggered)
@@ -88,7 +88,7 @@ auto executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptV
 
 		auto result = vm_.evaluate(expr);
 
-		if (result.has_value() && result.value().view<bool>())
+		if (result.has_value() && result->safeRemoveRef().view<bool>())
 		{
 			auto ret = vm_.evaluate(*body);
 
@@ -127,7 +127,7 @@ auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptVal
 		auto scope = StackFramePusher(vm_, *body);
 		auto const conditionResult = vm_.evaluate(conditionExpr);
 
-		if (conditionResult.has_value() && conditionResult.value().view<bool>())
+		if (conditionResult.has_value() && conditionResult->safeRemoveRef().view<bool>())
 		{
 			auto ret = vm_.evaluate(*body);
 
@@ -135,14 +135,14 @@ auto executeForStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptVal
 		}
 		else
 			break;
-		
+
 		vm_.evaluate(incrementExpr);
-		if(vm_.breakLevel) 
+		if(vm_.breakLevel)
 		{
 			vm_.breakLevel--;
 			break;
 		}
-		else if(vm_.continueTriggered) 
+		else if(vm_.continueTriggered)
 		{
 			vm_.continueTriggered = false;
 			continue;

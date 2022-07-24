@@ -111,20 +111,24 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 		infixParams[0] = { "lhs", t };
 		infixParams[1] = { "rhs", t };
 
+		auto refToType = constructTemplateType<RefType>(universeScope_, t);
 
 		Function::Params infixAssignParams;
-		infixAssignParams[0] = { "lhs", constructTemplateType<RefType>(universeScope_, t) };
+		infixAssignParams[0] = { "lhs", refToType };
 		infixAssignParams[1] = { "rhs", t };
 
 		Function::Params prePostfixParams;
-		prePostfixParams[0] = { "lhs", constructTemplateType<RefType>(universeScope_, t) };
+		prePostfixParams[0] = { "lhs", refToType };
 
 		#define MAKE_INFIX_OP(Name, Incantation) \
 			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
 				{ \
 					return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
 				}; \
-			universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2));
+			{ \
+				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
+				op.returnType = t; \
+			}
 
 		#define MAKE_INFIX_ASSIGN_OP(Name, Incantation) \
 			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
@@ -133,6 +137,7 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 				}; \
 			{ \
 				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2)); \
+				op.returnType = refToType; \
 				op.returnsRef = true; \
 			}
 
@@ -141,7 +146,10 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 				{ \
 					return builtin##Name##Operator<T>(vm_, args_[0]); \
 				}; \
-			universeScope_.registerOperator(vm_, Incantation, Operator::Postfix, Function(OPERATOR_##Name, prePostfixParams, 1));
+			{ \
+				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Postfix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
+				op.returnType = t; \
+			}
 
 		#define MAKE_PREFIX_OP(Name, Incantation) \
 			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
@@ -150,6 +158,7 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 				}; \
 			{ \
 				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Prefix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
+				op.returnType = refToType; \
 				op.returnsRef = true; \
 			}
 

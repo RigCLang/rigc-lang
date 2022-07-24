@@ -23,17 +23,6 @@ auto ClassType::add(DataMember mem, [[maybe_unused]] ParserNode const* initExpr)
 }
 
 ///////////////////////////////////////////
-auto ClassType::constructors() const
-	-> FunctionOverloads const*
-{
-	auto ctorsIt = methods.find("construct");
-	if (ctorsIt == methods.end())
-		return nullptr;
-
-	return &ctorsIt->second;
-}
-
-///////////////////////////////////////////
 auto ClassType::defaultConstructor() const
 	 -> Function*
 {
@@ -47,4 +36,17 @@ auto ClassType::defaultConstructor() const
 
 	return *def;
 }
+
+///////////////////////////////////////////
+auto ClassType::postInitialize(Instance& vm_) -> void
+{
+	// None
+}
+
+///////////////////////////////////////////
+auto ClassType::postEvaluate(Instance& vm_) -> void
+{
+	Super::postInitialize(vm_);
+}
+
 }

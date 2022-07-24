@@ -10,6 +10,8 @@ namespace rigc::vm
 //todo: refactor maybe use template?
 struct FuncType : IType
 {
+	using Super = IType;
+
 	InnerType result;
 	std::vector<InnerType> parameters;
 

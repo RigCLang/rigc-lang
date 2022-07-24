@@ -21,6 +21,8 @@ using MutDeclType	= MutInnerType;
 using TemplateArgument	= ExtendedVariant<int, DeclType>; // int as a placeholder
 using TemplateArguments	= std::map<std::string, TemplateArgument, std::less<>>;
 
+using FunctionOverloads	= std::vector<Function*>;
+
 /// <summary>
 ///		An interface for each type.
 /// </summary>
@@ -97,7 +99,9 @@ struct IType : public std::enable_shared_from_this<IType>
 		return EmptyTemplateArguments;
 	}
 
-	virtual auto postInitialize(Instance& vm_) -> void {}
+	auto constructors() const -> FunctionOverloads const*;
+
+	virtual auto postInitialize(Instance& vm_) -> void;
 };
 
 template <typename T>

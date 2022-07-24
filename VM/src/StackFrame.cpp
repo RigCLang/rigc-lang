@@ -10,7 +10,11 @@ namespace rigc::vm
 StackFramePusher::StackFramePusher(Instance& vm_, ParserNode const& stmt_)
 	: vm(vm_)
 {
+#if DEBUG
+	vm.pushStackFrameOf(&stmt_, fmt::format("{} -> {}", stmt_.type, stmt_.string()));
+#else
 	vm.pushStackFrameOf(&stmt_);
+#endif
 }
 
 ////////////////////////////////////////

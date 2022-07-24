@@ -12,13 +12,12 @@
 namespace rigc::vm
 {
 ////////////////////////////////////
-auto makeUniverseScope(Instance &vm_) -> std::unique_ptr<Scope>
+auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 {
 #define MAKE_BUILTIN_TYPE(CppName, RigCName) \
-	CreateCoreType<CppName>(vm_, *scope, #RigCName)
+	CreateCoreType<CppName>(vm_, scope_, #RigCName)
 
-	auto scope = std::make_unique<Scope>(vm_);
-
+	MAKE_BUILTIN_TYPE(void,		Void);
 	MAKE_BUILTIN_TYPE(bool,		Bool);
 	MAKE_BUILTIN_TYPE(char,		Char);
 	MAKE_BUILTIN_TYPE(char16_t,	Char16);
@@ -32,38 +31,51 @@ auto makeUniverseScope(Instance &vm_) -> std::unique_ptr<Scope>
 	MAKE_BUILTIN_TYPE(float,	Float32);
 	MAKE_BUILTIN_TYPE(double,	Float64);
 
-	scope->addType(std::make_unique<FuncType>());
-	scope->addType(std::make_unique<MethodType>());
+	scope_.addType(std::make_unique<FuncType>());
+	scope_.addType(std::make_unique<MethodType>());
+	// "allocateMemory" builtin function
+	{
+		auto func = Function{ &builtin::allocateMemory, {}, 0 };
+		func.variadic = true;
+
+		scope_.registerFunction(vm_, "allocateMemory", std::move(func));
+	}
+	// "freeMemory" builtin function
+	{
+		auto func = Function{ &builtin::freeMemory, {}, 0 };
+		func.variadic = true;
+
+		scope_.registerFunction(vm_, "freeMemory", std::move(func));
+	}
 	// "print" builtin function
 	{
 		auto func = Function{ &builtin::print, {}, 0 };
 		func.variadic = true;
 
-		scope->registerFunction(vm_, "print", std::move(func));
+		scope_.registerFunction(vm_, "print", std::move(func));
 	}
 	// "typeof" builtin function
 	{
 		auto func = Function{ &builtin::typeOf, {}, 0 };
 		func.variadic = true;
 
-		scope->registerFunction(vm_, "typeOf", std::move(func));
+		scope_.registerFunction(vm_, "typeOf", std::move(func));
 	}
 	// "readInt" builtin function
 	{
 		auto func = Function{ &builtin::readInt, {}, 0 };
 		func.variadic = true;
 
-		scope->registerFunction(vm_, "readInt", std::move(func));
+		scope_.registerFunction(vm_, "readInt", std::move(func));
 	}
 	// "readFloat" builtin function
 	{
 		auto func = Function{ &builtin::readFloat, {}, 0 };
 		func.variadic = true;
 
-		scope->registerFunction(vm_, "readFloat", std::move(func));
+		scope_.registerFunction(vm_, "readFloat", std::move(func));
 	}
 
-	return scope;
 #undef ADD_BUILTIN_TYPE
 #undef MAKE_BUILTIN_TYPE
 }
@@ -116,7 +128,7 @@ auto testFunctionOverload(Function& func_, FunctionParamTypeSpan paramTypes_) ->
 	// Ignore the `self` parameter for constructors
 	size_t i = func_.isConstructor ? 1 : 0;
 	size_t testedIdx = 0;
-	for(; i < paramTypes_.size(); ++i, ++testedIdx)
+	for(; i < func_.paramCount; ++i, ++testedIdx)
 	{
 		if (func_.params[i].type != paramTypes_[testedIdx])
 		{
@@ -167,6 +179,9 @@ auto tryDeduceFromSingleParamType(
 
 	if (!reqTemplArgs)
 	{
+		// If `T` is compared with `Ref< SomeType >`, fallback to `SomeType`
+		auto& actualType = paramType_->is<RefType>() ? paramType_->getTemplateArguments().front().as<DeclType>() : paramType_;
+
 		auto name = reqTypeName.string();
 		if (templateParams.find(name) == templateParams.end())
 			return DeductionResult::Failed;
@@ -181,12 +196,12 @@ auto tryDeduceFromSingleParamType(
 			// fmt::print("{} is '{}' (addr: {}) and now deduced to '{}' (addr: {})\n", name,
 			// 		existing->second.as<DeclType>()->name(),
 			// 		(void*)existing->second.as<DeclType>().get(),
-			// 		paramType_->name(),
-			// 		(void*)paramType_.get()
+			// 		actualType->name(),
+			// 		(void*)actualType.get()
 			// 	);
 
 			// Deduced something different (deduction mismatch)
-			if (existing->second.as<DeclType>() != paramType_)
+			if (existing->second.as<DeclType>() != actualType)
 				return DeductionResult::FailedWithError;
 		}
 
@@ -198,7 +213,7 @@ auto tryDeduceFromSingleParamType(
 				return DeductionResult::FailedWithError;
 		}
 
-		deduced[name] = paramType_;
+		deduced[name] = actualType;
 		return DeductionResult::Succeeded;
 	}
 
@@ -368,7 +383,21 @@ auto Scope::tryGenerateFunction(
 					)
 				);
 
-			vm_.scopeOf(&func).templateArguments = std::move(deduced);
+
+			auto& funcScope = vm_.scopeOf(&func);
+			funcScope.func = &func;
+			funcScope.templateArguments = std::move(deduced);
+
+			if (!templ->returnType)
+			{
+				auto& returnTypeNode = *findElem<rigc::ExplicitReturnType>(*templ->runtimeImpl().node);
+
+				func.returnType = vm_.evaluateType(returnTypeNode, &funcScope);
+				// fmt::print("Evaluated type {} to {}\n", returnTypeNode.string_view(), func.returnType->name());
+			}
+			else
+				func.returnType = templ->returnType;
+
 			return &func;
 		}
 	}
@@ -428,28 +457,44 @@ auto findOverload(
 ///////////////////////////////////////////////////////////////
 auto Scope::findType(std::string_view typeName_) const -> IType const*
 {
-	auto it = typeAliases.find(typeName_);
-	if (it != typeAliases.end())
-		return it->second;
+	{
+		if (auto type = types.find(typeName_).get())
+			return type;
+	}
+
+	{
+		auto it = typeAliases.find(typeName_);
+		if (it != typeAliases.end())
+			return it->second;
+	}
 
 	// Find within function instantiation
-	if (func)
 	{
-		auto& impl = func->runtimeImpl();
-		if (impl.templateArguments)
+		auto it = templateArguments.find(typeName_);
+		if (it != templateArguments.end())
 		{
-			auto it = impl.templateArguments->find(typeName_);
-			if (it != impl.templateArguments->end())
-			{
-				auto& arg = it->second;
+			auto& arg = it->second;
 
-				if (arg.is<DeclType>())
-					return arg.as<DeclType>().get();
-			}
+			if (arg.is<DeclType>())
+				return arg.as<DeclType>().get();
 		}
 	}
 
 	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
+auto Scope::traceForType(std::string_view typeName_) const
+	-> Opt< ScopeTraceResult<IType const*> >
+{
+	auto type = findType(typeName_);
+	if (type)
+		return ScopeTraceResult{ this, type };
+
+	if (parent)
+		return parent->traceForType(typeName_);
+
+	return std::nullopt;
 }
 
 ///////////////////////////////////////////////////////////////

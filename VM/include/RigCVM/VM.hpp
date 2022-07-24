@@ -40,7 +40,7 @@ struct Instance
 	/// <summary>Returns the "self" reference in method context.</summary>
 	auto getSelf() -> Value;
 
-	auto evaluateType(rigc::ParserNode const& typeNode_) -> DeclType;
+	auto evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_ = nullptr) -> DeclType;
 
 	auto findVariableByName(std::string_view name_) -> OptValue;
 	auto findType(std::string_view name_) -> IType const*;
@@ -50,12 +50,18 @@ struct Instance
 
 	auto cloneValue(Value value_) -> Value;
 
+	auto extendReturnValueLifetime(Value value_) -> void;
+
 	/// Address is related to the code block memory obtained from a parser.
 	auto scopeOf(void const *addr_) -> Scope&;
 
 	/// Pushes the stack frame for specified address that is used to acquire a scope.
 	/// Address is related to the code block memory obtained from a parser.
+#if DEBUG
+	auto pushStackFrameOf(void const* addr_, std::string name = "") -> Scope&;
+#else
 	auto pushStackFrameOf(void const* addr_) -> Scope&;
+#endif
 
 	/// Pops current stack frame
 	auto popStackFrame() -> void;
@@ -120,7 +126,7 @@ struct Instance
 	FunctionInstance const*	currentFunc	= nullptr;
 
 	/// Currently parsed class type.
-	StructuralType*			currentClass	= nullptr;
+	StructuralType*		currentClass	= nullptr;
 
 	/// Currently executed method's class.
 	ClassType const*	classContext	= nullptr;
@@ -129,7 +135,7 @@ struct Instance
 	bool				returnTriggered	= false;
 
 	/// The level of loop breakage triggered by `break <number>;` or `break;`
-	int				breakLevel	= 0;
+	int					breakLevel	= 0;
 
 	/// Whether currently executed loop has triggered a return statement.
 	bool				continueTriggered	= false;

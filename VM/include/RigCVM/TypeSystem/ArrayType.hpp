@@ -11,6 +11,8 @@ namespace rigc::vm
 
 struct ArrayType : TemplateType
 {
+	using Super = TemplateType;
+
 	ArrayType() = default;
 	ArrayType(InnerType inner_, size_t size_)
 		:

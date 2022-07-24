@@ -36,7 +36,7 @@ struct Function
 	using RuntimeFn		= FunctionInstance;
 	using RawFnSign		= OptValue(Instance&, ArgSpan);
 	using RawFn			= std::function<RawFnSign>;
-	using ReturnType	= std::optional<DeclType>;
+	using ReturnType	= DeclType;
 
 	using Impl = ExtendedVariant<
 			RuntimeFn,

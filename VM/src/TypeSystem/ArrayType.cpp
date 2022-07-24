@@ -10,6 +10,8 @@ namespace rigc::vm
 //////////////////////////////////////
 auto ArrayType::postInitialize(Instance& vm_) -> void
 {
+	Super::postInitialize(vm_);
+
 	// Setup template arguments:
 	assert((args.size() == 2) && "ArrayType::postInitialize: ArrayType must have 2 template arguments");
 

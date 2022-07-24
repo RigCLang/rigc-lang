@@ -13,11 +13,16 @@ namespace rigc::vm
 class ClassType : public StructuralType
 {
 public:
+	using Super = StructuralType;
+
 	Vec< DataMember > dataMembers;
 
 	auto defaultConstructor() const -> Function*;
-	auto constructors() const -> FunctionOverloads const*;
 
 	auto add(DataMember mem, ParserNode const* initExpr) -> void;
+
+	auto postInitialize(Instance& vm_) -> void override;
+
+	auto postEvaluate(Instance& vm_) -> void;
 };
 }

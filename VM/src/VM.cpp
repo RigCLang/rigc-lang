@@ -2,6 +2,8 @@
 
 #include <RigCVM/VM.hpp>
 
+#include <fmt/color.h>
+
 #include <RigCVM/Executors/All.hpp>
 #include <RigCVM/Value.hpp>
 #include <RigCVM/TypeSystem/ClassTemplate.hpp>
@@ -106,8 +108,8 @@ auto Instance::run(std::string_view moduleName_) -> int
 	fs::current_path(entryPoint.module_->absolutePath.parent_path());
 
 	stack.container.resize(StackSize);
-	scopes[nullptr] = makeUniverseScope(*this);
-	Scope& scope = *scopes[nullptr];
+	auto& scope = this->scopeOf(nullptr);
+	setupUniverseScope(*this, scope);
 	this->pushStackFrameOf(nullptr);
 
 	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
@@ -176,34 +178,88 @@ auto Instance::executeFunction(Function const& func) -> OptValue
 }
 
 //////////////////////////////////////////
+bool copyConstructOn(Instance& vm_, Value constructed_, Value const& copyFrom_)
+{
+	auto ctors = constructed_.type->constructors();
+
+	if (!ctors)
+		return false;
+
+	auto constructedRef = vm_.allocateReference(constructed_);
+	auto paramTypes = FunctionParamTypes{
+		// retValRef.type, // Skip the "self" parameter because its a constructor
+		copyFrom_.type,
+	};
+
+	// if (constructed_.type->is<ClassType>())
+	// 	fmt::print("Trying to construct {} from {}\n", constructed_.type->name(), copyFrom_.type->name());
+
+	auto ov = findOverload(*ctors, viewArray(paramTypes, 0, 1));
+
+	if (!ov)
+	{
+		return false;
+	}
+
+	auto args = Function::Args {
+		constructedRef, copyFrom_
+	};
+
+	vm_.executeFunction(*ov, viewArray(args, 0, 2));
+
+	return true;
+}
+
+//////////////////////////////////////////
 auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -> OptValue
 {
 	OptValue retVal;
+	OptValue result;
 
-	auto prevClassContext = classContext;
+	auto prevClassContext	= classContext;
+	auto prevStackFrames	= stack.frames.size();
 
 	if (func_.outerType && func_.outerType->is<ClassType>())
 		classContext = func_.outerType->as<ClassType>();
 
+	if (func_.returnType)
+	{
+		if (func_.returnType && func_.returnType->size() > 0)
+			retVal = this->allocateOnStack(func_.returnType, nullptr, 0);
+	}
+
 	// Raw function:
 	if (func_.isRaw())
 	{
+		auto processedArgs = std::vector( args_.begin(), args_.end() );
 		// Process parameters (conversions)
 		for (size_t i = 0; i < func_.paramCount; ++i)
 		{
 			auto& param = func_.params[i];
 			// TODO: allow conversions, not only refs
 			if (param.type != args_[i].type)
-				args_[i] = args_[i].removeRef();
+			{
+				// fmt::print("> Converting {} to {}\n", args_[i].type->name(), param.type->name());
+				processedArgs[i] = processedArgs[i].safeRemoveRef();
+			}
 		}
 
 		auto const& fn = func_.rawImpl();
-		retVal = fn(*this, args_);
+		result = fn(*this, processedArgs);
 	}
 	else
 	{
-		auto prevStackFrames	= stack.frames.size();
+		// TODO: reserve memory for the return value
+		// auto resultValue = FrameBasedValue();
+		// if (func_.returnType && (*func_.returnType)->size() > 0)
+		// 	resultValue = this->reserveOnStack(*func_.returnType);
+
+
+#if DEBUG
+		auto& fnScope			= this->pushStackFrameOf(func_.addr(), func_.runtimeImpl().node->string());
+#else
 		auto& fnScope			= this->pushStackFrameOf(func_.addr());
+#endif
 		auto& frame				= stack.frames.back();
 
 		fnScope.func = &func_;
@@ -212,20 +268,28 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 		for (size_t i = 0; i < func_.paramCount; ++i)
 		{
 			auto& param = func_.params[i];
+			auto paramFrameValue = this->reserveOnStack(param.type);
+			auto paramValue = paramFrameValue.toAbsolute(frame);
 
-			// TODO: allow conversions, not only refs
-			if (param.type != args_[i].type)
+			if (!copyConstructOn(*this, paramValue, args_[i]))
 			{
-				this->cloneValue(args_[i].removeRef());
+				throw RigCError("Cannot convert {} to {}", args_[i].type->name(), param.type->name())
+							.withLine(lastEvaluatedLine);
 			}
-			else
-				this->cloneValue(args_[i]);
+
+			// // TODO: allow conversions, not only refs
+			// if (param.type != args_[i].type)
+			// {
+			// 	// fmt::print("> Converting {} to {}\n", args_[i].type->name(), param.type->name());
+			// 	this->cloneValue(args_[i].removeRef());
+			// }
+			// else
+			// 	this->cloneValue(args_[i]);
 
 			if (!fnScope.variables.contains(param.name))
 			{
 				auto paramName = std::string(param.name);
-				auto& var = fnScope.variables[paramName];
-				var = this->reserveOnStack(param.type, true);
+				fnScope.variables[paramName] = paramFrameValue;
 			}
 		}
 		// Runtime function:
@@ -233,7 +297,7 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 
 		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>())
 		{
-			retVal = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
+			result = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
 		// TODO: support closures
 		// else if(fn.is_type<rigc::ClosureDefinition>())
@@ -245,25 +309,44 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 		// 	retVal = this->evaluate( *body );
 		// }
 
-		while (stack.frames.size() > prevStackFrames)
-			this->popStackFrame();
+
+		// retVal = resultValue.toAbsolute(stack.frames.back());
 	}
+
+	if (retVal && result)
+	{
+		if (!copyConstructOn(*this, *retVal, *result))
+		{
+			auto fnName = func_.isRaw() ? "" : findElem<rigc::Name>(*func_.runtimeImpl().node)->string();
+
+			throw RigCError("Cannot construct {} (required by function{}) from {}",
+					retVal->type->name(),
+					fnName,
+					result->type->name()
+				)
+				.withLine(lastEvaluatedLine);
+		}
+	}
+
+	while (stack.frames.size() > prevStackFrames)
+		this->popStackFrame();
+
 	this->returnTriggered = false;
 
 	classContext = prevClassContext;
 
-	if (retVal.has_value())
-	{
-		Value val;
-		if (!func_.returnsRef && retVal->type->is<RefType>())
-			val = this->cloneValue(retVal->removeRef());
-		else
-			val = this->cloneValue(*retVal);
+	// if (retVal.has_value())
+	// {
+	// 	Value val;
+	// 	if (!func_.returnsRef && retVal->type->is<RefType>())
+	// 		val = this->cloneValue(retVal->removeRef());
+	// 	else
+	// 		val = this->cloneValue(*retVal);
 
-		return val; // extend lifetime
-	}
+	// 	return val; // extend lifetime
+	// }
 
-	return {};
+	return retVal;
 }
 
 //////////////////////////////////////////
@@ -371,8 +454,10 @@ auto Instance::lineAt(rigc::ParserNode const& node_) const -> size_t
 }
 
 //////////////////////////////////////////
-auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
+auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) -> DeclType
 {
+	auto& scope = scope_ ? *scope_ : *currentScope;
+
 	DeclType evaluatedType;
 	// Note:
 	// "Type" node might be either disambiguated ("name::<Params>") or not ("name<Params>")
@@ -416,7 +501,11 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_) -> DeclType
 		}
 	}
 
-	return this->findType(typeName)->shared_from_this();
+	if (auto traceResult = scope.traceForType(typeName))
+	{
+		return traceResult->value->shared_from_this();
+	}
+	return nullptr;
 }
 
 //////////////////////////////////////////
@@ -450,11 +539,8 @@ auto Instance::findFunction(std::string_view name_) -> FunctionCandidates
 
 		if (auto type = it->scope->types.find(name_))
 		{
-			if (auto classType = type->as<ClassType>())
-			{
-				if (auto ctors = classType->constructors())
-					candidates.push_back( { it->scope, ctors } );
-			}
+			if (auto ctors = type->constructors())
+				candidates.push_back( { it->scope, ctors } );
 		}
 
 	}
@@ -466,6 +552,20 @@ auto Instance::findFunction(std::string_view name_) -> FunctionCandidates
 auto Instance::cloneValue(Value value_) -> Value
 {
 	return this->allocateOnStack( value_.getType(), reinterpret_cast<void*>(value_.blob()), value_.getType()->size() );
+}
+
+//////////////////////////////////////////
+auto Instance::extendReturnValueLifetime(Value value_) -> void
+{
+	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
+	{
+		auto valIt = rg::find(it->allocatedValues, value_.data, &Value::data);
+		if (valIt != it->allocatedValues.end())
+		{
+			it->allocatedValues.erase(valIt);
+			return;
+		}
+	}
 }
 
 //////////////////////////////////////////
@@ -533,15 +633,30 @@ auto Instance::scopeOf(void const *addr_) -> Scope&
 }
 
 //////////////////////////////////////////
+#ifdef DEBUG
+auto Instance::pushStackFrameOf(void const* addr_, std::string name) -> Scope&
+#else
 auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
+#endif
 {
 	Scope& scope = scopeOf(addr_);
+
+#if DEBUG
+	if (scope.name.empty())
+	{
+		scope.name = std::move(name);
+	}
+#endif
+
 	if (!scope.parent)
 		scope.parent = currentScope;
 
 	currentScope = &scope;
 	StackFrame& frame = stack.pushFrame();
 	frame.scope = &scope;
+
+	// fmt::print(">>> {}\n", (void*)&frame);
+
 	return scope;
 }
 
@@ -550,8 +665,25 @@ auto Instance::popStackFrame() -> void
 {
 	assert(stack.frames.size() > 1 && "Tried to pop a universe scope-related stack frame.");
 
+	auto& frame = stack.frames.back();
+#if DEBUG
+	// fmt::print("<<< {}, back {} bytes\n", (void*)&frame, stack.size - frame.initialStackSize);
+
+	{
+		using color = fmt::color;
+		using fmt::fg;
+		using fmt::emphasis;
+
+		auto scopeName = frame.scope->name;
+		if (scopeName.size() > 60)
+			scopeName = scopeName.substr(0, 60) + "\n\t/* ... */";
+
+		// fmt::print(fg(color::gray), "Scope:\n{}\n", scopeName);
+	}
+#endif
+
 	// Destroy from the back to the front
-	auto& allocated = stack.frames.back().allocatedValues;
+	auto& allocated = frame.allocatedValues;
 	for (auto it = allocated.rbegin(); it != allocated.rend(); ++it)
 	{
 		it->destroy(*this);

@@ -422,7 +422,8 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 			if (auto act = lhs_.as<PendingAction>(); isSymbol(*act))
 			{
 				autoOverloadResolution = true;
-				candidates = vm.findFunction(findElem<rigc::Name>(*act)->string_view());
+				auto symbolName = findElem<rigc::Name>(*act)->string_view();
+				candidates = vm.findFunction(symbolName);
 			}
 		}
 		else if (auto act = lhs_.as<ProcessedAction>(); act.is<ProcessedFunction>())
@@ -454,7 +455,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 				candidates.push_back( { &vm.scopeOf(nullptr), funcVal.view<FunctionOverloads const*>() } );
 		}
 
-		if (self) 
+		if (self)
 		{
 			evaluatedArgs[0] = vm.allocateReference(*self);
 			paramTypes[0] = evaluatedArgs[0].type;
@@ -501,14 +502,21 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 		//
 		if (!fn) {
 			std::string paramsString;
-			for(size_t i = 0; i < numParams; ++i)
+			size_t paramNumber = 0;
+			for(size_t i = 0; paramNumber < numParams; ++i)
 			{
-				if (i > 0)
+				if (i == 0 && !paramTypes[i])
+					continue;
+				if (paramNumber > 0)
 					paramsString += ", ";
 				paramsString += paramTypes[i]->name();
+				++paramNumber;
 			}
 
-			throw RigCError("Not matching function to call with params: {}.", paramsString)
+			throw RigCError("Not matching function {}to call with arguments of type: {}.",
+								fnName.empty() ? "" : fmt::format("\"{}\" ", fnName),
+								paramsString
+							)
 							.withHelp("Check the function name and arguments' arity and types.")
 							.withLine(vm.lastEvaluatedLine);
 		}
@@ -519,9 +527,13 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 		{
 			constructor			= true;
 			paramTypes[0]		= fn->outerType->shared_from_this();
-			self				= vm.allocateReference(vm.allocateOnStack(paramTypes[0], nullptr));
+			self				= vm.allocateReference(vm.allocateOnStack(paramTypes[0], nullptr, 0));
 			evaluatedArgs[0]	= *self;
 			++numParams;
+			// fmt::print("> Constructed value of type {} is at {}\n", paramTypes[0]->name(), self->removeRef().data);
+			// fmt::print("> Constructed reference of type {} is at {}\n", self->type->name(), self->data);
+			// fmt::print("> Constructed reference points at {}\n", self->view<void*>());
+			// fmt::print("> Its ref size: {} bytes\n", self->type->size());
 		}
 
 		auto result = vm.executeFunction(*fn, viewArray( evaluatedArgs, (self ? 0 : 1), numParams) );

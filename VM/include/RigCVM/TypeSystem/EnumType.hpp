@@ -12,6 +12,8 @@ namespace rigc::vm
 class EnumType : public StructuralType
 {
 public:
+	using Super = StructuralType;
+
 	DeclType underlyingType;
 	std::unordered_map<std::string, Value> fields;
 

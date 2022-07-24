@@ -63,8 +63,8 @@ auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptV
 		{
 			auto stackFramePos = vm_.stack.size;
 			OptValue val = vm_.evaluate(*stmt);
-			if (stmt->is_type<rigc::Expression>())
-				vm_.stack.size = stackFramePos;
+			// if (stmt->is_type<rigc::Expression>())
+			// 	vm_.stack.size = stackFramePos;
 
 			if (vm_.returnTriggered)
 				return val;
@@ -306,6 +306,8 @@ auto evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> Op
 	{
 		vm_.evaluate(*child);
 	}
+
+	type->postEvaluate(vm_);
 
 	vm_.currentClass = prevClass;
 

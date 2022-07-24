@@ -9,7 +9,9 @@ namespace rigc::vm
 {
 struct RefType : TemplateType
 {
-	using TemplateType::TemplateType;
+	using Super = TemplateType;
+
+	using Super::Super;
 
 	auto inner() const -> DeclType { return args.front().as<DeclType>(); }
 
@@ -39,7 +41,9 @@ struct RefType : TemplateType
 
 struct AddrType : TemplateType
 {
-	using TemplateType::TemplateType;
+	using Super = TemplateType;
+
+	using Super::Super;
 
 	auto inner() const { return args.front().as<DeclType>(); }
 
