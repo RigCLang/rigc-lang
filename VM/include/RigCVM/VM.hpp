@@ -99,6 +99,7 @@ struct Instance
 
 	auto parseModule(std::string_view name_) -> Module*;
 
+	auto getPathFromAlias(std::string_view alias_) const;
 	auto evaluateModule(Module& module_) -> void;
 	auto findModulePath(std::string_view name_) const -> fs::path;
 

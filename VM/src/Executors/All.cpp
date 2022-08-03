@@ -99,7 +99,6 @@ auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValu
 	return ExpressionExecutor{vm_, expr_}.evaluate();
 }
 
-//todo refactor evaluateSymbol and evaluateName
 ////////////////////////////////////////
 auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {

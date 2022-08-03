@@ -2,6 +2,7 @@
 
 #include <RigCVM/VM.hpp>
 
+#include "RigCVM/Environment.hpp"
 #include <RigCVM/Executors/All.hpp>
 #include <RigCVM/Value.hpp>
 #include <RigCVM/TypeSystem/ClassTemplate.hpp>
@@ -9,7 +10,6 @@
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
-
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
 namespace rigc::vm
@@ -32,31 +32,87 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 
 #undef DEFINE_BUILTIN_CONVERT_OP
 
-//////////////////////////////////////////
+auto getSeparatorPos(std::string_view name_)
+{
+	return name_.find(fs::path::preferred_separator);
+}
+
+auto getAlias(std::string_view name_)
+{	
+	auto separatorPos = getSeparatorPos(name_);
+	return std::string(name_.substr(0,separatorPos));
+}
+
+auto Instance::getPathFromAlias(std::string_view alias_) const
+{
+	auto const relativeStdPath = fs::path("lib/std").make_preferred();	
+	auto const stdPath = getVmAppPath().parent_path().parent_path() / relativeStdPath;
+
+	auto aliasesPaths = std::unordered_map<std::string,fs::path>{
+		{"root",fs::current_path()},
+		{"std",stdPath}
+	};
+	auto const separatorPos = getSeparatorPos(alias_);
+
+	if(separatorPos == std::string_view::npos)
+	{
+		throw RigCError("Could not find module {} - only provided a directory alias", alias_)
+								.withHelp("Provide a module name, example: {}/Module",alias_)
+								.withLine(lastEvaluatedLine);	
+	}
+	else
+	{
+		auto const alias = std::string(alias_.substr(0,separatorPos));
+		auto const mappedPath = aliasesPaths.find(alias);
+		if(mappedPath == aliasesPaths.end())
+		{
+			throw RigCError("Could not find alias {}",alias_)
+							.withHelp("Ensure the {} alias is defined within the configuration file", alias_)
+							.withLine(lastEvaluatedLine);	
+		}
+		else
+		{
+			alias_.remove_prefix(alias.size() + 1);
+			return mappedPath->second;
+		}
+	}
+}
+
+auto modulePathExtenstionExists(fs::path modulePath)
+{
+	if (!modulePath.has_extension())
+	{
+		modulePath.replace_extension(".rigc");
+		if (!fs::exists(modulePath))
+		{
+			modulePath.replace_extension(".rigcz");
+			if (!fs::exists(modulePath))
+				return fs::path{};
+		}
+	}
+	return modulePath;
+}
+
 auto Instance::findModulePath(std::string_view name_) const -> fs::path
 {
 	auto relativeTo	= fs::current_path();
-	auto path		= fs::path(std::string(name_));
+	auto modulePath		= fs::path(std::string(name_));
+	auto alias = getAlias(name_);
 
 	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
 	{
 		relativeTo = currentModule->absolutePath.parent_path();
 	}
-
-	path = relativeTo / path;
-
-	if (!path.has_extension())
+	if(name_.starts_with('@')) 
 	{
-		path.replace_extension(".rigc");
-		if (!fs::exists(path))
-		{
-			path.replace_extension(".rigcz");
-			if (!fs::exists(path))
-				return fs::path{};
-		}
-	}
+		relativeTo = getPathFromAlias(alias);
+    }
 
-	return path;
+	modulePath = relativeTo / modulePath;
+
+	modulePathExtenstionExists(modulePath);
+
+	return modulePath;
 }
 
 //////////////////////////////////////////
