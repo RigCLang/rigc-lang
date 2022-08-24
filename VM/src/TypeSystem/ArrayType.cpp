@@ -30,6 +30,7 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 				1
 			}
 		);
+		fn.returnType = constructTemplateType<AddrType>(vm_.universalScope(), this->inner());
 		this->addMethod("data", &fn);
 	}
 
@@ -49,6 +50,7 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 				1
 			}
 		);
+		fn.returnType = vm_.findType("Int32")->shared_from_this();
 		this->addMethod("size", &fn);
 	}
 }

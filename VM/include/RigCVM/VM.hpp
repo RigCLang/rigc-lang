@@ -29,9 +29,22 @@ struct EntryPoint
 
 struct Instance
 {
+	struct Settings
+	{
+		std::string_view entryModuleName;
+
+#if DEBUG // Debug-only settings
+		std::chrono::milliseconds functionCallDelay{0};
+		std::chrono::milliseconds warmupDuration{0};
+		bool skipRootExceptionCatching = false;
+#endif
+	};
+
+	Settings const* settings;
+
 	constexpr static auto StackSize	= std::size_t(2 * 1024 * 1024); // 2MB
 
-	auto run(std::string_view moduleName_) -> int;
+	auto run(Settings const& settings_) -> int;
 
 	auto executeFunction(Function const& func) -> OptValue;
 	auto executeFunction(Function const& func, Function::ArgSpan args_) -> OptValue;

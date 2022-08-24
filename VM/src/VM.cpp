@@ -11,6 +11,7 @@
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
+#include <RigCVM/DevServer/Messaging.hpp>
 
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
@@ -95,12 +96,14 @@ auto Instance::evaluateModule(Module& module_) -> void
 }
 
 //////////////////////////////////////////
-auto Instance::run(std::string_view moduleName_) -> int
+auto Instance::run(Settings const& settings_) -> int
 {
-	entryPoint.module_ = this->parseModule(moduleName_);
+	settings = &settings_;
+
+	entryPoint.module_ = this->parseModule(settings->entryModuleName);
 	if (!entryPoint.module_)
 	{
-		throw RigCError("Failed to run module \"{}\".", moduleName_);
+		throw RigCError("Failed to run module \"{}\".", settings->entryModuleName);
 	}
 
 	// Use its parent path as the working directory
@@ -109,6 +112,7 @@ auto Instance::run(std::string_view moduleName_) -> int
 
 	stack.container.resize(StackSize);
 	auto& scope = this->scopeOf(nullptr);
+	currentScope = &scope;
 	setupUniverseScope(*this, scope);
 	this->pushStackFrameOf(nullptr);
 
@@ -218,9 +222,36 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 
 	auto prevClassContext	= classContext;
 	auto prevStackFrames	= stack.frames.size();
+	auto fnName				= func_.isRaw() ? func_.raw().name : findElem<rigc::Name>(*func_.runtimeImpl().node)->string_view();
+
+#if DEBUG
+	if (settings->functionCallDelay.count() > 0)
+	{
+		std::this_thread::sleep_for(settings->functionCallDelay);
+	}
+#endif
 
 	if (func_.outerType && func_.outerType->is<ClassType>())
 		classContext = func_.outerType->as<ClassType>();
+
+	sendLogMessage(LogLevel::Info, "Executing function \"{}\".", fnName);
+
+	sendDebugMessage(fmt::format(
+R"msg(
+{{
+	"type": "callstack",
+	"action": "push",
+	"data": {{
+		"functionName": "{}",
+		"file": "{}",
+		"line": {}
+	}}
+}}
+)msg",
+		std::string(classContext ? classContext->name() + " :: " : "") + std::string(fnName), "file", 123)
+	);
+
+
 
 	if (func_.returnType)
 	{
@@ -317,7 +348,6 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 	{
 		if (!copyConstructOn(*this, *retVal, *result))
 		{
-			auto fnName = func_.isRaw() ? "" : findElem<rigc::Name>(*func_.runtimeImpl().node)->string();
 
 			throw RigCError("Cannot construct {} (required by function{}) from {}",
 					retVal->type->name(),
@@ -332,6 +362,15 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 		this->popStackFrame();
 
 	this->returnTriggered = false;
+
+	sendDebugMessage(
+		R"msg(
+		{
+			"type": "callstack",
+			"action": "pop"
+		}
+		)msg"
+	);
 
 	classContext = prevClassContext;
 

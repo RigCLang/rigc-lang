@@ -34,9 +34,9 @@
 		{
 			"name": "VM",
 			"filters": {
-        "system:windows":     { "defines": [ "PACC_SYSTEM_WINDOWS" ] },
-        "system:linux":     { "defines": [ "PACC_SYSTEM_LINUX" ] },
-        "system:macosx":     { "defines": [ "PACC_SYSTEM_MACOSX" ] }
+				"system:windows":	{ "defines": [ "PACC_SYSTEM_WINDOWS" ] },
+				"system:linux":		{ "defines": [ "PACC_SYSTEM_LINUX" ] },
+				"system:macosx":	{ "defines": [ "PACC_SYSTEM_MACOSX" ] }
 			},
 			"language": "C++20",
 			"type": "app",
@@ -50,7 +50,11 @@
 				"source": "VM/src/RigCVMPCH.cpp",
 				"definition": "RIGCVM_PCH"
 			},
-			"dependencies": [ "self:Parser", "fmt@8.0.1" ]
+			"dependencies": [
+				"self:Parser",
+				"fmt@8.0.1",
+				"websocketpp@0.8.2"
+			]
 		}
 	]
 }

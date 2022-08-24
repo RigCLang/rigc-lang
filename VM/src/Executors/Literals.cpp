@@ -4,18 +4,10 @@
 #include <RigCVM/VM.hpp>
 
 #include <RigCVM/TypeSystem/ArrayType.hpp>
+#include <RigCVM/Helper/String.hpp>
 
 namespace rigc::vm
 {
-////////////////////////////////////////
-static auto replaceAll(std::string& s, std::string_view from, std::string_view to) -> void
-{
-	size_t startPos = 0;
-	while((startPos = s.find(from, startPos)) != std::string::npos) {
-		s.replace(startPos, from.length(), to);
-		startPos += to.length();
-	}
-}
 
 ////////////////////////////////////////
 auto evaluateIntegerLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue

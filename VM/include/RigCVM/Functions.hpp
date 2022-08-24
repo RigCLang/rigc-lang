@@ -17,6 +17,13 @@ struct FunctionInstance
 	std::optional<TemplateArguments> templateArguments = std::nullopt;
 };
 
+struct RawFunctionInstance
+{
+	using Type = OptValue(Instance&, std::span<Value>);
+	std::function< Type >	func;
+	std::string				name = "<builtin>";
+};
+
 struct FunctionParam
 {
 	std::string_view		name;
@@ -34,8 +41,8 @@ struct Function
 	using ArgSpan		= std::span<Value>;
 
 	using RuntimeFn		= FunctionInstance;
-	using RawFnSign		= OptValue(Instance&, ArgSpan);
-	using RawFn			= std::function<RawFnSign>;
+
+	using RawFn			= RawFunctionInstance;
 	using ReturnType	= DeclType;
 
 	using Impl = ExtendedVariant<
@@ -66,22 +73,33 @@ struct Function
 	{
 	}
 
+	Function(std::function<RawFn::Type> impl_, Params params_, size_t paramCount_)
+		:
+		impl(RawFn{ impl_ }),
+		params(std::move(params_)),
+		paramCount(paramCount_)
+	{
+	}
+
 	auto runtimeImpl() const -> RuntimeFn const&
 	{
 		return impl.as<RuntimeFn>();
 	}
 
-	auto rawImpl() const -> RawFn
+	auto rawImpl() const -> std::function<RawFunctionInstance::Type> const&
 	{
-		return impl.as<RawFn>();
+		return impl.as<RawFn>().func;
 	}
+
+	auto raw() -> RawFn& { return impl.as<RawFn>(); }
+	auto raw() const -> RawFn const& { return impl.as<RawFn>(); }
 
 	auto addr() const -> void const*
 	{
 		if (impl.is<RuntimeFn>()) {
 			return this;
 		} else {
-			return rawImpl().target<RawFnSign*>();
+			return rawImpl().target<RawFunctionInstance::Type*>();
 		}
 	}
 

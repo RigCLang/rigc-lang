@@ -83,15 +83,17 @@ auto IType::postInitialize(Instance& vm_) -> void
 			}};
 
 			auto& fn	= scope.registerFunction(vm_, "construct", Function{
-				[](Instance &vm_, Function::ArgSpan args_) -> OptValue
-				{
-					auto self = args_[0].removeRef();
-					std::memcpy(
-							self.data,
-							args_[1].data,
-							self.type->size()
-						);
-					return std::nullopt;
+				RawFunctionInstance {
+					[](Instance &vm_, Function::ArgSpan args_) -> OptValue
+					{
+						auto self = args_[0].removeRef();
+						std::memcpy(
+								self.data,
+								args_[1].data,
+								self.type->size()
+							);
+						return std::nullopt;
+					}, fmt::format("{} :: construct({}, {})", this->name(), selfRef->name(), this->name())
 				},
 				std::move(params), 2
 			});

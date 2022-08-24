@@ -89,6 +89,8 @@ auto AddrType::postInitialize(Instance& vm_) -> void
 				2
 			}
 		);
+
+		fn.returnType = this->shared_from_this();
 	}
 
 	// assign operator
@@ -110,6 +112,8 @@ auto AddrType::postInitialize(Instance& vm_) -> void
 				2
 			}
 		);
+
+		fn.returnType = refToSelf;
 	}
 }
 }

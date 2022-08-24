@@ -36,14 +36,18 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	// "allocateMemory" builtin function
 	{
 		auto func = Function{ &builtin::allocateMemory, {}, 0 };
+		func.returnType = constructTemplateType<AddrType>(scope_, vm_.findType("Char")->shared_from_this());
 		func.variadic = true;
+		func.raw().name = "builtin::allocateMemory";
 
 		scope_.registerFunction(vm_, "allocateMemory", std::move(func));
 	}
 	// "freeMemory" builtin function
 	{
 		auto func = Function{ &builtin::freeMemory, {}, 0 };
+		func.returnType = constructTemplateType<AddrType>(scope_, vm_.findType("Char")->shared_from_this());
 		func.variadic = true;
+		func.raw().name = "builtin::freeMemory";
 
 		scope_.registerFunction(vm_, "freeMemory", std::move(func));
 	}
@@ -51,6 +55,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	{
 		auto func = Function{ &builtin::print, {}, 0 };
 		func.variadic = true;
+		func.raw().name = "builtin::print";
 
 		scope_.registerFunction(vm_, "print", std::move(func));
 	}
@@ -58,6 +63,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	{
 		auto func = Function{ &builtin::typeOf, {}, 0 };
 		func.variadic = true;
+		func.raw().name = "builtin::typeOf";
 
 		scope_.registerFunction(vm_, "typeOf", std::move(func));
 	}
@@ -65,6 +71,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	{
 		auto func = Function{ &builtin::readInt, {}, 0 };
 		func.variadic = true;
+		func.raw().name = "builtin::readInt";
 
 		scope_.registerFunction(vm_, "readInt", std::move(func));
 	}
@@ -72,6 +79,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	{
 		auto func = Function{ &builtin::readFloat, {}, 0 };
 		func.variadic = true;
+		func.raw().name = "builtin::readFloat";
 
 		scope_.registerFunction(vm_, "readFloat", std::move(func));
 	}

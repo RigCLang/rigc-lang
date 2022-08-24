@@ -128,6 +128,26 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 			{ \
 				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
 				op.returnType = t; \
+				op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
+						Incantation, \
+						infixParams[0].type->name(), infixParams[1].type->name(), \
+						op.returnType->name() \
+					); \
+			}
+
+		#define MAKE_INFIX_REL_OP(Name, Incantation) \
+			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
+				{ \
+					return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
+				}; \
+			{ \
+				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
+				op.returnType = vm_.findType("Bool")->shared_from_this(); \
+				op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
+						Incantation, \
+						infixParams[0].type->name(), infixParams[1].type->name(), \
+						op.returnType->name() \
+					); \
 			}
 
 		#define MAKE_INFIX_ASSIGN_OP(Name, Incantation) \
@@ -139,6 +159,11 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2)); \
 				op.returnType = refToType; \
 				op.returnsRef = true; \
+				op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
+						Incantation, \
+						infixAssignParams[0].type->name(), infixAssignParams[1].type->name(), \
+						op.returnType->name() \
+					); \
 			}
 
 		#define MAKE_POSTFIX_OP(Name, Incantation) \
@@ -149,6 +174,11 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 			{ \
 				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Postfix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
 				op.returnType = t; \
+				op.raw().name = fmt::format("operator post {} (lhs: {}) -> {}", \
+						Incantation, \
+						prePostfixParams[0].type->name(), \
+						op.returnType->name() \
+					); \
 			}
 
 		#define MAKE_PREFIX_OP(Name, Incantation) \
@@ -160,6 +190,11 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Prefix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
 				op.returnType = refToType; \
 				op.returnsRef = true; \
+				op.raw().name = fmt::format("operator pre {} (rhs: {}) -> {}", \
+						Incantation, \
+						prePostfixParams[0].type->name(), \
+						op.returnType->name() \
+					); \
 			}
 
 		if constexpr (!std::is_same_v<T, bool>)
@@ -191,10 +226,10 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 			MAKE_PREFIX_OP(PreDecrement, "--");
 
 			// Relational
-			MAKE_INFIX_OP(LowerThan,		"<");
-			MAKE_INFIX_OP(GreaterThan,		">");
-			MAKE_INFIX_OP(LowerEqThan,		"<=");
-			MAKE_INFIX_OP(GreaterEqThan,	">=");
+			MAKE_INFIX_REL_OP(LowerThan,		"<");
+			MAKE_INFIX_REL_OP(GreaterThan,		">");
+			MAKE_INFIX_REL_OP(LowerEqThan,		"<=");
+			MAKE_INFIX_REL_OP(GreaterEqThan,	">=");
 		}
 
 		if constexpr (std::is_same_v<T, bool>)
@@ -205,8 +240,8 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_
 		}
 
 		// Relational
-		MAKE_INFIX_OP(Equal,	"==");
-		MAKE_INFIX_OP(NotEqual,	"!=");
+		MAKE_INFIX_REL_OP(Equal,	"==");
+		MAKE_INFIX_REL_OP(NotEqual,	"!=");
 
 		// Assignment
 		MAKE_INFIX_ASSIGN_OP(Assign,	"=");
