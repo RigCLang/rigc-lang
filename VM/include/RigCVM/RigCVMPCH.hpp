@@ -34,19 +34,26 @@
 namespace rg = std::ranges;
 namespace fs = std::filesystem;
 
-template <typename T>
-using Opt = std::optional<T>;
+using String		= std::string;
+using StringView	= std::string_view;
 
 template <typename T>
-using Vec = std::vector<T>;
+using Opt			= std::optional<T>;
+template <typename... Ts>
+using Variant		= std::variant<Ts...>;
 
+template <typename T, size_t Extent = std::dynamic_extent>
+using Span			= std::span<T, Extent>;
+template <typename T, size_t N>
+using Array			= std::array<T, N>;
+template <typename T>
+using DynArray		= std::vector<T>;
 template <typename TKey, typename TValue>
-using Map = std::map<TKey, TValue>;
-
+using Map			= std::map<TKey, TValue>;
+template <typename TKey>
+using Set			= std::set<TKey>;
 template <typename TKey, typename TValue>
 using UMap = std::unordered_map<TKey, TValue>;
-
-// pair
 template <typename TFirst, typename TSecond>
 using Pair = std::pair<TFirst, TSecond>;
 

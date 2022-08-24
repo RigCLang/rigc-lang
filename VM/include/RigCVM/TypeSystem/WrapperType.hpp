@@ -9,7 +9,7 @@ namespace rigc::vm
 {
 struct TemplateType : IType
 {
-	Vec<TemplateArgument> args;
+	DynArray<TemplateArgument> args;
 
 	TemplateType()
 	{}

@@ -74,7 +74,7 @@ struct IType : public std::enable_shared_from_this<IType>
 		return std::hash<std::string>{}(this->hashBasis());
 	}
 
-	using MethodsMap = UMap<std::string_view, Vec<Function*>>;
+	using MethodsMap = UMap<std::string_view, DynArray<Function*>>;
 	MethodsMap methods;
 
 	template <std::derived_from<IType> T>

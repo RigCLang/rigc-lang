@@ -15,7 +15,7 @@ class ClassType : public StructuralType
 public:
 	using Super = StructuralType;
 
-	Vec< DataMember > dataMembers;
+	DynArray< DataMember > dataMembers;
 
 	auto defaultConstructor() const -> Function*;
 

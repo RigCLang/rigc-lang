@@ -10,15 +10,15 @@ namespace rigc::vm
 class ClassTemplate
 {
 public:
-	ClassTemplate(std::string name_, Vec<TemplateParameter> parameters_)
+	ClassTemplate(std::string name_, DynArray<TemplateParameter> parameters_)
 		: name(std::move(name_))
 		, parameters(std::move(parameters_))
 	{
 	}
 
 	std::string name;
-	Vec<TemplateParameter> parameters;
+	DynArray<TemplateParameter> parameters;
 
-	auto instantiate(vm::Instance& vm_, Vec<TemplateParameterValue> const& params_) const -> DeclType;
+	auto instantiate(vm::Instance& vm_, DynArray<TemplateParameterValue> const& params_) const -> DeclType;
 };
 };

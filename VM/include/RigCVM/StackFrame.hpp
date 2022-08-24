@@ -16,7 +16,7 @@ struct StackFrame
 	Scope*			scope;
 	std::size_t		initialStackSize = 0;
 
-	Vec< Value >	allocatedValues;
+	DynArray< Value >	allocatedValues;
 };
 
 struct StackFramePusher
