@@ -11,75 +11,11 @@
 	#include <Windows.h>
 #endif
 
-auto enableColors() -> void;
-auto printError() -> void;
-
 namespace rvm = rigc::vm;
 
-struct VMSettings
-{
-	bool skipRootExceptionCatching = false;
-};
-
-auto parseArgs(std::span<std::string_view> args) -> rvm::Instance::Settings
-{
-	// TODO:
-	auto result = rvm::Instance::Settings();
-
-	if (args.size() < 2)
-	{
-		throw RigCError("No entry point specified.").withHelp("Use rigcvm [module name] to run RigC script.");
-	}
-
-	result.entryModuleName = args[1];
-
-	auto findArg = [&](std::string_view prefix) {
-		auto it = rg::find_if(args, [&](auto a){ return a.starts_with(prefix); });
-		if (it != args.end())
-			return *it;
-		return std::string_view{};
-	};
-
-#if DEBUG
-	// Warmup time
-	{
-		constexpr auto Prefix = std::string_view("--warmup=");
-
-		// Read warmup
-		auto warmupArg = findArg(Prefix);
-		if (!warmupArg.empty())
-		{
-			auto wmStr = std::string( warmupArg.substr(Prefix.length()) );
-			result.warmupDuration = std::chrono::milliseconds( std::stoi( wmStr ) );
-		}
-	}
-
-	// Warmup time
-	{
-		constexpr auto Prefix = std::string_view("--delay-fn=");
-
-		// Read warmup
-		auto warmupArg = findArg(Prefix);
-		if (!warmupArg.empty())
-		{
-			auto wmStr = std::string( warmupArg.substr(Prefix.length()) );
-			result.functionCallDelay = std::chrono::milliseconds( std::stoi( wmStr ) );
-		}
-	}
-
-	// skipRootExceptionCatching
-	{
-		constexpr auto Prefix = std::string_view("--skipRootExceptionCatching");
-
-		// Read warmup
-		auto arg = findArg(Prefix);
-		if (!arg.empty())
-			result.skipRootExceptionCatching = true;
-	}
-#endif
-
-	return result;
-}
+auto enableColors() -> void;
+auto printError() -> void;
+auto parseArgs(std::span<std::string_view> args) -> rvm::Instance::Settings;
 
 auto main(int argc, char* argv[]) -> int
 {
@@ -150,6 +86,9 @@ auto main(int argc, char* argv[]) -> int
 #endif
 }
 
+
+
+
 auto enableColors() -> void
 {
 	#ifdef PACC_SYSTEM_WINDOWS
@@ -169,4 +108,64 @@ auto printError() -> void
 	using fmt::emphasis;
 
 	fmt::print(fg(color::red) | emphasis::bold, "Error:\n");
+}
+
+auto parseArgs(std::span<std::string_view> args) -> rvm::Instance::Settings
+{
+	// TODO:
+	auto result = rvm::Instance::Settings();
+
+	if (args.size() < 2)
+	{
+		throw RigCError("No entry point specified.").withHelp("Use rigcvm [module name] to run RigC script.");
+	}
+
+	result.entryModuleName = args[1];
+
+	auto findArg = [&](std::string_view prefix) {
+		auto it = rg::find_if(args, [&](auto a){ return a.starts_with(prefix); });
+		if (it != args.end())
+			return *it;
+		return std::string_view{};
+	};
+
+#if DEBUG
+	// Warmup time
+	{
+		constexpr auto Prefix = std::string_view("--warmup=");
+
+		// Read warmup
+		auto warmupArg = findArg(Prefix);
+		if (!warmupArg.empty())
+		{
+			auto wmStr = std::string( warmupArg.substr(Prefix.length()) );
+			result.warmupDuration = std::chrono::milliseconds( std::stoi( wmStr ) );
+		}
+	}
+
+	// Warmup time
+	{
+		constexpr auto Prefix = std::string_view("--delay-fn=");
+
+		// Read warmup
+		auto warmupArg = findArg(Prefix);
+		if (!warmupArg.empty())
+		{
+			auto wmStr = std::string( warmupArg.substr(Prefix.length()) );
+			result.functionCallDelay = std::chrono::milliseconds( std::stoi( wmStr ) );
+		}
+	}
+
+	// skipRootExceptionCatching
+	{
+		constexpr auto Prefix = std::string_view("--skipRootExceptionCatching");
+
+		// Read warmup
+		auto arg = findArg(Prefix);
+		if (!arg.empty())
+			result.skipRootExceptionCatching = true;
+	}
+#endif
+
+	return result;
 }
