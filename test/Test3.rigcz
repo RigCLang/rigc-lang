@@ -1,0 +1,76 @@
+template <T: type_name>
+func swap(a: Ref<T>, b: Ref<T>)
+{
+	var temp = a;
+	a = b;
+	b = temp;
+}
+
+template <Range: type_name, From: type_name, To: type_name>
+func replaced(self: Range, from: From, to: To)
+{
+	for (var i = 0; i < self.size(); ++i)
+	{
+		if (self[i] == from)
+			self[i] = to;
+	}
+	ret self;
+}
+
+template <Range: type_name>
+func reversed(self: Range)
+{
+	for (var i = 0; i < self.size() / 2; ++i)
+	{
+		swap(self[i], self[self.size() - i - 1]);
+	}
+	ret self;
+}
+
+class Vec2
+{
+	x: Float32;
+	y: Float32;
+
+	construct {
+		x = 0.f;
+		y = 0.f;
+	}
+
+	construct(x: Float32, y: Float32) {
+		self.x = x;
+		self.y = y;
+	}
+}
+
+class StringView
+{
+	addr: Addr<Char>;
+	_size: Int32;
+
+	template <N: Int32>
+	construct (str: Ref< StaticArray<Char, N> >)
+	{
+		self.addr = str.data();
+		self._size = N;
+	}
+
+	print() {
+		for (var i = 0; i < self.size(); ++i)
+			print("{}", *(addr + i));
+	}
+
+	size() {
+		ret _size;
+	}
+}
+
+func main
+{
+	var str = "Hello, World!";
+	var sv = StringView(str);
+	sv.print();
+
+	var vec = Vec2::<Float32>(10.f, 5.f);
+	print("vec: ({:.2f}, {:.2f})\n", vec.x, vec.y);
+}

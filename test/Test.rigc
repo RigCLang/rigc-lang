@@ -1,0 +1,80 @@
+// import "math/Vector2";
+
+// template <T: type_name, U: ComparableWith<T>>
+// func count(self: Ref<Span<T>>, elem: Ref<U>)
+// {
+// 	var c = 0;
+// 	for (var i = 0; i < self.size(); ++i)
+// 	{
+// 		if (self[i] == elem)
+// 			++c;
+// 	}
+// 	ret c;
+// }
+
+// template <T: type_name, U: ComparableWith<T>>
+// func indexOf(self: Ref<Span<T>>, elem: Ref<U>)
+// 	-> Opt<Int32>
+// {
+// 	for (var i = 0; i < self.size(); ++i)
+// 	{
+// 		if (self[i] == elem)
+// 			ret i;
+// 	}
+// 	ret EMPTY_OPT;
+// }
+
+// template <T: type_name, U: ComparableWith<T>>
+// func indexOf(self: Ref<Span<T>>, elem: Ref<U>, valueIfNotFound)
+// 	-> Int32
+// {
+// 	for (var i = 0; i < self.size(); ++i)
+// 	{
+// 		if (self[i] == elem)
+// 			ret i;
+// 	}
+// 	ret valueIfNotFound;
+// }
+
+// template <T: type_name, U: ComparableWith<T>>
+// func indexOf(self: Ref<Span<T>>, subseq: Span<U>)
+// 	-> Opt<Int32>
+// {
+// 	for (var i = 0; i < self.size(); ++i)
+// 	{
+// 		for (var j = 0; j < subseq.size(); ++j)
+// 		{
+// 			if (self[i + j] != subseq[j])
+// 				break;
+// 			else
+// 				if (j == subseq.size() - 1)
+// 					ret i;
+// 		}
+// 	}
+// 	ret EMPTY_OPT;
+// }
+
+// template <N: Int32>
+// func indexOf(self: Ref< StaticArray<Char, 13> >, elem: Char)
+// {
+// 	for (var i = 0; i < self.size(); ++i)
+// 	{
+// 		if (self[i] == elem)
+// 			ret i;
+// 	}
+// 	ret -1;
+// }
+
+template <T: type_name>
+func max(a: T, b: T)
+{
+	if (a > b)
+		ret a;
+	else
+		ret b;
+}
+
+func main {
+	print("max(10.5f, 20.5f): {}\n", max(10.5f, 20.5f));
+	print("max(1, 2): {}\n", max(1, 2));
+}
