@@ -50,8 +50,10 @@ template <typename T>
 using DynArray		= std::vector<T>;
 template <typename TKey, typename TValue>
 using Map			= std::map<TKey, TValue>;
-template <typename TKey>
-using Set			= std::set<TKey>;
+template <typename TElem>
+using Set			= std::set<TElem>;
+template <typename TElem>
+using Queue			= std::queue<TElem>;
 template <typename TKey, typename TValue>
 using UMap = std::unordered_map<TKey, TValue>;
 template <typename TFirst, typename TSecond>

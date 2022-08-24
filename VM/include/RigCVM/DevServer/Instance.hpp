@@ -16,14 +16,14 @@ public:
 
 	void run();
 
-	void enqueueMessage(std::string msg_);
+	void enqueueMessage(String msg_);
 
 private:
 	using ConnectionSet = std::set<ws::connection_hdl,std::owner_less<ws::connection_hdl>>;
 
-	std::queue<std::string> _messageQueue;
-	ConnectionSet			_connections;
-	ServerBase				_endpoint;
+	Queue<String>	_messageQueue;
+	ConnectionSet	_connections;
+	ServerBase		_endpoint;
 };
 
 extern DevelopmentServer* g_devServer;

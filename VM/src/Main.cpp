@@ -15,11 +15,11 @@ namespace rvm = rigc::vm;
 
 auto enableColors() -> void;
 auto printError() -> void;
-auto parseArgs(std::span<std::string_view> args) -> rvm::Instance::Settings;
+auto parseArgs(Span<StringView> args) -> rvm::Instance::Settings;
 
 auto main(int argc, char* argv[]) -> int
 {
-	auto args = std::vector< std::string_view >();
+	auto args = DynArray<StringView>();
 	args.reserve(argc);
 	for (int i = 0; i < argc; ++i)
 		args.push_back(argv[i]);
@@ -110,7 +110,7 @@ auto printError() -> void
 	fmt::print(fg(color::red) | emphasis::bold, "Error:\n");
 }
 
-auto parseArgs(std::span<std::string_view> args) -> rvm::Instance::Settings
+auto parseArgs(Span<StringView> args) -> rvm::Instance::Settings
 {
 	// TODO:
 	auto result = rvm::Instance::Settings();
@@ -122,43 +122,43 @@ auto parseArgs(std::span<std::string_view> args) -> rvm::Instance::Settings
 
 	result.entryModuleName = args[1];
 
-	auto findArg = [&](std::string_view prefix) {
+	auto findArg = [&](StringView prefix) {
 		auto it = rg::find_if(args, [&](auto a){ return a.starts_with(prefix); });
 		if (it != args.end())
 			return *it;
-		return std::string_view{};
+		return StringView{};
 	};
 
 #if DEBUG
 	// Warmup time
 	{
-		constexpr auto Prefix = std::string_view("--warmup=");
+		constexpr auto Prefix = StringView("--warmup=");
 
 		// Read warmup
 		auto warmupArg = findArg(Prefix);
 		if (!warmupArg.empty())
 		{
-			auto wmStr = std::string( warmupArg.substr(Prefix.length()) );
+			auto wmStr = String( warmupArg.substr(Prefix.length()) );
 			result.warmupDuration = std::chrono::milliseconds( std::stoi( wmStr ) );
 		}
 	}
 
 	// Warmup time
 	{
-		constexpr auto Prefix = std::string_view("--delay-fn=");
+		constexpr auto Prefix = StringView("--delay-fn=");
 
 		// Read warmup
 		auto warmupArg = findArg(Prefix);
 		if (!warmupArg.empty())
 		{
-			auto wmStr = std::string( warmupArg.substr(Prefix.length()) );
+			auto wmStr = String( warmupArg.substr(Prefix.length()) );
 			result.functionCallDelay = std::chrono::milliseconds( std::stoi( wmStr ) );
 		}
 	}
 
 	// skipRootExceptionCatching
 	{
-		constexpr auto Prefix = std::string_view("--skipRootExceptionCatching");
+		constexpr auto Prefix = StringView("--skipRootExceptionCatching");
 
 		// Read warmup
 		auto arg = findArg(Prefix);
