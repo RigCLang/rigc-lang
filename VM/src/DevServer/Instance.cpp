@@ -9,11 +9,11 @@ DevelopmentServer* g_devServer = nullptr;
 
 static auto sendMtx = std::mutex();
 
-DevelopmentServer::DevelopmentServer()
+DevelopmentServer::DevelopmentServer(LogStreamPtr loggingStream)
 {
 	// Set logging settings
-	_endpoint.set_error_channels(ws::log::elevel::all);
-	_endpoint.set_access_channels(ws::log::alevel::all ^ ws::log::alevel::frame_payload);
+	if(loggingStream)
+		setupLoggingTo(loggingStream);
 
 	// Initialize Asio
 	_endpoint.init_asio();
@@ -103,6 +103,15 @@ void DevelopmentServer::enqueueMessage(String msg_)
 {
 	auto lock = std::scoped_lock(sendMtx);
 	_messageQueue.emplace( std::move(msg_) );
+}
+
+auto DevelopmentServer::setupLoggingTo(std::ostream* stream) -> void
+{
+	_endpoint.set_error_channels(ws::log::elevel::all);
+	_endpoint.set_access_channels(ws::log::alevel::all ^ ws::log::alevel::frame_payload);
+
+	_endpoint.get_alog().set_ostream(stream);
+	_endpoint.get_elog().set_ostream(stream);
 }
 
 }

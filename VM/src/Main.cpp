@@ -5,7 +5,12 @@
 #include <RigCVM/ErrorHandling/Formatting.hpp>
 #include <RigCVM/Helper/String.hpp>
 #include <RigCVM/DevServer/Instance.hpp>
+
 #include <fmt/color.h>
+
+#ifdef DEBUG
+#include <fstream>
+#endif
 
 #ifdef PACC_SYSTEM_WINDOWS
 	#include <Windows.h>
@@ -68,7 +73,17 @@ auto main(int argc, char* argv[]) -> int
 	};
 
 #if DEBUG
-	auto server = rvm::DevelopmentServer();
+	auto fileStream = std::make_unique<std::ofstream>(settings.logFilePath);
+
+	auto server = [&settings, &fileStream] {
+		if(settings.logFilePath.empty()) {
+			return rvm::DevelopmentServer(nullptr);
+		}
+		else {
+			return rvm::DevelopmentServer(fileStream.get());
+		}
+	}();
+
 	rvm::g_devServer = &server;
 	auto serverThread = std::jthread([&]{ server.run(); });
 
@@ -164,6 +179,15 @@ auto parseArgs(Span<StringView> args) -> rvm::Instance::Settings
 		auto arg = findArg(Prefix);
 		if (!arg.empty())
 			result.skipRootExceptionCatching = true;
+	}
+
+	// Log file
+	{
+		constexpr auto Prefix = StringView("--log-file=");
+
+		auto logFileArg = findArg(Prefix);
+		if (!logFileArg.empty())
+			result.logFilePath = String( logFileArg.substr(Prefix.length()) );
 	}
 #endif
 
