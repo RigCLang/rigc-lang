@@ -37,6 +37,7 @@ struct Instance
 		std::chrono::milliseconds functionCallDelay{0};
 		std::chrono::milliseconds warmupDuration{0};
 		bool skipRootExceptionCatching = false;
+		std::string logFilePath;
 #endif
 	};
 

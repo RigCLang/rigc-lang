@@ -12,7 +12,9 @@ using ServerBase = ws::server<ws::config::asio>;
 class DevelopmentServer
 {
 public:
-	DevelopmentServer();
+	using LogStreamPtr = std::ostream*;
+
+	DevelopmentServer(LogStreamPtr loggingStream); // WebsocketFileLogger
 
 	void run();
 
@@ -20,6 +22,8 @@ public:
 
 private:
 	using ConnectionSet = std::set<ws::connection_hdl,std::owner_less<ws::connection_hdl>>;
+
+	auto setupLoggingTo(std::ostream* loggingStream) -> void;
 
 	Queue<String>	_messageQueue;
 	ConnectionSet	_connections;
