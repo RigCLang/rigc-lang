@@ -14,14 +14,14 @@ class DevelopmentServer
 public:
 	using LogStreamPtr = std::ostream*;
 
-	DevelopmentServer(LogStreamPtr loggingStream); // WebsocketFileLogger
+	DevelopmentServer(LogStreamPtr loggingStream);
 
 	void run();
 
 	void enqueueMessage(String msg_);
 
 private:
-	using ConnectionSet = std::set<ws::connection_hdl,std::owner_less<ws::connection_hdl>>;
+	using ConnectionSet = std::set<ws::connection_hdl, std::owner_less<ws::connection_hdl>>;
 
 	auto setupLoggingTo(std::ostream* loggingStream) -> void;
 
