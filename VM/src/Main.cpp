@@ -73,7 +73,7 @@ auto main(int argc, char* argv[]) -> int
 	};
 
 #if DEBUG
-	auto fileStream = std::make_unique<std::ofstream>(settings.logFilePath);
+	auto fileStream = std::make_unique<std::ofstream>(settings.logFilePath, std::ios_base::trunc);
 
 	auto server = [&settings, &fileStream] {
 		if(settings.logFilePath.empty()) {
