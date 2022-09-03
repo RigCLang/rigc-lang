@@ -250,7 +250,7 @@ R"msg(
 }}
 )msg",
 			std::string(classContext ? classContext->name() + " :: " : "") + std::string(fnName),
-			currentModule ? currentModule->absolutePath.filename().string() : "<unknown>",
+			modules.front()->absolutePath.filename().string(),
 			lastEvaluatedLine
 		)
 	);
