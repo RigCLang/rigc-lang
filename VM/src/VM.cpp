@@ -236,7 +236,8 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 
 	sendLogMessage(LogLevel::Info, "Executing function \"{}\".", fnName);
 
-	sendDebugMessage(fmt::format(
+	sendDebugMessage(
+		fmt::format(
 R"msg(
 {{
 	"type": "callstack",
@@ -248,10 +249,11 @@ R"msg(
 	}}
 }}
 )msg",
-		std::string(classContext ? classContext->name() + " :: " : "") + std::string(fnName), "file", 123)
+			std::string(classContext ? classContext->name() + " :: " : "") + std::string(fnName),
+			modules.front()->absolutePath.filename().string(),
+			lastEvaluatedLine
+		)
 	);
-
-
 
 	if (func_.returnType)
 	{
