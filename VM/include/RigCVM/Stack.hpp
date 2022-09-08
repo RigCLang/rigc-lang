@@ -43,7 +43,7 @@ R"(
 	"type": "stack",
 	"action": "pushFrame",
 	"data": {{
-		"initialSize": "{}",
+		"initialSize": "{}"
 	}}
 }}
 )", frame.initialStackSize)
@@ -63,7 +63,7 @@ R"(
 R"(
 {
 	"type": "stack",
-	"action": "popFrame",
+	"action": "popFrame"
 }
 )"
 	);
