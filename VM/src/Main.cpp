@@ -173,7 +173,7 @@ auto parseArgs(Span<StringView> args) -> rvm::Instance::Settings
 
 	// skipRootExceptionCatching
 	{
-		constexpr auto Prefix = StringView("--skipRootExceptionCatching");
+		constexpr auto Prefix = StringView("--skip-root-exception-catching");
 
 		// Read warmup
 		auto arg = findArg(Prefix);
