@@ -96,7 +96,7 @@ auto Instance::evaluateModule(Module& module_) -> void
 }
 
 //////////////////////////////////////////
-auto Instance::run(Settings const& settings_) -> int
+auto Instance::run(InstanceSettings const& settings_) -> int
 {
 	settings = &settings_;
 
