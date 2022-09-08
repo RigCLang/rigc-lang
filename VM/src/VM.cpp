@@ -653,6 +653,24 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 	{
 		stack.frames.back().allocatedValues.push_back(val);
 	}
+#ifdef DEBUG
+	auto const typeWholeName = val.type->name();
+	auto const typeFirstLetter = typeWholeName.front();
+	sendDebugMessage(fmt::format(
+R"(
+{{
+	"type": "stack",
+	"action": "alllocate",
+	"data": {{
+		"name": "{}",
+		"type": "{}",
+		"size": {},
+		"address": {},
+	}}
+}}
+)", typeWholeName, typeFirstLetter, val.type->size(), stack.size) // the address will be an offset from the stack which is it's size
+	);
+#endif
 
 	return val;
 }
