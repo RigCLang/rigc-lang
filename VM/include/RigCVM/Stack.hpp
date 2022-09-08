@@ -3,6 +3,7 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/StackFrame.hpp>
+#include <RigCVM/DevServer/Messaging.hpp>
 
 namespace rigc::vm
 {
@@ -34,6 +35,21 @@ struct Stack
 		StackFrame frame{this};
 		frame.initialStackSize = this->size;
 		frames.push_back(frame);
+
+#ifdef DEBUG
+	sendDebugMessage(fmt::format(
+R"(
+{{
+	"type": "stack",
+	"action": "pushFrame",
+	"data": {{
+		"initialSize": "{}",
+	}}
+}}
+)", frame.initialStackSize)
+	);
+#endif
+
 		return frames.back();
 	}
 
@@ -41,6 +57,17 @@ struct Stack
 	{
 		size = frames.back().initialStackSize;
 		frames.pop_back();
+
+#ifdef DEBUG
+	sendDebugMessage(
+R"(
+{
+	"type": "stack",
+	"action": "popFrame",
+}
+)"
+	);
+#endif
 	}
 };
 
