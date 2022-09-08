@@ -665,7 +665,7 @@ R"(
 		"name": "{}",
 		"type": "{}",
 		"size": {},
-		"address": {},
+		"address": {}
 	}}
 }}
 )", typeWholeName, typeFirstLetter, val.type->size(), stack.size) // the address will be an offset from the stack which is it's size
