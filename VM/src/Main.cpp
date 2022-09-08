@@ -5,6 +5,7 @@
 #include <RigCVM/ErrorHandling/Formatting.hpp>
 #include <RigCVM/Helper/String.hpp>
 #include <RigCVM/DevServer/Instance.hpp>
+#include <RigCVM/Settings.hpp>
 
 #include <fmt/color.h>
 
@@ -20,7 +21,6 @@ namespace rvm = rigc::vm;
 
 auto enableColors() -> void;
 auto printError() -> void;
-auto parseArgs(Span<StringView> args) -> rvm::Instance::Settings;
 
 auto main(int argc, char* argv[]) -> int
 {
@@ -61,10 +61,10 @@ auto main(int argc, char* argv[]) -> int
 	};
 
 	auto instance = rvm::Instance();
-	auto settings = rvm::Instance::Settings();
+	auto settings = rvm::InstanceSettings();
 
 	tryCatch([&]{
-		settings = parseArgs(args);
+		settings = rvm::parseArgs(args);
 		return 0;
 	});
 
@@ -125,71 +125,3 @@ auto printError() -> void
 	fmt::print(fg(color::red) | emphasis::bold, "Error:\n");
 }
 
-auto parseArgs(Span<StringView> args) -> rvm::Instance::Settings
-{
-	// TODO:
-	auto result = rvm::Instance::Settings();
-
-	if (args.size() < 2)
-	{
-		throw RigCError("No entry point specified.").withHelp("Use rigcvm [module name] to run RigC script.");
-	}
-
-	result.entryModuleName = args[1];
-
-	auto findArg = [&](StringView prefix) {
-		auto it = rg::find_if(args, [&](auto a){ return a.starts_with(prefix); });
-		if (it != args.end())
-			return *it;
-		return StringView{};
-	};
-
-#if DEBUG
-	// Warmup time
-	{
-		constexpr auto Prefix = StringView("--warmup=");
-
-		// Read warmup
-		auto warmupArg = findArg(Prefix);
-		if (!warmupArg.empty())
-		{
-			auto wmStr = String( warmupArg.substr(Prefix.length()) );
-			result.warmupDuration = std::chrono::milliseconds( std::stoi( wmStr ) );
-		}
-	}
-
-	// Warmup time
-	{
-		constexpr auto Prefix = StringView("--delay-fn=");
-
-		// Read warmup
-		auto warmupArg = findArg(Prefix);
-		if (!warmupArg.empty())
-		{
-			auto wmStr = String( warmupArg.substr(Prefix.length()) );
-			result.functionCallDelay = std::chrono::milliseconds( std::stoi( wmStr ) );
-		}
-	}
-
-	// skipRootExceptionCatching
-	{
-		constexpr auto Prefix = StringView("--skip-root-exception-catching");
-
-		// Read warmup
-		auto arg = findArg(Prefix);
-		if (!arg.empty())
-			result.skipRootExceptionCatching = true;
-	}
-
-	// Log file
-	{
-		constexpr auto Prefix = StringView("--log-file=");
-
-		auto logFileArg = findArg(Prefix);
-		if (!logFileArg.empty())
-			result.logFilePath = String( logFileArg.substr(Prefix.length()) );
-	}
-#endif
-
-	return result;
-}
