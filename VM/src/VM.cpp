@@ -660,7 +660,7 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 R"(
 {{
 	"type": "stack",
-	"action": "alllocate",
+	"action": "allocate",
 	"data": {{
 		"name": "{}",
 		"type": "{}",
