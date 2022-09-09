@@ -6,6 +6,82 @@
 namespace rigc::vm
 {
 
+using ProgramArgs = Span<StringView>;
+
+struct ProgramArg {
+	StringView name;
+	StringView value;
+};
+
+auto findArg(ProgramArgs const& args, StringView name, bool acceptSeparate = true) -> Opt<ProgramArg>
+{
+	auto nameLen = name.length();
+	for (size_t i = 1; i < args.size(); ++i)
+	{
+		if (args[i] == name) { // --program-arg [optionally a value]
+			return ProgramArg(args[i], ((acceptSeparate && i + 1 < args.size()) ? args[i + 1] : StringView{}));
+		}
+		else if (args[i].starts_with(name) && args[i][nameLen] == '=') { // --program-name=value
+			return ProgramArg(args[i].substr(0, nameLen), args[i].substr(nameLen+1));
+		}
+	}
+
+	return std::nullopt;
+}
+
+template <typename T>
+auto argValue(ProgramArgs const& args, StringView name) -> Opt<T> = delete;
+
+template <typename T>
+auto argValueOr(ProgramArgs const& args, StringView name, T alternative) -> T
+{
+	return argValue<T>(args, name).value_or(alternative);
+}
+
+template <std::integral T>
+auto argValue(ProgramArgs const& args, StringView name) -> Opt<T>
+{
+	auto result = findArg(args, name);
+
+	if (result)
+		return static_cast<T>( std::stoll( String(result->value) ) );
+	return std::nullopt;
+}
+
+template <std::floating_point T>
+auto argValue(ProgramArgs const& args, StringView name) -> Opt<T>
+{
+	auto result = findArg(args, name);
+
+	if (result)
+		return static_cast<T>( std::stold( String(result->value) ) );
+	return std::nullopt;
+}
+
+template <>
+auto argValue<bool>(ProgramArgs const& args, StringView name) -> Opt<bool>
+{
+	auto result = findArg(args, name, false); // treat it as a flag, that is: --flag means it should return true
+	return result ? Opt(result->value == "true" || result->value.empty()) : std::nullopt;
+}
+
+template <>
+auto argValue<StringView>(ProgramArgs const& args, StringView name) -> Opt<StringView>
+{
+	auto result = findArg(args, name);
+	return result ? Opt(result->value) : std::nullopt;
+}
+
+template <>
+auto argValue<String>(ProgramArgs const& args, StringView name) -> Opt<String>
+{
+	auto result = findArg(args, name);
+	return result ? Opt(String(result->value)) : std::nullopt;
+}
+
+
+
+
 auto parseArgs(Span<StringView> args) -> InstanceSettings
 {
 	// TODO:
@@ -18,37 +94,28 @@ auto parseArgs(Span<StringView> args) -> InstanceSettings
 
 	result.entryModuleName = args[1];
 
-	auto findArg = [&](StringView prefix) {
-		auto it = rg::find_if(args, [&](auto a){ return a.starts_with(prefix); });
-		if (it != args.end())
-			return *it;
-		return StringView{};
-	};
-
 #if DEBUG
 	// Warmup time
 	{
-		constexpr auto Prefix = StringView("--warmup=");
+		constexpr auto Prefix = StringView("--warmup");
 
 		// Read warmup
-		auto warmupArg = findArg(Prefix);
-		if (!warmupArg.empty())
+		auto warmup = argValue<int>(args, Prefix);
+		if (warmup)
 		{
-			auto wmStr = String( warmupArg.substr(Prefix.length()) );
-			result.warmupDuration = std::chrono::milliseconds( std::stoi( wmStr ) );
+			result.warmupDuration = std::chrono::milliseconds( *warmup );
 		}
 	}
 
 	// Warmup time
 	{
-		constexpr auto Prefix = StringView("--delay-fn=");
+		constexpr auto Prefix = StringView("--delay-fn");
 
 		// Read warmup
-		auto warmupArg = findArg(Prefix);
-		if (!warmupArg.empty())
+		auto fnCallDelay = argValue<int>(args, Prefix);
+		if (fnCallDelay)
 		{
-			auto wmStr = String( warmupArg.substr(Prefix.length()) );
-			result.functionCallDelay = std::chrono::milliseconds( std::stoi( wmStr ) );
+			result.functionCallDelay = std::chrono::milliseconds( *fnCallDelay );
 		}
 	}
 
@@ -57,18 +124,18 @@ auto parseArgs(Span<StringView> args) -> InstanceSettings
 		constexpr auto Prefix = StringView("--skip-root-exception-catching");
 
 		// Read warmup
-		auto arg = findArg(Prefix);
-		if (!arg.empty())
+		auto skip = argValue<bool>(args, Prefix);
+		if (skip)
 			result.skipRootExceptionCatching = true;
 	}
 
 	// Log file
 	{
-		constexpr auto Prefix = StringView("--log-file=");
+		constexpr auto Prefix = StringView("--log-file");
 
-		auto logFileArg = findArg(Prefix);
-		if (!logFileArg.empty())
-			result.logFilePath = String( logFileArg.substr(Prefix.length()) );
+		auto logFile = argValue<StringView>(args, Prefix);
+		if (logFile)
+			result.logFilePath = String( *logFile );
 	}
 #endif
 
