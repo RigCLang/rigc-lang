@@ -700,13 +700,6 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 {
 	Scope& scope = scopeOf(addr_);
 
-#if DEBUG
-	if (scope.name.empty())
-	{
-		scope.name = std::move(name);
-	}
-#endif
-
 	if (!scope.parent)
 		scope.parent = currentScope;
 
@@ -714,7 +707,25 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 	StackFrame& frame = stack.pushFrame();
 	frame.scope = &scope;
 
-	// fmt::print(">>> {}\n", (void*)&frame);
+#if DEBUG
+	if (scope.name.empty())
+	{
+		scope.name = std::move(name);
+	}
+
+	sendDebugMessage(fmt::format(
+R"(
+{{
+	"type": "stack",
+	"action": "pushFrame",
+	"data": {{
+		"initialSize": "{}"
+	}}
+}}
+)", frame.initialStackSize)
+	);
+
+#endif
 
 	return scope;
 }
@@ -738,6 +749,15 @@ auto Instance::popStackFrame() -> void
 			scopeName = scopeName.substr(0, 60) + "\n\t/* ... */";
 
 		// fmt::print(fg(color::gray), "Scope:\n{}\n", scopeName);
+
+		sendDebugMessage(
+R"(
+{
+	"type": "stack",
+	"action": "popFrame"
+}
+)"
+		);
 	}
 #endif
 
