@@ -708,6 +708,11 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 	frame.scope = &scope;
 
 #if DEBUG
+	if(addr_ != nullptr)
+	{
+		return scope;
+	}
+
 	if (scope.name.empty())
 	{
 		scope.name = std::move(name);
