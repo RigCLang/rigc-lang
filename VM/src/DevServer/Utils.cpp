@@ -23,7 +23,7 @@ auto formatFunctionSignature(rigc::ParserNode const& node) {
 		+ (returnType ? returnType->string() : "");
 }
 
-auto stripWhitespace(std::string& str) {
+auto stripBlockAndWhitespace(std::string& str) {
 	auto const prefixIt = rg::find_if(str, [](char c) { return std::isalpha(c); });
 
 	auto const begin = rg::begin(str);
@@ -43,7 +43,7 @@ auto formatCodeBlock(rigc::ParserNode const& node) {
 	auto nodeString = node.string();
 
 	if (node.is_type<rigc::CodeBlock>()) {
-		stripWhitespace(nodeString);
+		stripBlockAndWhitespace(nodeString);
 	}
 
 	if(nodeString.length() > maxLabelNameLen) {
