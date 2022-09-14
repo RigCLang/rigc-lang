@@ -742,6 +742,17 @@ auto Instance::popStackFrame() -> void
 	assert(stack.frames.size() > 1 && "Tried to pop a universe scope-related stack frame.");
 
 	auto& frame = stack.frames.back();
+
+	// Destroy from the back to the front
+	auto& allocated = frame.allocatedValues;
+	for (auto it = allocated.rbegin(); it != allocated.rend(); ++it)
+	{
+		it->destroy(*this);
+	}
+
+	stack.popFrame();
+	currentScope = stack.frames.back().scope;
+
 #if DEBUG
 	// fmt::print("<<< {}, back {} bytes\n", (void*)&frame, stack.size - frame.initialStackSize);
 
@@ -766,15 +777,5 @@ R"(
 		);
 	}
 #endif
-
-	// Destroy from the back to the front
-	auto& allocated = frame.allocatedValues;
-	for (auto it = allocated.rbegin(); it != allocated.rend(); ++it)
-	{
-		it->destroy(*this);
-	}
-
-	stack.popFrame();
-	currentScope = stack.frames.back().scope;
 }
 }
