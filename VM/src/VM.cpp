@@ -12,6 +12,7 @@
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 #include <RigCVM/DevServer/Messaging.hpp>
+#include <RigCVM/DevServer/Utils.hpp>
 
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
@@ -289,7 +290,7 @@ R"msg(
 
 
 #if DEBUG
-		auto& fnScope			= this->pushStackFrameOf(func_.addr(), func_.runtimeImpl().node->string());
+		auto& fnScope			= this->pushStackFrameOf(func_.addr(), formatStackFrameLabel(*func_.runtimeImpl().node));
 #else
 		auto& fnScope			= this->pushStackFrameOf(func_.addr());
 #endif
