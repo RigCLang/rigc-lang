@@ -3,6 +3,7 @@
 #include <RigCVM/VM.hpp>
 #include <RigCVM/DevServer/Utils.hpp>
 
+#include <cctype>
 #include <numeric>
 #include <functional>
 
@@ -24,12 +25,15 @@ auto formatFunctionSignature(rigc::ParserNode const& node) {
 }
 
 auto stripBlockAndWhitespace(std::string& str) {
-	auto const prefixIt = rg::find_if(str, [](char c) { return std::isalpha(c); });
+	auto const firstAlphaCharIt = rg::find_if(str, ::isalpha);
 
 	auto const begin = rg::begin(str);
-	auto const end = begin + (prefixIt - begin);
+	auto const end = begin + (firstAlphaCharIt - begin);
 
-	str.erase(begin, end);
+	str.erase(
+        begin,
+		end
+    );
 }
 
 auto formatCodeBlock(rigc::ParserNode const& node) {
