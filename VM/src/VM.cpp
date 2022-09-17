@@ -12,6 +12,7 @@
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 #include <RigCVM/DevServer/Messaging.hpp>
+#include <RigCVM/DevServer/Utils.hpp>
 
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
@@ -289,7 +290,7 @@ R"msg(
 
 
 #if DEBUG
-		auto& fnScope			= this->pushStackFrameOf(func_.addr(), func_.runtimeImpl().node->string());
+		auto& fnScope			= this->pushStackFrameOf(func_.addr(), formatStackFrameLabel(*func_.runtimeImpl().node));
 #else
 		auto& fnScope			= this->pushStackFrameOf(func_.addr());
 #endif
@@ -653,6 +654,24 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 	{
 		stack.frames.back().allocatedValues.push_back(val);
 	}
+#ifdef DEBUG
+	auto const typeWholeName = val.type->name();
+	auto const typeFirstLetter = typeWholeName.front();
+	sendDebugMessage(fmt::format(
+R"(
+{{
+	"type": "stack",
+	"action": "allocate",
+	"data": {{
+		"name": "{}",
+		"type": "{}",
+		"size": {},
+		"address": {}
+	}}
+}}
+)", typeWholeName, typeFirstLetter, val.type->size(), stack.size) // the address will be an offset from the stack which is it's size
+	);
+#endif
 
 	return val;
 }
@@ -682,13 +701,6 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 {
 	Scope& scope = scopeOf(addr_);
 
-#if DEBUG
-	if (scope.name.empty())
-	{
-		scope.name = std::move(name);
-	}
-#endif
-
 	if (!scope.parent)
 		scope.parent = currentScope;
 
@@ -696,7 +708,30 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 	StackFrame& frame = stack.pushFrame();
 	frame.scope = &scope;
 
-	// fmt::print(">>> {}\n", (void*)&frame);
+#if DEBUG
+	if(addr_ != nullptr)
+	{
+		return scope;
+	}
+
+	if (scope.name.empty())
+	{
+		scope.name = std::move(name);
+	}
+
+	sendDebugMessage(fmt::format(
+R"(
+{{
+	"type": "stack",
+	"action": "pushFrame",
+	"data": {{
+		"initialSize": "{}"
+	}}
+}}
+)", frame.initialStackSize)
+	);
+
+#endif
 
 	return scope;
 }
@@ -707,6 +742,17 @@ auto Instance::popStackFrame() -> void
 	assert(stack.frames.size() > 1 && "Tried to pop a universe scope-related stack frame.");
 
 	auto& frame = stack.frames.back();
+
+	// Destroy from the back to the front
+	auto& allocated = frame.allocatedValues;
+	for (auto it = allocated.rbegin(); it != allocated.rend(); ++it)
+	{
+		it->destroy(*this);
+	}
+
+	stack.popFrame();
+	currentScope = stack.frames.back().scope;
+
 #if DEBUG
 	// fmt::print("<<< {}, back {} bytes\n", (void*)&frame, stack.size - frame.initialStackSize);
 
@@ -720,17 +766,16 @@ auto Instance::popStackFrame() -> void
 			scopeName = scopeName.substr(0, 60) + "\n\t/* ... */";
 
 		// fmt::print(fg(color::gray), "Scope:\n{}\n", scopeName);
+
+		sendDebugMessage(
+R"(
+{
+	"type": "stack",
+	"action": "popFrame"
+}
+)"
+		);
 	}
 #endif
-
-	// Destroy from the back to the front
-	auto& allocated = frame.allocatedValues;
-	for (auto it = allocated.rbegin(); it != allocated.rend(); ++it)
-	{
-		it->destroy(*this);
-	}
-
-	stack.popFrame();
-	currentScope = stack.frames.back().scope;
 }
 }
