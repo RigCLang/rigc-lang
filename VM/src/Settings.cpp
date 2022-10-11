@@ -99,7 +99,6 @@ auto parseArgs(Span<StringView> args) -> InstanceSettings
 	{
 		constexpr auto Prefix = StringView("--warmup");
 
-		// Read warmup
 		auto warmup = argValue<int>(args, Prefix);
 		if (warmup)
 		{
@@ -107,11 +106,19 @@ auto parseArgs(Span<StringView> args) -> InstanceSettings
 		}
 	}
 
-	// Warmup time
+	// Wait until connection
+	{
+		constexpr auto Prefix = StringView("--wait-for-connection");
+
+		auto wait = argValue<bool>(args, Prefix);
+		if (wait)
+			result.waitForConnection = true;
+	}
+
+	// Function delay time
 	{
 		constexpr auto Prefix = StringView("--delay-fn");
 
-		// Read warmup
 		auto fnCallDelay = argValue<int>(args, Prefix);
 		if (fnCallDelay)
 		{
@@ -123,7 +130,6 @@ auto parseArgs(Span<StringView> args) -> InstanceSettings
 	{
 		constexpr auto Prefix = StringView("--skip-root-exception-catching");
 
-		// Read warmup
 		auto skip = argValue<bool>(args, Prefix);
 		if (skip)
 			result.skipRootExceptionCatching = true;

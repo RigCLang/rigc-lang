@@ -14,6 +14,7 @@ struct InstanceSettings
 	std::chrono::milliseconds warmupDuration{0};
 	bool skipRootExceptionCatching = false;
 	String logFilePath;
+	bool waitForConnection = false;
 #endif
 };
 
