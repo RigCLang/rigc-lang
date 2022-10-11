@@ -214,7 +214,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	{
 		auto varNameStr = std::string(varName);
 		auto& var = vm_.currentScope->variables[varNameStr];
-		var = vm_.reserveOnStack(type, true);
+		var = FrameBasedValue::fromAbsolute(value, vm_.stack.frames.back());
 	}
 
 	return value;
