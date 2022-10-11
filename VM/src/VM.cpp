@@ -172,7 +172,6 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 		devserverLog("Warmup (time: {} ms)...\n", settings->warmupDuration.count());
 		std::this_thread::sleep_for(settings->warmupDuration);
 	}
-#endif
 
 	sendDebugMessage(fmt::format(R"msg(
 {{
@@ -182,7 +181,6 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 }}
 )msg", intptr_t(stack.data())));
 
-#if DEBUG
 	if (settings->waitForConnection)
 	{
 		devserverLog("Waiting for debugger to connect...\n");
@@ -299,6 +297,7 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 	if (func_.outerType && func_.outerType->is<ClassType>())
 		classContext = func_.outerType->as<ClassType>();
 
+#ifdef DEBUG
 	sendLogMessage(LogLevel::Info, "Executing function \"{}\".", fnName);
 
 	sendDebugMessage(
@@ -319,6 +318,8 @@ R"msg(
 			lastEvaluatedLine
 		)
 	);
+
+#endif
 
 	if (func_.returnType)
 	{
@@ -430,6 +431,8 @@ R"msg(
 
 	this->returnTriggered = false;
 
+
+#ifdef DEBUG
 	sendDebugMessage(
 		R"msg(
 		{
@@ -438,6 +441,7 @@ R"msg(
 		}
 		)msg"
 	);
+#endif
 
 	classContext = prevClassContext;
 
@@ -455,6 +459,7 @@ R"msg(
 	return retVal;
 }
 
+#if DEBUG
 auto Instance::tryHitBreakpoint(rigc::ParserNode const& node) -> bool
 {
 	auto lock = std::scoped_lock(breakpointsMutex);
@@ -491,6 +496,7 @@ auto Instance::tryHitBreakpoint(rigc::ParserNode const& node) -> bool
 	}
 	return false;
 }
+#endif
 
 //////////////////////////////////////////
 auto Instance::evaluate(rigc::ParserNode const& stmt_) -> OptValue
@@ -759,6 +765,7 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 
 	if (val.type->is<ClassType>())
 	{
+		// fmt::print("Creating value at {} of type {}.\n", bytes - stack.data(), val.type->name());
 		stack.frames.back().allocatedValues.push_back(val);
 	}
 #ifdef DEBUG
@@ -883,6 +890,7 @@ auto Instance::popStackFrame() -> void
 	auto& allocated = frame.allocatedValues;
 	for (auto it = allocated.rbegin(); it != allocated.rend(); ++it)
 	{
+		// fmt::print("Destroying value at {} of type {}.\n", static_cast<const char*>(it->data) - stack.data(), it->type->name());
 		it->destroy(*this);
 	}
 
