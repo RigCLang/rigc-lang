@@ -53,6 +53,7 @@
 			"dependencies": [
 				"self:Parser",
 				"fmt@8.0.1",
+				"json@3.9.1",
 				"websocketpp@0.8.2"
 			]
 		}
