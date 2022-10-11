@@ -445,17 +445,6 @@ R"msg(
 
 	classContext = prevClassContext;
 
-	// if (retVal.has_value())
-	// {
-	// 	Value val;
-	// 	if (!func_.returnsRef && retVal->type->is<RefType>())
-	// 		val = this->cloneValue(retVal->removeRef());
-	// 	else
-	// 		val = this->cloneValue(*retVal);
-
-	// 	return val; // extend lifetime
-	// }
-
 	return retVal;
 }
 
@@ -707,20 +696,6 @@ auto Instance::findFunction(std::string_view name_) -> FunctionCandidates
 auto Instance::cloneValue(Value value_) -> Value
 {
 	return this->allocateOnStack( value_.getType(), reinterpret_cast<void*>(value_.blob()), value_.getType()->size() );
-}
-
-//////////////////////////////////////////
-auto Instance::extendReturnValueLifetime(Value value_) -> void
-{
-	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
-	{
-		auto valIt = rg::find(it->allocatedValues, value_.data, &Value::data);
-		if (valIt != it->allocatedValues.end())
-		{
-			it->allocatedValues.erase(valIt);
-			return;
-		}
-	}
 }
 
 //////////////////////////////////////////
