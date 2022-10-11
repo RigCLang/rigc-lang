@@ -99,6 +99,8 @@ struct FrameBasedValue : ValueBase
 {
 	size_t stackOffset;
 
+	static FrameBasedValue fromAbsolute(Value value_, StackFrame const& frame_);
+
 	template <typename T>
 	auto view(StackFrame const& frame_) -> T&;
 

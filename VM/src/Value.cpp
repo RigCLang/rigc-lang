@@ -4,6 +4,7 @@
 
 #include <RigCVM/VM.hpp>
 #include <RigCVM/Stack.hpp>
+#include <RigCVM/StackFrame.hpp>
 #include <RigCVM/TypeSystem/ClassType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
@@ -171,6 +172,12 @@ auto dump(Instance& vm_, Value const& value_) -> std::string
 		}
 	}
 	return "<unknown>";
+}
+
+FrameBasedValue FrameBasedValue::fromAbsolute(Value value_, StackFrame const& frame_)
+{
+	auto offset = (static_cast<const char*>(value_.data) - frame_.stack->data()) - frame_.initialStackSize;
+	return { std::move(value_.type), size_t(offset) };
 }
 
 template <typename T>

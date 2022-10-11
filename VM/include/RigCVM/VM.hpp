@@ -10,6 +10,10 @@
 
 #include <RigCVM/Functions.hpp>
 
+#if DEBUG
+#include <RigCVM/DevServer/Breakpoint.hpp>
+#endif
+
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
 namespace rigc::vm
@@ -152,6 +156,18 @@ struct Instance
 	size_t lastEvaluatedLine = 0;
 private:
 	rigc::ParserNode const* root = nullptr;
+
+#if DEBUG
+	rigc::ParserNode const*	lastExecutedNode = nullptr;
+
+	DynArray<Breakpoint>	breakpoints;
+	std::mutex				breakpointsMutex;
+public:
+	auto tryHitBreakpoint(rigc::ParserNode const& node) -> bool;
+	void updateBreakpoints(DynArray<Breakpoint> breakpoints);
+
+	std::function<void()> onInitializeDevTools;
+#endif
 };
 
 /// <summary>

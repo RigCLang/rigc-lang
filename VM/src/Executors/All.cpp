@@ -146,6 +146,8 @@ auto evaluateName(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 	return vm_.allocateReference(opt.value());
 }
 
+bool copyConstructOn(Instance& vm_, Value constructed_, Value const& copyFrom_);
+
 ////////////////////////////////////////
 auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
@@ -155,6 +157,8 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 
 	bool deduceType = (declType == "var" || declType == "const");
 
+	size_t currentStackSize = vm_.stack.size;
+
 	Value value;
 	if (valueExpr)
 	{
@@ -162,6 +166,21 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		if (auto ref = value.type->as<RefType>())
 		{
 			value = value.removeRef();
+
+			// If the value existed before the definition it means it is a reference
+			// to another variable.
+			// FIXME: This is a hack that will break eventually. We need to create an x-value type.
+			if (static_cast<const char*>(value.data) - vm_.stack.data() < ptrdiff_t(currentStackSize))
+			{
+				auto newValue = vm_.allocateOnStack(value.type, nullptr, 0);
+				if (!copyConstructOn(vm_, newValue, value))
+				{
+					// Byte-wise copy
+					std::memcpy(newValue.data, value.data, value.type->size());
+				}
+
+				value = newValue;
+			}
 		}
 	}
 	else if (deduceType)
@@ -214,7 +233,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 	{
 		auto varNameStr = std::string(varName);
 		auto& var = vm_.currentScope->variables[varNameStr];
-		var = vm_.reserveOnStack(type, true);
+		var = FrameBasedValue::fromAbsolute(value, vm_.stack.frames.back());
 	}
 
 	return value;

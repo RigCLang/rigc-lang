@@ -2,6 +2,8 @@
 
 #include RIGCVM_PCH
 
+#include <RigCVM/DevServer/Breakpoint.hpp>
+
 namespace ws = websocketpp;
 
 namespace rigc::vm
@@ -20,6 +22,23 @@ public:
 
 	void enqueueMessage(String msg_);
 
+	auto& getConnections() const {
+		return _connections;
+	}
+
+	std::atomic_bool		suspended = true; // This doesn't have to be atomic
+	std::atomic_uint64_t	suspensionId = 0;
+
+
+	/// <summary>
+	/// Suspends the current thread until `suspended` is false.
+	/// </summary>
+	void waitForContinue(ch::microseconds sleepInterval = ch::milliseconds(100));
+
+	void waitForConnection(ch::microseconds sleepInterval = ch::milliseconds(100));
+
+
+	std::function<void(DynArray<Breakpoint>)> onBreakpointsUpdated;
 private:
 	using ConnectionSet = std::set<ws::connection_hdl, std::owner_less<ws::connection_hdl>>;
 
