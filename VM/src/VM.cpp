@@ -11,9 +11,11 @@
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
+#include <RigCVM/DevServer/Instance.hpp>
 #include <RigCVM/DevServer/Messaging.hpp>
 #include <RigCVM/DevServer/Utils.hpp>
 
+#include <RigCVM/Helper/String.hpp>
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
 namespace rigc::vm
@@ -93,7 +95,10 @@ auto Instance::evaluateModule(Module& module_) -> void
 	{
 		this->evaluate(*stmt);
 	}
-	currentModule = prevModule;
+
+	if (prevModule) {
+		currentModule = prevModule;
+	}
 }
 
 //////////////////////////////////////////
@@ -158,10 +163,69 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 		throw RigCError("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName)
 						.withLine(lastEvaluatedLine);
 
+#if DEBUG
+	if (onInitializeDevTools) {
+		onInitializeDevTools();
+	}
+
+	if (settings->warmupDuration.count() > 0) {
+		devserverLog("Warmup (time: {} ms)...\n", settings->warmupDuration.count());
+		std::this_thread::sleep_for(settings->warmupDuration);
+	}
+#endif
+
+	sendDebugMessage(fmt::format(R"msg(
+{{
+	"type": "stack",
+	"action": "setBaseAddress",
+	"data": "{}"
+}}
+)msg", intptr_t(stack.data())));
+
+#if DEBUG
+	if (settings->waitForConnection)
+	{
+		devserverLog("Waiting for debugger to connect...\n");
+		g_devServer->waitForConnection();
+		sendDebugMessage(fmt::format(R"msg(
+{{
+	"type": "session",
+	"action": "started"
+}}
+		)msg"));
+
+		g_devServer->waitForContinue();
+
+
+		devserverLog("Execution started...\n");
+	}
+#endif
+
 	this->executeFunction(*(*mainFuncOv)[0]);
+
+#if DEBUG
+		sendDebugMessage(fmt::format(R"msg(
+{{
+	"type": "session",
+	"action": "finished"
+}}
+		)msg"));
+#endif
 
 	return 0;
 }
+
+//////////////////////////////////////////
+
+#if DEBUG
+
+void Instance::updateBreakpoints(DynArray<Breakpoint> breakpoints)
+{
+	auto lock = std::scoped_lock(breakpointsMutex);
+	this->breakpoints = std::move(breakpoints);
+}
+
+#endif
 
 //////////////////////////////////////////
 auto Instance::allocateReference(Value const& toValue_) -> Value
@@ -228,7 +292,7 @@ auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -
 #if DEBUG
 	if (settings->functionCallDelay.count() > 0)
 	{
-		std::this_thread::sleep_for(settings->functionCallDelay);
+		tt::sleep_for(settings->functionCallDelay);
 	}
 #endif
 
@@ -391,6 +455,43 @@ R"msg(
 	return retVal;
 }
 
+auto Instance::tryHitBreakpoint(rigc::ParserNode const& node) -> bool
+{
+	auto lock = std::scoped_lock(breakpointsMutex);
+
+	if (lastExecutedNode && lastExecutedNode->m_begin.line != node.m_begin.line)
+	{
+		auto it = rg::find(breakpoints, node.m_begin.line - 1, &Breakpoint::line);
+
+		if (it != breakpoints.end()) {
+			// devserverLog("Hit breakpoint at line {}, suspending with id: {}\n", node.m_begin.line, uint64_t(g_devServer->suspensionId));
+			sendDebugMessage(fmt::format(
+				R"msg(
+				{{
+					"type": "breakpoint",
+					"action": "hit",
+					"id": "{}",
+					"line": {},
+					"column": {},
+					"file": "{}",
+					"suspensionId": "{}"
+				}}
+				)msg",
+				it->id,
+				it->line,
+				node.m_begin.column - 1,
+				currentModule->absolutePath.filename().string(),
+				uint64_t(g_devServer->suspensionId)
+			));
+
+			g_devServer->suspended = true;
+			g_devServer->waitForContinue();
+			return true;
+		}
+	}
+	return false;
+}
+
 //////////////////////////////////////////
 auto Instance::evaluate(rigc::ParserNode const& stmt_) -> OptValue
 {
@@ -406,6 +507,12 @@ auto Instance::evaluate(rigc::ParserNode const& stmt_) -> OptValue
 	auto it = Executors.find( stmt_.type.substr( prefix.size() ));
 	if (it != Executors.end())
 	{
+#if DEBUG
+		this->tryHitBreakpoint(stmt_);
+
+		lastExecutedNode = &stmt_;
+#endif
+
 		auto val = it->second(*this, stmt_);
 		return val;
 	}
@@ -669,7 +776,26 @@ R"(
 		"address": {}
 	}}
 }}
-)", typeWholeName, typeFirstLetter, val.type->size(), stack.size) // the address will be an offset from the stack which is it's size
+)", typeWholeName, typeFirstLetter, val.type->size(), prevSize) // the address will be an offset from the stack which is it's size
+	);
+
+	auto stackContentString = std::string();
+	stackContentString.reserve(256 * 8);
+	for (size_t i = 0; i < 256; ++i)
+	{
+		if (i > 0)
+			stackContentString += ", ";
+		stackContentString += fmt::format("{}", int(stack.data()[i]));
+	}
+
+	sendDebugMessage(fmt::format(
+R"(
+{{
+	"type": "stack",
+	"action": "update",
+	"data": [{}]
+}}
+)", stackContentString) // the address will be an offset from the stack which is it's size
 	);
 #endif
 
@@ -701,7 +827,7 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 {
 	Scope& scope = scopeOf(addr_);
 
-	if (!scope.parent)
+	if (!scope.parent && addr_)
 		scope.parent = currentScope;
 
 	currentScope = &scope;
@@ -709,7 +835,7 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 	frame.scope = &scope;
 
 #if DEBUG
-	if(addr_ != nullptr)
+	if(addr_ == nullptr)
 	{
 		return scope;
 	}
@@ -719,16 +845,26 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 		scope.name = std::move(name);
 	}
 
+	auto escape = [](std::string s) {
+		replaceAll(s, "\\", "\\\\");
+		replaceAll(s, "\"", "\\\"");
+		replaceAll(s, "\n", "\\n");
+		replaceAll(s, "\r", "\\r");
+		replaceAll(s, "\t", "\\t");
+		return s;
+	};
+
 	sendDebugMessage(fmt::format(
 R"(
 {{
 	"type": "stack",
 	"action": "pushFrame",
 	"data": {{
+		"name": "{}",
 		"initialSize": "{}"
 	}}
 }}
-)", frame.initialStackSize)
+)", escape(name), frame.initialStackSize)
 	);
 
 #endif

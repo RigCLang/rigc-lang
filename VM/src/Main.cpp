@@ -5,6 +5,8 @@
 #include <RigCVM/ErrorHandling/Formatting.hpp>
 #include <RigCVM/Helper/String.hpp>
 #include <RigCVM/DevServer/Instance.hpp>
+#include <RigCVM/DevServer/Breakpoint.hpp>
+#include <RigCVM/DevServer/Utils.hpp>
 #include <RigCVM/Settings.hpp>
 
 #include <fmt/color.h>
@@ -77,20 +79,23 @@ auto main(int argc, char* argv[]) -> int
 
 	auto server = [&settings, &fileStream] {
 		if(settings.logFilePath.empty()) {
-			return rvm::DevelopmentServer(nullptr);
+			return std::make_unique<rvm::DevelopmentServer>(nullptr);
 		}
 		else {
-			return rvm::DevelopmentServer(fileStream.get());
+			return std::make_unique<rvm::DevelopmentServer>(fileStream.get());
 		}
 	}();
 
-	rvm::g_devServer = &server;
-	auto serverThread = std::jthread([&]{ server.run(); });
+	rvm::g_devServer = server.get();
+	auto serverThread = std::jthread();
 
-	if (settings.warmupDuration.count() > 0) {
-		fmt::print("Warmup (time: {} ms)...\n", settings.warmupDuration.count());
-		std::this_thread::sleep_for(settings.warmupDuration);
-	}
+	instance.onInitializeDevTools = [&] {
+		serverThread = std::jthread([&]{ server->run(); });
+
+		server->onBreakpointsUpdated = [&](DynArray<rvm::Breakpoint> breakpoints) {
+			instance.updateBreakpoints( std::move(breakpoints) );
+		};
+	};
 
 	if (settings.skipRootExceptionCatching)
 		return instance.run(settings);
