@@ -33,6 +33,9 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 
 	scope_.addType(std::make_unique<FuncType>());
 	scope_.addType(std::make_unique<MethodType>());
+
+	auto addrOfChar = constructTemplateType<AddrType>(scope_, vm_.findType("Char")->shared_from_this());
+
 	// "allocateMemory" builtin function
 	{
 		auto func = Function{ &builtin::allocateMemory, {}, 0 };
@@ -45,11 +48,24 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	// "freeMemory" builtin function
 	{
 		auto func = Function{ &builtin::freeMemory, {}, 0 };
-		func.returnType = constructTemplateType<AddrType>(scope_, vm_.findType("Char")->shared_from_this());
+		func.returnType = addrOfChar;
 		func.variadic = true;
 		func.raw().name = "builtin::freeMemory";
 
 		scope_.registerFunction(vm_, "freeMemory", std::move(func));
+	}
+	// "printCharacters" builtin function
+	{
+		auto params = Function::Params();
+		params[0] = { "chars", addrOfChar };
+		params[1] = { "size", vm_.findType("Int32")->shared_from_this() };
+
+		auto func = Function{ &builtin::printCharacters, params, 2 };
+		func.returnType = addrOfChar;
+		func.variadic = false;
+		func.raw().name = "builtin::printCharacters";
+
+		scope_.registerFunction(vm_, "printCharacters", std::move(func));
 	}
 	// "print" builtin function
 	{
