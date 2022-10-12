@@ -32,10 +32,12 @@ struct EntryPoint
 	String functionName = String(DefaultFunctionName);
 };
 
+
 struct Instance
 {
-
 	InstanceSettings const* settings;
+
+	BuiltinTypes builtinTypes;
 
 	constexpr static auto StackSize	= std::size_t(2 * 1024 * 1024); // 2MB
 
@@ -49,6 +51,9 @@ struct Instance
 	auto getSelf() -> Value;
 
 	auto evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_ = nullptr) -> DeclType;
+
+	auto arrayOf(DeclType type_, size_t size_) -> MutDeclType;
+	auto arrayOf(IType const& type_, size_t size_) -> MutDeclType;
 
 	auto findVariableByName(StringView name_) -> OptValue;
 	auto findType(StringView name_) -> IType const*;

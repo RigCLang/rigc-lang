@@ -142,7 +142,7 @@ auto CreateCoreType(Instance &vm_, Scope& universeScope_, StringView name_, size
 				}; \
 			{ \
 				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
-				op.returnType = vm_.findType("Bool")->shared_from_this(); \
+				op.returnType = vm_.builtinTypes.Bool.shared(); \
 				op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
 						Incantation, \
 						infixParams[0].type->name(), infixParams[1].type->name(), \

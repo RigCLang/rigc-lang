@@ -18,7 +18,7 @@ auto allocateMemory(Instance &vm_, Function::ArgSpan args_) -> OptValue
 	auto size = args_[0].safeRemoveRef().view<int>();
 
 	auto mem = std::malloc(size);
-	auto type = vm_.findType("Char")->shared_from_this();
+	auto type = vm_.builtinTypes.Char.shared();
 	return vm_.allocatePointer( Value { type, mem } );
 }
 
@@ -97,7 +97,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 auto typeOf(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
 	auto name = args_[0].safeRemoveRef().type->name();
-	auto t = constructTemplateType<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), name.size());
+	auto t = vm_.arrayOf(*vm_.builtinTypes.Char.raw, name.size());
 
 	return vm_.allocateOnStack( t, name.data(), name.size() );
 }

@@ -73,7 +73,7 @@ auto AddrType::postInitialize(Instance& vm_) -> void
 
 
 		params[0] = { "self", this->shared_from_this() };
-		params[1] = { "rhs", vm_.findType("Int32")->shared_from_this() };
+		params[1] = { "rhs", vm_.builtinTypes.Int32.shared() };
 
 		auto& fn = vm_.universalScope().registerOperator(vm_, "+", Operator::Infix,
 			Function{

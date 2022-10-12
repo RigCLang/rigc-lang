@@ -49,7 +49,8 @@ auto evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 	replaceAll(s, "\\\\",	"\\");
 	replaceAll(s, "\\\"",	"\"");
 
-	auto type = constructTemplateType<ArrayType>(vm_.universalScope(), vm_.findType("Char")->shared_from_this(), s.size());
+
+	auto type = vm_.arrayOf(*vm_.builtinTypes.Char.raw, s.size());
 
 	return vm_.allocateOnStack( std::move(type), s.data(), s.size() );
 }
@@ -59,7 +60,7 @@ auto evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVal
 {
 	auto sv = expr_.string_view();
 
-	String s(sv, 1, sv.length() - 2);
+	auto s = String(sv, 1, sv.length() - 2);
 	replaceAll(s, "\\n",	"\n");
 	replaceAll(s, "\\t",	"\t");
 	replaceAll(s, "\\r",	"\r");
@@ -69,7 +70,7 @@ auto evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVal
 	replaceAll(s, "\\\"",	"\"");
 	char c = s[0];
 
-	return vm_.allocateOnStack( vm_.findType("Char")->shared_from_this(), c );
+	return vm_.allocateOnStack( vm_.builtinTypes.Char.shared(), c );
 }
 
 // ////////////////////////////////////////

@@ -275,8 +275,8 @@ auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 
 	auto const typeExpr = findNthElem<rigc::Name>(expr_, 2);
 
-	type->underlyingType = [&typeExpr, &vm_] {
-		if(!typeExpr) return vm_.findType("Int32");
+	type->underlyingType = [&typeExpr, &vm_]() -> IType const* {
+		if(!typeExpr) return vm_.builtinTypes.Int32.raw;
 
 		auto const underlying = vm_.findType(typeExpr->string_view());
 		if(!underlying)

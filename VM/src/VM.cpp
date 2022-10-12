@@ -644,7 +644,7 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) ->
 			// TEMP:
 			auto size	= std::stoi(templateParams->children[1]->string());
 
-			return constructTemplateType<ArrayType>(this->universalScope(), inner, size);
+			return this->arrayOf(inner, size);
 		}
 	}
 
@@ -653,6 +653,16 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) ->
 		return traceResult->value->shared_from_this();
 	}
 	return nullptr;
+}
+
+auto Instance::arrayOf(DeclType type_, size_t size_) -> MutDeclType
+{
+	return constructTemplateType<ArrayType>(this->universalScope(), std::move(type_), size_);
+}
+
+auto Instance::arrayOf(IType const& type_, size_t size_) -> MutDeclType
+{
+	return this->arrayOf(type_.shared_from_this(), size_);
 }
 
 //////////////////////////////////////////

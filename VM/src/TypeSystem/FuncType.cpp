@@ -42,7 +42,7 @@ auto FuncType::postInitialize(Instance& vm_) -> void
 auto FuncType::name() const -> String
 {
 	if (!result && parameters.empty())
-		return String(BuiltinTypes::OverloadedFunction);
+		return String(builtin_types::OverloadedFunction);
 
 	String ret = "Func<" + result->name();
 	for (auto const& param : parameters) {
@@ -57,7 +57,7 @@ auto FuncType::name() const -> String
 auto MethodType::name() const -> String
 {
 	if (!result && parameters.empty())
-		return String(BuiltinTypes::OverloadedMethod);
+		return String(builtin_types::OverloadedMethod);
 
 	String ret = "Method<" + classType->name() + ", " + result->name();
 	for (auto const& param : parameters) {
@@ -78,7 +78,7 @@ auto allocateMethodOverloads(Instance& vm_, Value self_, FunctionOverloads const
 	buf[0] = overloads_;
 	buf[1] = self_.data;
 
-	auto type = vm_.findType(BuiltinTypes::OverloadedMethod);
+	auto type = vm_.findType(builtin_types::OverloadedMethod);
 	return vm_.allocateOnStack(type->shared_from_this(), (void const*)buf, sizeof(buf));
 }
 }
