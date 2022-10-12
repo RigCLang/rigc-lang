@@ -17,8 +17,8 @@ struct FuncType : IType
 
 	bool isVariadic = false;
 
-	auto name() const -> std::string override;
-	auto symbolName() const -> std::string override {
+	auto name() const -> String override;
+	auto symbolName() const -> String override {
 		return "Func";
 	}
 
@@ -42,8 +42,8 @@ struct MethodType : IType
 	std::vector<InnerType> parameters;
 
 
-	auto name() const -> std::string override;
-	auto symbolName() const -> std::string override {
+	auto name() const -> String override;
+	auto symbolName() const -> String override {
 		return "Method";
 	}
 

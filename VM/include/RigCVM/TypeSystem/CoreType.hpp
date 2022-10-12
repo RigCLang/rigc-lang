@@ -32,7 +32,7 @@ private:
 			sizeof(bool)
 		});
 
-	static constexpr auto Names = std::to_array<std::string_view>({
+	static constexpr auto Names = std::to_array<StringView>({
 			"Void",
 			"Int16",	"Int32",	"Int64",
 			"Uint16",	"Uint32",	"Uint64",
@@ -66,7 +66,7 @@ public:
 		#undef ELSE_HANDLE_TYPE
 	}
 
-	auto toString() const -> std::string_view
+	auto toString() const -> StringView
 	{
 		return Names[static_cast<int>(kind)];
 	}
@@ -76,9 +76,9 @@ public:
 		return Sizes[static_cast<int>(kind)];
 	}
 
-	auto name() const -> std::string override
+	auto name() const -> String override
 	{
-		return std::string(this->toString());
+		return String(this->toString());
 	}
 
 	auto decay() const -> InnerType override

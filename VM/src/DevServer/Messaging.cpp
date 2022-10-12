@@ -8,12 +8,12 @@
 namespace rigc::vm
 {
 
-void sendDebugMessage(std::string const& msg_)
+void sendDebugMessage(String const& msg_)
 {
 	g_devServer->enqueueMessage(msg_);
 }
 
-auto serializeLogLevel(LogLevel level_) -> std::string_view
+auto serializeLogLevel(LogLevel level_) -> StringView
 {
 	switch (level_)
 	{
@@ -26,9 +26,9 @@ auto serializeLogLevel(LogLevel level_) -> std::string_view
 
 
 
-void sendLogMessage(LogLevel level_, std::string_view msg_)
+void sendLogMessage(LogLevel level_, StringView msg_)
 {
-	auto escaped = std::string(msg_);
+	auto escaped = String(msg_);
 	rigc::vm::replaceAll(escaped, "\"", "\\\"");
 
 	sendDebugMessage(fmt::format(

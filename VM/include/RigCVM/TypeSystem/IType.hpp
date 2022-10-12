@@ -19,7 +19,7 @@ using DeclType		= InnerType;
 using MutDeclType	= MutInnerType;
 
 using TemplateArgument	= ExtendedVariant<int, DeclType>; // int as a placeholder
-using TemplateArguments	= std::map<std::string, TemplateArgument, std::less<>>;
+using TemplateArguments	= std::map<String, TemplateArgument, std::less<>>;
 
 using FunctionOverloads	= std::vector<Function*>;
 
@@ -36,12 +36,12 @@ struct IType : public std::enable_shared_from_this<IType>
 	///		Complete, unique name of a type.
 	///		Includes template params, etc., i.e. `Array<Char, 14>`
 	///	</summary>
-	virtual auto name() const -> std::string = 0;
+	virtual auto name() const -> String = 0;
 
 	///	<summary>
 	///		Symbol name of the type without template params (i.e. "Array")
 	///	</summary>
-	virtual auto symbolName() const -> std::string {
+	virtual auto symbolName() const -> String {
 		return this->name();
 	}
 
@@ -63,7 +63,7 @@ struct IType : public std::enable_shared_from_this<IType>
 	///	<summary>
 	///		Returns the string that is used to calculate hash of this type.
 	///	</summary>
-	virtual auto hashBasis() const -> std::string {
+	virtual auto hashBasis() const -> String {
 		return this->name();
 	}
 
@@ -71,10 +71,10 @@ struct IType : public std::enable_shared_from_this<IType>
 	///		Returns the hash of this type.
 	///	</summary>
 	virtual auto hash() const -> std::size_t {
-		return std::hash<std::string>{}(this->hashBasis());
+		return std::hash<String>{}(this->hashBasis());
 	}
 
-	using MethodsMap = UMap<std::string_view, DynArray<Function*>>;
+	using MethodsMap = UMap<StringView, DynArray<Function*>>;
 	MethodsMap methods;
 
 	template <std::derived_from<IType> T>
@@ -92,7 +92,7 @@ struct IType : public std::enable_shared_from_this<IType>
 		return dynamic_cast<T*>(this);
 	}
 
-	auto addMethod(std::string_view name_, Function* func_) -> void;
+	auto addMethod(StringView name_, Function* func_) -> void;
 
 	virtual auto getTemplateArguments() const -> std::vector<TemplateArgument> const&
 	{
@@ -115,6 +115,6 @@ struct SafeCoreTypeSize<void> {
 };
 
 template <typename T>
-auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_ = SafeCoreTypeSize<T>::value) -> IType*;
+auto CreateCoreType(Instance &vm_, Scope& universeScope_, StringView name_, size_t size_ = SafeCoreTypeSize<T>::value) -> IType*;
 
 }

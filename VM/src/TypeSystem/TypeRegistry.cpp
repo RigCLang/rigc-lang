@@ -5,21 +5,21 @@
 namespace rigc::vm
 {
 //////////////////////////////////////////
-auto TypeRegistry::exists(std::string_view hash_) const
+auto TypeRegistry::exists(StringView hash_) const
 	-> bool
 {
 	return types.find(Hasher{}(hash_)) != types.end();
 }
 
 //////////////////////////////////////////
-auto TypeRegistry::find(std::string_view hashBasis_) const
+auto TypeRegistry::find(StringView hashBasis_) const
 	-> DeclType
 {
 	return this->find(Hasher{}(hashBasis_));
 }
 
 //////////////////////////////////////////
-auto TypeRegistry::find(std::string_view hashBasis_)
+auto TypeRegistry::find(StringView hashBasis_)
 	-> MutDeclType
 {
 	return this->find(Hasher{}(hashBasis_));

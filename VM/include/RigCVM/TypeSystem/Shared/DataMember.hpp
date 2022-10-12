@@ -6,9 +6,9 @@
 namespace rigc::vm
 {
 
-struct DataMember 
+struct DataMember
 {
-	std::string	name;
+	String	name;
 	DeclType	type;
 	size_t		offset = 0;
 };

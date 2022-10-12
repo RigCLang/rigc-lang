@@ -39,7 +39,7 @@ auto evaluateStringLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 {
 	auto sv = expr_.string_view();
 
-	std::string s(sv, 1, sv.length() - 2);
+	String s(sv, 1, sv.length() - 2);
 	s.reserve(s.size() * 2);
 	replaceAll(s, "\\n",	"\n");
 	replaceAll(s, "\\t",	"\t");
@@ -59,7 +59,7 @@ auto evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVal
 {
 	auto sv = expr_.string_view();
 
-	std::string s(sv, 1, sv.length() - 2);
+	String s(sv, 1, sv.length() - 2);
 	replaceAll(s, "\\n",	"\n");
 	replaceAll(s, "\\t",	"\t");
 	replaceAll(s, "\\r",	"\r");

@@ -12,14 +12,14 @@ enum class LogLevel
 	Error,
 };
 
-auto serializeLogLevel(LogLevel level_) -> std::string_view;
+auto serializeLogLevel(LogLevel level_) -> StringView;
 
-void sendDebugMessage(std::string const& msg_);
+void sendDebugMessage(String const& msg_);
 
-void sendLogMessage(LogLevel level_, std::string_view msg_);
+void sendLogMessage(LogLevel level_, StringView msg_);
 
 template <typename Arg, typename... Args>
-void sendLogMessage(LogLevel level_, std::string_view msg_, Arg&& arg_, Args&&... args_)
+void sendLogMessage(LogLevel level_, StringView msg_, Arg&& arg_, Args&&... args_)
 {
 	sendLogMessage(level_, fmt::format(msg_, std::forward<Arg>(arg_), std::forward<Args>(args_)...));
 }

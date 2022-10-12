@@ -100,7 +100,7 @@ DEFINE_BUILTIN_PREFIX_OP(PreDecrement, --);
 
 //////////////////////////////////////
 template <typename T>
-auto CreateCoreType(Instance &vm_, Scope& universeScope_, std::string_view name_, size_t size_) -> IType*
+auto CreateCoreType(Instance &vm_, Scope& universeScope_, StringView name_, size_t size_) -> IType*
 {
 	auto t = std::make_shared<CoreType>(CoreType::fromCppType<T>());
 	universeScope_.addType(t);
@@ -272,7 +272,7 @@ auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& fro
 }
 
 template <typename T>
-auto addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_) -> void
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, StringView from_, StringView to_, ConversionFunc& func_) -> void
 {
 	addTypeConversion<T>(
 			vm_, universeScope_,
@@ -283,9 +283,9 @@ auto addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view fr
 }
 
 #define LINK_BUILTIN_TYPE(TypeName) \
-	template IType* CreateCoreType<TypeName>(Instance&, Scope&, std::string_view, size_t); \
+	template IType* CreateCoreType<TypeName>(Instance&, Scope&, StringView, size_t); \
 	template auto addTypeConversion<TypeName>(Instance&, Scope&, DeclType const&, DeclType const&, ConversionFunc&) -> void; \
-	template auto addTypeConversion<TypeName>(Instance&, Scope&, std::string_view, std::string_view, ConversionFunc&) -> void
+	template auto addTypeConversion<TypeName>(Instance&, Scope&, StringView, StringView, ConversionFunc&) -> void
 
 
 LINK_BUILTIN_TYPE(void);

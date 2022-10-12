@@ -10,7 +10,7 @@ namespace rigc::vm
 {
 
 //////////////////////////////////////
-auto IType::addMethod(std::string_view name_, Function* func_) -> void
+auto IType::addMethod(StringView name_, Function* func_) -> void
 {
 	this->methods[name_].push_back(func_);
 	func_->outerType = this;

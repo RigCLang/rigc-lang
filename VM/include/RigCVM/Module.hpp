@@ -21,10 +21,10 @@ public:
 	{
 	}
 
-	std::unique_ptr<rigc::ParserNode const>	root;
-	std::unique_ptr<pegtl::file_input<>>	fileInput;
-	fs::path				absolutePath;
-	std::vector<Module*>	importedModules;
+	UniquePtr<rigc::ParserNode const>	root;
+	UniquePtr<pegtl::file_input<>>		fileInput;
+	FsPath								absolutePath;
+	DynArray<Module*>					importedModules;
 
 	State state = State::Unresolved;
 };

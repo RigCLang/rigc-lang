@@ -15,7 +15,7 @@ public:
 	using Super = StructuralType;
 
 	DeclType underlyingType;
-	std::unordered_map<std::string, Value> fields;
+	std::unordered_map<String, Value> fields;
 
 	auto add(DataMember mem, OptValue const& val) -> void;
 	auto postInitialize(Instance& vm) -> void;

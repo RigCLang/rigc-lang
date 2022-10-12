@@ -24,7 +24,7 @@ auto formatFunctionSignature(rigc::ParserNode const& node) {
 		+ (returnType ? returnType->string() : "");
 }
 
-auto stripBlockAndWhitespace(std::string& str) {
+auto stripBlockAndWhitespace(String& str) {
 	auto const firstAlphaCharIt = rg::find_if(str, ::isalpha);
 
 	auto const begin = rg::begin(str);
@@ -53,7 +53,7 @@ auto formatCodeBlock(rigc::ParserNode const& node) {
 	if(nodeString.length() > maxLabelNameLen) {
 		return
 			nodeString.substr(0, maxAllowedLen)
-				+ std::string(overflowIndicator);
+				+ String(overflowIndicator);
 	} else {
 		return nodeString;
 	}
@@ -63,7 +63,7 @@ auto formatCodeBlock(rigc::ParserNode const& node) {
 
 namespace rigc::vm {
 
-auto formatStackFrameLabel(ParserNode const& node) -> std::string {
+auto formatStackFrameLabel(ParserNode const& node) -> String {
 	auto const isFunctionDefinition = node.is_type<rigc::FunctionDefinition>();
 
 	if(isFunctionDefinition) {

@@ -40,7 +40,7 @@ struct Styles {
 	fmt::text_style Yellow	= fmt::fg(fmt::color::yellow);
 };
 
-using ArgPair = std::pair<char const*, std::string>;
+using ArgPair = std::pair<char const*, String>;
 
 inline Styles const& s() {
 	static auto instance = Styles{};

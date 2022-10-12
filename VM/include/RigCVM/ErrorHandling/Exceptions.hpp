@@ -8,9 +8,9 @@
 
 struct RigCError : std::exception
 {
-	std::string basicMessage;
+	String basicMessage;
 
-	std::string helpMessage;
+	String helpMessage;
 	std::size_t lineNum = 0;
 
 public:
@@ -21,8 +21,8 @@ public:
 	{
 	}
 
-	auto what() const noexcept -> const char* override { 
-		return basicMessage.c_str(); 
+	auto what() const noexcept -> const char* override {
+		return basicMessage.c_str();
 	}
 
 	template <typename... Args>
@@ -38,7 +38,7 @@ public:
 		return *this;
 	}
 
-	auto help() const -> std::string const& { return helpMessage; }
+	auto help() const -> String const& { return helpMessage; }
 	auto lineNumber() const -> std::size_t{ return lineNum; }
 };
 

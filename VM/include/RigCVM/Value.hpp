@@ -21,7 +21,7 @@ struct ValueBase
 		return type;
 	}
 
-	auto typeName() const -> std::string {
+	auto typeName() const -> String {
 		auto decayed = type->decay();
 		return (decayed ? decayed.get() : type.get())->name();
 	}
@@ -66,7 +66,7 @@ struct Value : ValueBase
 	auto removePtr() const-> Value;
 };
 
-auto dump(Instance& vm_, Value const& value_)-> std::string;
+auto dump(Instance& vm_, Value const& value_)-> String;
 
 struct CompileTimeValue : ValueBase
 {
@@ -120,5 +120,5 @@ using ConversionFunc = OptValue(Instance &, Value const&);
 template <typename T>
 auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_) -> void;
 template <typename T>
-auto addTypeConversion(Instance &vm_, Scope& universeScope_, std::string_view from_, std::string_view to_, ConversionFunc& func_) -> void;
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, StringView from_, StringView to_, ConversionFunc& func_) -> void;
 }

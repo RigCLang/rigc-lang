@@ -23,13 +23,13 @@ class StructuralType;
 
 struct EntryPoint
 {
-	constexpr static auto DefaultFunctionName = std::string_view("main");
+	constexpr static auto DefaultFunctionName = StringView("main");
 
 	/// Module that contains the entry point.
 	Module* module_ = nullptr;
 
 	/// Name of the function that is executed first when the script is run.
-	std::string functionName = std::string(DefaultFunctionName);
+	String functionName = String(DefaultFunctionName);
 };
 
 struct Instance
@@ -50,15 +50,13 @@ struct Instance
 
 	auto evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_ = nullptr) -> DeclType;
 
-	auto findVariableByName(std::string_view name_) -> OptValue;
-	auto findType(std::string_view name_) -> IType const*;
-	auto findFunction(std::string_view name_) -> FunctionCandidates;
+	auto findVariableByName(StringView name_) -> OptValue;
+	auto findType(StringView name_) -> IType const*;
+	auto findFunction(StringView name_) -> FunctionCandidates;
 
 	auto tryConvert(Value value_, DeclType const& to_) -> OptValue;
 
 	auto cloneValue(Value value_) -> Value;
-
-	auto extendReturnValueLifetime(Value value_) -> void;
 
 	/// Address is related to the code block memory obtained from a parser.
 	auto scopeOf(void const *addr_) -> Scope&;
@@ -66,7 +64,7 @@ struct Instance
 	/// Pushes the stack frame for specified address that is used to acquire a scope.
 	/// Address is related to the code block memory obtained from a parser.
 #if DEBUG
-	auto pushStackFrameOf(void const* addr_, std::string name = "") -> Scope&;
+	auto pushStackFrameOf(void const* addr_, String name = "") -> Scope&;
 #else
 	auto pushStackFrameOf(void const* addr_) -> Scope&;
 #endif
@@ -103,7 +101,7 @@ struct Instance
 
 	/// Allocates stack space required for type specified by its `typeName_`, initialized with specified `value_`.
 	template <typename T>
-	auto allocateOnStack(std::string_view typeName_, T const& value_) -> Value
+	auto allocateOnStack(StringView typeName_, T const& value_) -> Value
 	{
 		auto type = this->findType(typeName_);
 		assert(type && "Unknown type.");
@@ -111,13 +109,13 @@ struct Instance
 		return this->allocateOnStack<T>( type->shared_from_this(), value_ );
 	}
 
-	auto parseModule(std::string_view name_) -> Module*;
+	auto parseModule(StringView name_) -> Module*;
 
 	auto evaluateModule(Module& module_) -> void;
-	auto findModulePath(std::string_view name_) const -> fs::path;
+	auto findModulePath(StringView name_) const -> fs::path;
 
-	std::set<fs::path>						loadedModules;
-	std::vector< std::shared_ptr<Module> >	modules;
+	Set<FsPath>					loadedModules;
+	DynArray<SharedPtr<Module>>	modules;
 
 	EntryPoint			entryPoint;
 
@@ -150,7 +148,7 @@ struct Instance
 
 	/// Maps memory address to a related scope.
 	/// Address might come from a parsed code (ParserNode)
-	std::map<void const*, std::unique_ptr<Scope>>	scopes;
+	Map<void const*, UniquePtr<Scope>>	scopes;
 
 	size_t lineAt(rigc::ParserNode const& node_) const;
 	size_t lastEvaluatedLine = 0;

@@ -121,7 +121,7 @@ auto Value::tryDestroy(Instance& vm_, bool destroyMembers_) -> void
 
 
 /////////////////////////////////////
-auto dump(Instance& vm_, Value const& value_) -> std::string
+auto dump(Instance& vm_, Value const& value_) -> String
 {
 	auto offset = reinterpret_cast<char const*>(value_.data) - vm_.stack.container.data();
 
@@ -160,7 +160,7 @@ auto dump(Instance& vm_, Value const& value_) -> std::string
 			return addr + fmt::format("{}", value_.view<bool>() ? "true" : "false");
 		else if (auto cl = type.as<ClassType>())
 		{
-			std::string str;
+			String str;
 			str.reserve(1024);
 			str += "{\n";
 			for (auto& dm : cl->dataMembers)

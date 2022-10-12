@@ -17,8 +17,8 @@ struct RefType;
 
 namespace BuiltinTypes
 {
-constexpr std::string_view OverloadedFunction = "<ovf>";
-constexpr std::string_view OverloadedMethod = "<ovm>";
+constexpr auto OverloadedFunction = StringView("<ovf>");
+constexpr auto OverloadedMethod = StringView("<ovm>");
 }
 
 struct Operator
@@ -28,11 +28,11 @@ struct Operator
 		Infix,
 		Postfix,
 	};
-	std::string_view	str;
+	StringView			str;
 	Type				type;
 };
 struct TypeImpl
 {
-	std::map<std::string_view, Function*>	methods;
+	Map<StringView, Function*>	methods;
 };
 }

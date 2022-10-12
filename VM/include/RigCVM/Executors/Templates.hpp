@@ -7,5 +7,5 @@
 namespace rigc::vm
 {
 ////////////////////////////////////////
-auto getTemplateParamList(rigc::ParserNode const& expr_) -> DynArray<Pair<std::string, TypeConstraint>>;
+auto getTemplateParamList(rigc::ParserNode const& expr_) -> DynArray<Pair<String, TypeConstraint>>;
 }

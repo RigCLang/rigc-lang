@@ -39,12 +39,12 @@ auto FuncType::postInitialize(Instance& vm_) -> void
 }
 
 //////////////////////////////////////
-auto FuncType::name() const -> std::string
+auto FuncType::name() const -> String
 {
 	if (!result && parameters.empty())
-		return std::string(BuiltinTypes::OverloadedFunction);
+		return String(BuiltinTypes::OverloadedFunction);
 
-	std::string ret = "Func<" + result->name();
+	String ret = "Func<" + result->name();
 	for (auto const& param : parameters) {
 		ret += ", ";
 		ret += param->name();
@@ -54,12 +54,12 @@ auto FuncType::name() const -> std::string
 }
 
 //////////////////////////////////////
-auto MethodType::name() const -> std::string
+auto MethodType::name() const -> String
 {
 	if (!result && parameters.empty())
-		return std::string(BuiltinTypes::OverloadedMethod);
+		return String(BuiltinTypes::OverloadedMethod);
 
-	std::string ret = "Method<" + classType->name() + ", " + result->name();
+	String ret = "Method<" + classType->name() + ", " + result->name();
 	for (auto const& param : parameters) {
 		ret += ", ";
 		ret += param->name();

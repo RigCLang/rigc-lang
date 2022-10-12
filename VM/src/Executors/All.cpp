@@ -16,7 +16,7 @@ namespace rigc::vm
 {
 #define MAKE_EXECUTOR(ClassName, Executor) { #ClassName, Executor }
 
-std::map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
+Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(ImportStatement,					executeImportStatement),
 	MAKE_EXECUTOR(CodeBlock,						executeCodeBlock),
 	MAKE_EXECUTOR(IfStatement,						executeIfStatement),
@@ -231,7 +231,7 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 
 	if (!vm_.currentScope->variables.contains(varName))
 	{
-		auto varNameStr = std::string(varName);
+		auto varNameStr = String(varName);
 		auto& var = vm_.currentScope->variables[varNameStr];
 		var = FrameBasedValue::fromAbsolute(value, vm_.stack.frames.back());
 	}
@@ -243,8 +243,8 @@ auto evaluateVariableDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 auto executeUnionDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	// auto const templateParamList = getTemplateParamList(expr_);
-	// std::pair<std::string, TypeConstraint>, string is a name,
-	// TypeConstraint is, for now, a struct with just a name (std::string)
+	// std::pair<String, TypeConstraint>, string is a name,
+	// TypeConstraint is, for now, a struct with just a name (String)
 	// TODO: actually do something with the template parameter list
 
 	auto type = std::make_shared<UnionType>();
@@ -308,8 +308,8 @@ auto executeEnumDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptV
 auto evaluateClassDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	// auto const templateParamList = getTemplateParamList(expr_);
-	// std::pair<std::string, TypeConstraint>, string is a name,
-	// TypeConstraint is, for now, a struct with just a name (std::string)
+	// std::pair<String, TypeConstraint>, string is a name,
+	// TypeConstraint is, for now, a struct with just a name (String)
 	// TODO: actually do something with the template parameter list
 
 	auto type = std::make_shared<ClassType>();
@@ -345,7 +345,7 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 	// TODO: this is a quick implementation, it should remain temporary and be remade later
 	if(auto const enumType = vm_.currentClass->as<EnumType>()) {
 		auto const type = enumType->underlyingType;
-		auto member = DataMember{ std::string(varName), std::move(type) };
+		auto member = DataMember{ String(varName), std::move(type) };
 
 		if(valueExpr)
 			enumType->add(std::move(member), ExpressionExecutor(vm_, *valueExpr).evaluate());
@@ -398,9 +398,9 @@ auto evaluateDataMemberDefinition(Instance &vm_, rigc::ParserNode const& expr_) 
 	// value = vm_.cloneValue(value);
 
 	if(auto unionType = vm_.currentClass->as<UnionType>())
-		unionType->add( DataMember{ std::string(varName), std::move(type) }, valueExpr);
+		unionType->add( DataMember{ String(varName), std::move(type) }, valueExpr);
 	else if(auto classType = vm_.currentClass->as<ClassType>())
-		classType->add( DataMember{ std::string(varName), std::move(type) }, valueExpr);
+		classType->add( DataMember{ String(varName), std::move(type) }, valueExpr);
 
 	return {};
 }

@@ -89,7 +89,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::formatOperatorName(std::string_view opName_, Operator::Type type_) -> StaticString<char, 512>
+auto Scope::formatOperatorName(StringView opName_, Operator::Type type_) -> StaticString<char, 512>
 {
 	constexpr char opPrefix[]		= "operator ";
 	constexpr char prefixOpText[]	= "pr";
@@ -154,7 +154,7 @@ auto testFunctionOverload(Function& func_, FunctionParamTypeSpan paramTypes_) ->
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::findFunction(std::string_view funcName_) const -> FunctionOverloads const*
+auto Scope::findFunction(StringView funcName_) const -> FunctionOverloads const*
 {
 	auto it = functions.find(funcName_);
 	if (it != functions.end())
@@ -303,9 +303,9 @@ auto tryDeduceTemplateParams(
 
 ///////////////////////////////////////////////////////////////
 auto Scope::tryGenerateFunction(
-		Instance &vm_,
-		std::string_view			funcName_,
-		FunctionParamTypeSpan		paramTypes_
+		Instance&				vm_,
+		StringView				funcName_,
+		FunctionParamTypeSpan	paramTypes_
 	) -> Function const*
 {
 	auto templIt = functionTemplates.find(funcName_);
@@ -373,7 +373,7 @@ auto Scope::tryGenerateFunction(
 				}
 			}
 
-			auto paramsString = std::string();
+			auto paramsString = String();
 			for (size_t i = 0; i < paramTypes_.size(); ++i)
 			{
 				if (i > 0)
@@ -463,7 +463,7 @@ auto findOverload(
 
 
 ///////////////////////////////////////////////////////////////
-auto Scope::findType(std::string_view typeName_) const -> IType const*
+auto Scope::findType(StringView typeName_) const -> IType const*
 {
 	{
 		if (auto type = types.find(typeName_).get())
@@ -492,7 +492,7 @@ auto Scope::findType(std::string_view typeName_) const -> IType const*
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::traceForType(std::string_view typeName_) const
+auto Scope::traceForType(StringView typeName_) const
 	-> Opt< ScopeTraceResult<IType const*> >
 {
 	auto type = findType(typeName_);
@@ -506,19 +506,19 @@ auto Scope::traceForType(std::string_view typeName_) const
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::findOperator(std::string_view opName_, Operator::Type type_) const -> FunctionOverloads const*
+auto Scope::findOperator(StringView opName_, Operator::Type type_) const -> FunctionOverloads const*
 {
 	auto fmtName = formatOperatorName(opName_, type_);
 	return this->findFunction(
-			std::string_view( fmtName.data(), fmtName.numChars )
+			StringView( fmtName.data(), fmtName.numChars )
 		);
 }
 
 
 ///////////////////////////////////////////////////////////////
-auto Scope::registerType(Instance& vm_, std::string_view name_, IType& type_) -> IType&
+auto Scope::registerType(Instance& vm_, StringView name_, IType& type_) -> IType&
 {
-	typeAliases[std::string(name_)] = &type_;
+	typeAliases[String(name_)] = &type_;
 
 	return type_;
 }
@@ -532,38 +532,38 @@ auto Scope::addType(MutDeclType type_) -> void
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::registerFunction(Instance& vm_, std::string_view name_, Function func_) -> Function&
+auto Scope::registerFunction(Instance& vm_, StringView name_, Function func_) -> Function&
 {
 	functionStorage.emplace_back( std::make_unique<Function>(std::move(func_)) );
 	Function& f = *functionStorage.back();
 
 	// TODO: ensure unique overload signature
-	FunctionOverloads& overloads = functions[ std::string(name_) ];
+	FunctionOverloads& overloads = functions[ String(name_) ];
 	overloads.emplace_back( &f );
 
 	return f;
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::registerFunctionTemplate(Instance& vm_, std::string_view name_, Function func_) -> Function&
+auto Scope::registerFunctionTemplate(Instance& vm_, StringView name_, Function func_) -> Function&
 {
 	functionStorage.emplace_back( std::make_unique<Function>(std::move(func_)) );
 	Function& f = *functionStorage.back();
 
 	// TODO: ensure unique overload signature
-	FunctionOverloads& overloads = functionTemplates[ std::string(name_) ];
+	FunctionOverloads& overloads = functionTemplates[ String(name_) ];
 	overloads.emplace_back( &f );
 
 	return f;
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::registerOperator(Instance& vm_, std::string_view name_, Operator::Type type_, Function func_) -> Function&
+auto Scope::registerOperator(Instance& vm_, StringView name_, Operator::Type type_, Function func_) -> Function&
 {
 	auto fmtName = formatOperatorName(name_, type_);
 	return this->registerFunction(
 			vm_,
-			std::string_view( fmtName.data(), fmtName.numChars ),
+			StringView( fmtName.data(), fmtName.numChars ),
 			std::move(func_)
 		);
 }
