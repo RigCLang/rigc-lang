@@ -10,7 +10,6 @@
 namespace rigc::vm::builtin
 {
 
-////////////////////////////////////////
 auto allocateMemory(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
 	if (args_.size() != 1)
@@ -30,6 +29,19 @@ auto freeMemory(Instance &vm_, Function::ArgSpan args_) -> OptValue
 
 	std::free(args_[0].safeRemoveRef().removePtr().data);
 	return {};
+}
+
+auto printCharacters(Instance &vm_, Function::ArgSpan args_) -> OptValue
+{
+	// Detect VM malfunction. Overload resolution should have prevented this.
+	assert((args_.size() == 2) && "builtin::printCharacters() called with wrong number of arguments.");
+
+	auto chars = &args_[0].removePtr().view<char>();
+	auto size = args_[1].view<int>();
+
+	fmt::print("{}", StringView(chars, size_t(size)));
+
+	return std::nullopt;
 }
 
 ////////////////////////////////////////
