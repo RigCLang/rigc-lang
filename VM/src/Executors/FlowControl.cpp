@@ -84,7 +84,7 @@ auto executeWhileStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptV
 
 	while (true)
 	{
-		StackFramePusher scope(vm_, *body);
+		auto scope = StackFramePusher(vm_, *body);
 
 		auto result = vm_.evaluate(expr);
 

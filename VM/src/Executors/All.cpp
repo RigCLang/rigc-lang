@@ -53,7 +53,7 @@ Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 ////////////////////////////////////////
 auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptValue
 {
-	StackFramePusher scope(vm_, codeBlock_);
+	auto scope = StackFramePusher(vm_, codeBlock_);
 
 	auto stmts = findElem<rigc::Statements>(codeBlock_);
 
@@ -81,7 +81,7 @@ auto executeCodeBlock(Instance &vm_, rigc::ParserNode const& codeBlock_) -> OptV
 ////////////////////////////////////////
 auto executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue
 {
-	StackFramePusher scope(vm_, stmt_);
+	auto scope = StackFramePusher(vm_, stmt_);
 
 	for (auto const& childStmt : stmt_.children)
 	{
