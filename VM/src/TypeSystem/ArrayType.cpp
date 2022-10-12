@@ -42,7 +42,7 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 				{
 					auto val = args_[0].removeRef();
 					return vm_.allocateOnStack(
-							vm_.findType("Int32")->shared_from_this(),
+							vm_.builtinTypes.Int32.shared(),
 							int(val.type->size())
 						);
 				},
@@ -50,7 +50,7 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 				1
 			}
 		);
-		fn.returnType = vm_.findType("Int32")->shared_from_this();
+		fn.returnType = vm_.builtinTypes.Int32.shared();
 		this->addMethod("size", &fn);
 	}
 }

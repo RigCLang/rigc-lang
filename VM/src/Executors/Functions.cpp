@@ -77,7 +77,7 @@ auto evaluateFunctionDefinition(Instance &vm_, rigc::ParserNode const& expr_) ->
 		// else: Leave the return type empty -> it has to be resolved for each instantiation
 	}
 	else
-		returnType = vm_.findType("Void")->shared_from_this();
+		returnType = vm_.builtinTypes.Void.shared();
 
 	Function::Params params;
 	size_t numParams = 0;
@@ -133,7 +133,7 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 		// else: Leave the return type empty -> it has to be resolved for each instantiation
 	}
 	else
-		returnType = vm_.findType("Void")->shared_from_this();
+		returnType = vm_.builtinTypes.Void.shared();
 
 	Function::Params params;
 	size_t numParams = 0;

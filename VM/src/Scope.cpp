@@ -15,7 +15,10 @@ namespace rigc::vm
 auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 {
 #define MAKE_BUILTIN_TYPE(CppName, RigCName) \
-	CreateCoreType<CppName>(vm_, scope_, #RigCName)
+	{ \
+		auto created = CreateCoreType<CppName>(vm_, scope_, #RigCName); \
+		vm_.builtinTypes.RigCName.raw = created; \
+	}
 
 	MAKE_BUILTIN_TYPE(void,		Void);
 	MAKE_BUILTIN_TYPE(bool,		Bool);
@@ -34,12 +37,12 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	scope_.addType(std::make_unique<FuncType>());
 	scope_.addType(std::make_unique<MethodType>());
 
-	auto addrOfChar = constructTemplateType<AddrType>(scope_, vm_.findType("Char")->shared_from_this());
+	auto addrOfChar = constructTemplateType<AddrType>(scope_, vm_.builtinTypes.Char.shared());
 
 	// "allocateMemory" builtin function
 	{
 		auto func = Function{ &builtin::allocateMemory, {}, 0 };
-		func.returnType = constructTemplateType<AddrType>(scope_, vm_.findType("Char")->shared_from_this());
+		func.returnType = addrOfChar;
 		func.variadic = true;
 		func.raw().name = "builtin::allocateMemory";
 
@@ -58,7 +61,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	{
 		auto params = Function::Params();
 		params[0] = { "chars", addrOfChar };
-		params[1] = { "size", vm_.findType("Int32")->shared_from_this() };
+		params[1] = { "size", vm_.builtinTypes.Int32.shared() };
 
 		auto func = Function{ &builtin::printCharacters, params, 2 };
 		func.returnType = addrOfChar;

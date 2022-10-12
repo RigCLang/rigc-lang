@@ -263,7 +263,7 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 		auto const rhs = rhs_.as<PendingAction>();
 		auto const rhsName = findElem<rigc::Name>(*rhs, false);
 
-		// FIXME: this is a qufickfix, need to figure out how to properly handle templated types
+		// FIXME: this is a quickfix, need to figure out how to properly handle templated types
 		if(!rhsName)
 			throw RigCError("Rhs of the conversion operator should be a valid identifier.")
 							.withHelp("Check the spelling of the rhs.")
