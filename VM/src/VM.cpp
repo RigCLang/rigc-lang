@@ -280,8 +280,8 @@ bool copyConstructOn(Instance& vm_, Value constructed_, Value const& copyFrom_)
 //////////////////////////////////////////
 auto Instance::executeFunction(Function const& func_, Function::ArgSpan args_) -> OptValue
 {
-	OptValue retVal;
-	OptValue result;
+	auto retVal = OptValue();
+	auto result = OptValue();
 
 	auto prevClassContext	= classContext;
 	auto prevStackFrames	= stack.frames.size();
@@ -330,7 +330,10 @@ R"msg(
 	// Raw function:
 	if (func_.isRaw())
 	{
+		// SIDENOTE: for some reason DynArray isn't resolved here correctly
+		// but the original type is.
 		auto processedArgs = std::vector( args_.begin(), args_.end() );
+
 		// Process parameters (conversions)
 		for (size_t i = 0; i < func_.paramCount; ++i)
 		{
@@ -602,7 +605,7 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) ->
 {
 	auto& scope = scope_ ? *scope_ : *currentScope;
 
-	DeclType evaluatedType;
+	auto evaluatedType = DeclType();
 	// Note:
 	// "Type" node might be either disambiguated ("name::<Params>") or not ("name<Params>")
 	// Sometimes not disambiguated notation is acceptable.
@@ -705,7 +708,7 @@ auto Instance::reserveOnStack(DeclType type_, bool lookBack_) -> FrameBasedValue
 
 	auto size = type_->size();
 
-	FrameBasedValue result;
+	auto result = FrameBasedValue();
 	result.type			= std::move(type_);
 	result.stackOffset	= stack.size - frame.initialStackSize;
 	if (lookBack_)
@@ -730,11 +733,11 @@ auto Instance::allocateOnStack(DeclType type_, void const* sourceBytes_, size_t 
 	size_t prevSize = stack.size;
 	stack.size = newSize;
 
-	char* bytes = stack.data() + prevSize;
+	auto bytes = stack.data() + prevSize;
 	if (sourceBytes_)
 		std::memcpy(bytes, sourceBytes_, toCopy);
 
-	Value val;
+	auto val = Value();
 	val.type = std::move(type_);
 	val.data = bytes;
 
@@ -807,13 +810,13 @@ auto Instance::pushStackFrameOf(void const* addr_, String name) -> Scope&
 auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 #endif
 {
-	Scope& scope = scopeOf(addr_);
+	auto& scope = scopeOf(addr_);
 
 	if (!scope.parent && addr_)
 		scope.parent = currentScope;
 
 	currentScope = &scope;
-	StackFrame& frame = stack.pushFrame();
+	auto& frame = stack.pushFrame();
 	frame.scope = &scope;
 
 #if DEBUG

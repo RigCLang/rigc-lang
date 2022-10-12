@@ -10,8 +10,8 @@ namespace rigc::vm
 
 struct Stack
 {
-	using DataContainer		= std::vector<char>;
-	using FrameContainer	= std::vector<StackFrame>;
+	using DataContainer		= DynArray<char>;
+	using FrameContainer	= DynArray<StackFrame>;
 
 	DataContainer	container;
 	FrameContainer	frames;
@@ -32,7 +32,7 @@ struct Stack
 
 	auto pushFrame() -> StackFrame&
 	{
-		StackFrame frame{this};
+		auto frame = StackFrame(this);
 		frame.initialStackSize = this->size;
 		frames.push_back(frame);
 
