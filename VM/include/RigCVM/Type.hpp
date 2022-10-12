@@ -2,7 +2,7 @@
 
 #include RIGCVM_PCH
 
-#include <RigCVM/ExtendedVariant.hpp>
+#include <RigCVM/Helper/ExtendedVariant.hpp>
 #include <RigCVM/TypeSystem/IType.hpp>
 #include <RigCVM/TypeSystem/CoreType.hpp>
 #include <RigCVM/TypeSystem/TypeRegistry.hpp>

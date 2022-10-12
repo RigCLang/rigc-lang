@@ -3,7 +3,7 @@
 #include RIGCVM_PCH
 
 #include <RigCVM/TypeSystem/IType.hpp>
-#include <RigCVM/ExtendedVariant.hpp>
+#include <RigCVM/Helper/ExtendedVariant.hpp>
 #include <RigCVM/Value.hpp>
 
 namespace rigc::vm

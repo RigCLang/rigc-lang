@@ -2,7 +2,7 @@
 
 #include RIGCVM_PCH
 
-#include <RigCVM/ExtendedVariant.hpp>
+#include <RigCVM/Helper/ExtendedVariant.hpp>
 
 namespace rigc::vm
 {
