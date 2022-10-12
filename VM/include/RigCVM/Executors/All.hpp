@@ -9,10 +9,10 @@ struct Instance;
 
 using OptValue = std::optional<struct Value>;
 
-using ExecutorTrigger	= std::string_view;
+using ExecutorTrigger	= StringView;
 using ExecutorFunction	= OptValue(Instance&, rigc::ParserNode const&);
 
-extern std::map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors;
+extern Map<ExecutorTrigger, ExecutorFunction*, std::less<> > Executors;
 
 #define DECLARE_EXECUTOR(Name) \
 	auto Name(Instance &vm_, rigc::ParserNode const& stmt_) -> OptValue;

@@ -39,10 +39,10 @@ DEFINE_BUILTIN_CONVERT_OP	(double,	Float64);
 #undef DEFINE_BUILTIN_CONVERT_OP
 
 //////////////////////////////////////////
-auto Instance::findModulePath(std::string_view name_) const -> fs::path
+auto Instance::findModulePath(StringView name_) const -> fs::path
 {
 	auto relativeTo	= fs::current_path();
-	auto path		= fs::path(std::string(name_));
+	auto path		= fs::path(String(name_));
 
 	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
 	{
@@ -66,7 +66,7 @@ auto Instance::findModulePath(std::string_view name_) const -> fs::path
 }
 
 //////////////////////////////////////////
-auto Instance::parseModule(std::string_view name_) -> Module*
+auto Instance::parseModule(StringView name_) -> Module*
 {
 	auto path = this->findModulePath(name_);
 
@@ -313,7 +313,7 @@ R"msg(
 	}}
 }}
 )msg",
-			std::string(classContext ? classContext->name() + " :: " : "") + std::string(fnName),
+			String(classContext ? classContext->name() + " :: " : "") + String(fnName),
 			modules.front()->absolutePath.filename().string(),
 			lastEvaluatedLine
 		)
@@ -387,7 +387,7 @@ R"msg(
 
 			if (!fnScope.variables.contains(param.name))
 			{
-				auto paramName = std::string(param.name);
+				auto paramName = String(param.name);
 				fnScope.variables[paramName] = paramFrameValue;
 			}
 		}
@@ -494,9 +494,9 @@ auto Instance::evaluate(rigc::ParserNode const& stmt_) -> OptValue
 
 // FIXME: a quickfix
 #ifdef _MSC_VER
-	constexpr std::string_view prefix = "struct rigc::";
+	constexpr auto prefix = StringView("struct rigc::");
 #elif defined(__GNUC__) || defined(__clang__)
-	constexpr std::string_view prefix = "rigc::";
+	constexpr auto prefix = StringView("rigc::");
 #endif
 
 	auto it = Executors.find( stmt_.type.substr( prefix.size() ));
@@ -540,7 +540,7 @@ auto Instance::getSelf() -> Value
 }
 
 //////////////////////////////////////////
-auto Instance::findVariableByName(std::string_view name_) -> OptValue
+auto Instance::findVariableByName(StringView name_) -> OptValue
 {
 	if (name_ == "stackSize")
 	{
@@ -653,7 +653,7 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) ->
 }
 
 //////////////////////////////////////////
-auto Instance::findType(std::string_view name_) -> IType const*
+auto Instance::findType(StringView name_) -> IType const*
 {
 	auto scope = currentScope;
 	while (scope)
@@ -671,7 +671,7 @@ auto Instance::findType(std::string_view name_) -> IType const*
 }
 
 //////////////////////////////////////////
-auto Instance::findFunction(std::string_view name_) -> FunctionCandidates
+auto Instance::findFunction(StringView name_) -> FunctionCandidates
 {
 	auto candidates = FunctionCandidates{};
 	candidates.reserve(10);
@@ -761,7 +761,7 @@ R"(
 )", typeWholeName, typeFirstLetter, val.type->size(), prevSize) // the address will be an offset from the stack which is it's size
 	);
 
-	auto stackContentString = std::string();
+	auto stackContentString = String();
 	stackContentString.reserve(256 * 8);
 	for (size_t i = 0; i < 256; ++i)
 	{
@@ -802,7 +802,7 @@ auto Instance::scopeOf(void const *addr_) -> Scope&
 
 //////////////////////////////////////////
 #ifdef DEBUG
-auto Instance::pushStackFrameOf(void const* addr_, std::string name) -> Scope&
+auto Instance::pushStackFrameOf(void const* addr_, String name) -> Scope&
 #else
 auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 #endif
@@ -827,7 +827,7 @@ auto Instance::pushStackFrameOf(void const* addr_) -> Scope&
 		scope.name = std::move(name);
 	}
 
-	auto escape = [](std::string s) {
+	auto escape = [](String s) {
 		replaceAll(s, "\\", "\\\\");
 		replaceAll(s, "\"", "\\\"");
 		replaceAll(s, "\n", "\\n");

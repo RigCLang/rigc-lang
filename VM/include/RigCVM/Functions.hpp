@@ -14,19 +14,19 @@ class ClassType;
 struct FunctionInstance
 {
 	rigc::ParserNode const* node;
-	std::optional<TemplateArguments> templateArguments = std::nullopt;
+	Opt<TemplateArguments> templateArguments = std::nullopt;
 };
 
 struct RawFunctionInstance
 {
-	using Type = OptValue(Instance&, std::span<Value>);
-	std::function< Type >	func;
-	std::string				name = "<builtin>";
+	using Type = OptValue(Instance&, Span<Value>);
+	Func< Type >	func;
+	String			name = "<builtin>";
 };
 
 struct FunctionParam
 {
-	std::string_view		name;
+	StringView				name;
 	DeclType				type;
 	rigc::ParserNode const*	typeNode = nullptr; // for unevaluated types in template functions
 };
@@ -34,11 +34,11 @@ struct FunctionParam
 struct Function
 {
 	constexpr static size_t MAX_PARAMS = 16;
-	using Params		= std::array<FunctionParam,	MAX_PARAMS>;
-	using Args			= std::array<Value,			MAX_PARAMS>;
+	using Params		= Array<FunctionParam,	MAX_PARAMS>;
+	using Args			= Array<Value,			MAX_PARAMS>;
 
-	using ParamSpan		= std::span<FunctionParam>;
-	using ArgSpan		= std::span<Value>;
+	using ParamSpan		= Span<FunctionParam>;
+	using ArgSpan		= Span<Value>;
 
 	using RuntimeFn		= FunctionInstance;
 
@@ -73,7 +73,7 @@ struct Function
 	{
 	}
 
-	Function(std::function<RawFn::Type> impl_, Params params_, size_t paramCount_)
+	Function(Func<RawFn::Type> impl_, Params params_, size_t paramCount_)
 		:
 		impl(RawFn{ impl_ }),
 		params(std::move(params_)),
@@ -86,7 +86,7 @@ struct Function
 		return impl.as<RuntimeFn>();
 	}
 
-	auto rawImpl() const -> std::function<RawFunctionInstance::Type> const&
+	auto rawImpl() const -> Func<RawFunctionInstance::Type> const&
 	{
 		return impl.as<RawFn>().func;
 	}
@@ -114,6 +114,6 @@ struct Function
 	}
 };
 
-using FunctionOverloads		= std::vector<Function*>;
-using FunctionCandidates	= std::vector< std::pair<Scope const*, FunctionOverloads const*> >;
+using FunctionOverloads		= DynArray< Function* >;
+using FunctionCandidates	= DynArray< Pair<Scope const*, FunctionOverloads const*> >;
 }

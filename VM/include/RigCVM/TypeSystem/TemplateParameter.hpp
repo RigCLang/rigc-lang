@@ -11,7 +11,7 @@ namespace rigc::vm
 
 struct TemplateParameter
 {
-	std::string name;
+	String name;
 
 	struct Type
 	{
@@ -24,14 +24,14 @@ struct TemplateParameter
 		Opt<CompileTimeValue>	defaultValue;
 	};
 
-	static auto value(std::string name_, DeclType type, CompileTimeValue value={}) -> TemplateParameter
+	static auto value(String name_, DeclType type, CompileTimeValue value={}) -> TemplateParameter
 	{
 		TemplateParameter param{std::move(name_)};
 		param.variant = Value{std::move(type), std::move(value)};
 		return param;
 	}
 
-	static auto type(std::string name_, DeclType default_ = nullptr) -> TemplateParameter
+	static auto type(String name_, DeclType default_ = nullptr) -> TemplateParameter
 	{
 		TemplateParameter param{std::move(name_)};
 		param.variant = Type{std::move(default_)};
@@ -40,13 +40,13 @@ struct TemplateParameter
 
 	auto isType() const -> bool { return variant.is<Type>(); }
 	auto isValue() const -> bool { return variant.is<Value>(); }
-	auto getDefaultType() const -> DeclType 
+	auto getDefaultType() const -> DeclType
 	{
 		return isType() ? variant.as<Type>().defaultType : nullptr;
 	}
 
 private:
-	TemplateParameter(std::string name_)
+	TemplateParameter(String name_)
 		: name(std::move(name_))
 	{
 	}

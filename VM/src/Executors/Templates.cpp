@@ -6,12 +6,12 @@
 namespace rigc::vm
 {
 ////////////////////////////////////////
-auto getTemplateParamList(rigc::ParserNode const& expr_) -> DynArray<Pair<std::string, TypeConstraint>>
+auto getTemplateParamList(rigc::ParserNode const& expr_) -> DynArray<Pair<String, TypeConstraint>>
 {
 	auto const templateParamList = findElem<rigc::TemplateDefParamList>(expr_);
 	if(not templateParamList) return {};
 
-	auto list = DynArray<Pair<std::string, TypeConstraint>>();
+	auto list = DynArray<Pair<String, TypeConstraint>>();
 
 	auto i = 0;
 	for(auto const& templateParam : templateParamList->children)

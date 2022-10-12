@@ -168,7 +168,7 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> ProcessedAction
 }
 
 ////////////////////////////////////////
-auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> ProcessedAction
+auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action& rhs_) -> ProcessedAction
 {
 	auto evalSide = [&](Action& side) -> Value { return *this->evalSingleAction(side).as<OptValue>(); };
 
@@ -305,7 +305,7 @@ auto ExpressionExecutor::evalInfixOperator(std::string_view op_, Action& lhs_, A
 	}
 }
 
-auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand, Operator::Type operatorType) {
+auto executeIncrementDecrement(Instance& vm, StringView op, Value& operand, Operator::Type operatorType) {
 	FunctionParamTypes types;
 	size_t typeIdx = 0;
 	types[typeIdx++] = operand.getType();
@@ -330,7 +330,7 @@ auto executeIncrementDecrement(Instance& vm, std::string_view op, Value& operand
 }
 
 ////////////////////////////////////////
-auto ExpressionExecutor::evalPrefixOperator(std::string_view op_, Action& rhs_) -> ProcessedAction
+auto ExpressionExecutor::evalPrefixOperator(StringView op_, Action& rhs_) -> ProcessedAction
 {
 	auto rhs = *this->evalSingleAction(rhs_).as<RuntimeValue>();
 
@@ -403,7 +403,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 		auto autoOverloadResolution = false;
 		auto candidates	= FunctionCandidates();
 		auto self		= OptValue();
-		auto fnName		= std::string_view();
+		auto fnName		= StringView();
 
 		if (lhs_.is<PendingAction>()) // lhs is yet to be processed
 		{
@@ -501,7 +501,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 		//
 		if (!fn) {
-			std::string paramsString;
+			String paramsString;
 			size_t paramNumber = 0;
 			for(size_t i = 0; paramNumber < numParams; ++i)
 			{

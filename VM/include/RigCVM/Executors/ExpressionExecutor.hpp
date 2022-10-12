@@ -13,7 +13,7 @@ struct Instance;
 struct ProcessedFunction {
 	FunctionCandidates	candidates;
 	OptValue			self={};
-	std::string_view	name={};
+	StringView	name={};
 };
 
 class ExpressionExecutor
@@ -41,8 +41,8 @@ private:
 
 	auto evalSingleAction(Action& lhs_) -> ProcessedAction;
 
-	auto evalInfixOperator(std::string_view op_, Action& lhs_, Action& rhs_) -> ProcessedAction;
-	auto evalPrefixOperator(std::string_view op_, Action& rhs_) -> ProcessedAction;
+	auto evalInfixOperator(StringView op_, Action& lhs_, Action& rhs_) -> ProcessedAction;
+	auto evalPrefixOperator(StringView op_, Action& rhs_) -> ProcessedAction;
 	auto evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction;
 
 	std::vector<Action> actions;

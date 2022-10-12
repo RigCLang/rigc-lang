@@ -7,7 +7,7 @@
 namespace rigc::vm
 {
 
-auto formatStackFrameLabel(ParserNode const&) -> std::string;
+auto formatStackFrameLabel(ParserNode const&) -> String;
 
 template <typename T, typename... Ts>
 inline void devserverLog(T&& t, Ts&&... ts)

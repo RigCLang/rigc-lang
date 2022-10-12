@@ -15,7 +15,7 @@ struct StaticString : std::array<T, MaxLength>
 	auto operator+=(StaticString<T, OtherLen> const& other_) -> StaticString&
 	{
 		size_t toAdd = std::min(OtherLen, MaxLength - numChars);
-		
+
 		for(size_t i = 0; i < toAdd; ++i)
 			(*this)[numChars + i] = other_[i];
 		numChars += toAdd;
@@ -38,7 +38,7 @@ struct StaticString : std::array<T, MaxLength>
 	}
 
 	constexpr
-	auto operator+=(std::string_view const& other_) -> StaticString&
+	auto operator+=(StringView const& other_) -> StaticString&
 	{
 		size_t toAdd = std::min(other_.length(), MaxLength - numChars);
 

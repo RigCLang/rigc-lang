@@ -43,7 +43,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 		return {};
 
 	auto chars = &format.view<char const>();
-	auto fmtView = std::string_view(chars, format.getType()->size());
+	auto fmtView = StringView(chars, format.getType()->size());
 
 	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
 	for (size_t c = 1; c < args_.size(); ++c)
@@ -68,7 +68,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 		{
 			auto chars = &val.view<char const>();
 
-			store.push_back(std::string(chars, type->size()));
+			store.push_back(String(chars, type->size()));
 		}
 		// else if (typeName == "Char")
 		// 	store.push_back(val.view<char>());
@@ -99,12 +99,12 @@ auto printMessage(Value const& msg) -> void
 
 	auto chars = &msg.view<const char>();
 
-	fmt::print("{}", std::string_view(chars, msg.getType()->size()));
+	fmt::print("{}", StringView(chars, msg.getType()->size()));
 }
 
 ////////////////////////////////////////
 template <typename CppType>
-auto executeRead(Instance &vm_, std::string_view rigcTypeName) -> OptValue
+auto executeRead(Instance &vm_, StringView rigcTypeName) -> OptValue
 {
 	auto data = CppType();
 	std::cin >> data; // scanf?

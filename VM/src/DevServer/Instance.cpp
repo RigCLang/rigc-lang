@@ -57,8 +57,8 @@ void DevelopmentServer::run()
 			// fmt::print("Got message:\n{}\n", msg->get_payload());
 
 			auto json = json::parse(msg->get_payload());
-			auto type = json.value("type", std::string(""));
-			auto action = json.value("action", std::string(""));
+			auto type = json.value("type", String(""));
+			auto action = json.value("action", String(""));
 			if (type == "session")
 			{
 				if (action == "continue" && std::stoull(json.value("suspensionId", "0")) == suspensionId)
