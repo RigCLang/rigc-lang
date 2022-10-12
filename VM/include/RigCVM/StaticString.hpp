@@ -5,8 +5,11 @@
 namespace rigc::vm
 {
 
+/// @brief Helper class for using Array as a static string.
+/// @tparam T
+/// @tparam MaxLength
 template <typename T, size_t MaxLength>
-struct StaticString : std::array<T, MaxLength>
+struct StaticString : Array<T, MaxLength>
 {
 	size_t numChars = 0;
 
