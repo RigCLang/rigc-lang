@@ -105,6 +105,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	// "readInt" builtin function
 	{
 		auto func = Function{ &builtin::readInt, {}, 0 };
+		func.returnType = vm_.builtinTypes.Int32.shared();
 		func.variadic = true;
 		func.raw().name = "builtin::readInt";
 
@@ -113,6 +114,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	// "readFloat" builtin function
 	{
 		auto func = Function{ &builtin::readFloat, {}, 0 };
+		func.returnType = vm_.builtinTypes.Float64.shared();
 		func.variadic = true;
 		func.raw().name = "builtin::readFloat";
 
