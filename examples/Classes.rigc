@@ -24,23 +24,23 @@ class Vector2
 		self.y = y;
 	}
 
-	length {
+	length -> Float32 {
 		ret sqrt(x*x + y*y);
 	}
 
-	plus (other: Vector2) {
+	plus (other: Vector2) -> Vector2 {
 		ret Vector2(x + other.x, y + other.y);
 	}
 
-	plus (scalar: Float32) {
+	plus (scalar: Float32) -> Vector2 {
 		ret Vector2(x + scalar, y + scalar);
 	}
 
-	minus (other: Vector2) {
+	minus (other: Vector2) -> Vector2 {
 		ret Vector2(x - other.x, y - other.y);
 	}
 
-	minus (scalar: Float32) {
+	minus (scalar: Float32) -> Vector2 {
 		ret Vector2(x - scalar, y - scalar);
 	}
 }

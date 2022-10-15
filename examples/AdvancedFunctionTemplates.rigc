@@ -12,7 +12,7 @@
 
 export
 template <Range: type_name, Elem: type_name>
-func indexOf(self: Range, elem: Elem)
+func indexOf(self: Range, elem: Elem) -> Int32
 {
 	for (var i = 0; i < self.size(); ++i)
 	{
@@ -24,7 +24,7 @@ func indexOf(self: Range, elem: Elem)
 
 export
 template <Range: type_name, Elem: type_name>
-func count(self: Range, elem: Elem)
+func count(self: Range, elem: Elem) -> Int32
 {
 	var c = 0;
 	for (var i = 0; i < self.size(); ++i)
@@ -37,7 +37,7 @@ func count(self: Range, elem: Elem)
 
 export
 template <Range: type_name, Elem: type_name>
-func contains(self: Range, elem: Elem)
+func contains(self: Range, elem: Elem) -> Bool
 {
 	for (var i = 0; i < self.size(); ++i)
 	{
@@ -49,13 +49,13 @@ func contains(self: Range, elem: Elem)
 
 export
 template <T: type_name, N: Int32>
-func length(self: Ref<Array<T, N>>)
+func length(self: Ref<Array<T, N>>) -> Int32
 {
 	ret N;
 }
 
 template <T: type_name>
-func squared(self: T) { ret self * self; }
+func squared(self: T) -> T { ret self * self; }
 
 template <T: type_name>
 func square(number: Ref<T>) {
@@ -73,7 +73,7 @@ func replace(self: Ref<Range>, from: From, to: To)
 }
 
 template <Range: type_name, From: type_name, To: type_name>
-func replaced(self: Range, from: From, to: To)
+func replaced(self: Range, from: From, to: To) -> Range
 {
 	for (var i = 0; i < self.size(); ++i)
 	{
@@ -92,7 +92,7 @@ func swap(a: Ref<T>, b: Ref<T>)
 }
 
 template <Range: type_name>
-func reversed(self: Range)
+func reversed(self: Range) -> Range
 {
 	for (var i = 0; i < self.size() / 2; ++i)
 	{

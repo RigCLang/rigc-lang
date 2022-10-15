@@ -1,18 +1,18 @@
 // Returns lower of the two floats
-export func min(a: Float32, b: Float32)
+export func min(a: Float32, b: Float32) -> Float32
 {
 	if (a < b)	ret a;
 	else		ret b;
 }
 
 // Returns bigger of the two floats
-export func max(a: Float32, b: Float32)
+export func max(a: Float32, b: Float32) -> Float32
 {
 	if (a > b)	ret a;
 	else		ret b;
 }
 
-export func min(a: Float64, b: Float64) {
+export func min(a: Float64, b: Float64) -> Float64 {
 	if (a < b) {
 		ret a;
 	} else {
@@ -20,7 +20,7 @@ export func min(a: Float64, b: Float64) {
 	}
 }
 
-export func max(a: Float64, b: Float64) {
+export func max(a: Float64, b: Float64) -> Float64 {
 	if (a > b) {
 		ret a;
 	} else {
@@ -28,7 +28,7 @@ export func max(a: Float64, b: Float64) {
 	}
 }
 
-export func sqrt(self: Float32)
+export func sqrt(self: Float32) -> Float32
 {
 	var x = self;
 	var y = 1.f;
@@ -40,7 +40,7 @@ export func sqrt(self: Float32)
 	ret x;
 }
 
-export func sqrt(self: Float64)
+export func sqrt(self: Float64) -> Float64
 {
 	var x = self;
 	var y = 1.;
@@ -52,7 +52,7 @@ export func sqrt(self: Float64)
 	ret x;
 }
 
-export func pow(self: Float64, exponent: Int32)
+export func pow(self: Float64, exponent: Int32) -> Float64
 {
 	var result = 1.0;
 	for(var i = 0; i < exponent; i++) {

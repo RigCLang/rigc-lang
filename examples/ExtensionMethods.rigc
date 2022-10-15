@@ -17,7 +17,7 @@ class Vector2 {
 		self.y = y;
 	}
 
-	length {
+	length -> Float32 {
 		ret sqrt(x*x + y*y);
 	}
 }
@@ -26,7 +26,7 @@ class Vector2 {
 // `self` is a keyword that makes this an extension method
 // That means you can call it with a dot. Example:
 // vec.plus(30.f)
-func plus(self: Vector2, scalar: Float32)
+func plus(self: Vector2, scalar: Float32) -> Vector2
 {
 	ret Vector2( self.x + scalar, self.y + scalar);
 }
