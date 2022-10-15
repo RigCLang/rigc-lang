@@ -36,7 +36,7 @@ auto printCharacters(Instance &vm_, Function::ArgSpan args_) -> OptValue;
 /// printCharacters("Hello, {}!\n", text);
 auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue;
 
-/// @brief Returns the type of the given value, as a StaticArray<Char, ?>.
+/// @brief Returns the type of the given value, as a Array<Char, ?>.
 ///
 /// @note This function will be completely reworked in the future because of
 /// varying return type (could not be properly compiled).
@@ -44,7 +44,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue;
 /// @example
 ///
 /// var text = "Hello, world!";
-/// print("{}\n", typeOf(text)); // prints "StaticArray<Char, 13>"
+/// print("{}\n", typeOf(text)); // prints "Array<Char, 13>"
 auto typeOf(Instance &vm_, Function::ArgSpan args_) -> OptValue;
 
 /// @brief Reads an int from standard input.

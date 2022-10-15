@@ -25,12 +25,12 @@ struct ArrayType : TemplateType
 	auto inner() const { return args.front().as<DeclType>(); }
 
 	auto name() const -> String override {
-		return fmt::format("StaticArray<{}, {}>", this->inner()->name(), this->count());
+		return fmt::format("Array<{}, {}>", this->inner()->name(), this->count());
 	}
 
 	auto symbolName() const -> String override
 	{
-		return "StaticArray";
+		return "Array";
 	}
 
 	auto count() const -> std::size_t
@@ -50,7 +50,7 @@ struct ArrayType : TemplateType
 
 	static auto hashWrapped(InnerType const& inner_, size_t count_) -> std::size_t
 	{
-		return std::hash<String>{}(fmt::format("StaticArray<{}, {}>", inner_->name(), count_));
+		return std::hash<String>{}(fmt::format("Array<{}, {}>", inner_->name(), count_));
 	}
 
 	auto postInitialize(Instance& vm_) -> void override;
