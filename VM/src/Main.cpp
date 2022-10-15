@@ -53,7 +53,7 @@ auto main(int argc, char* argv[]) -> int
 				"{Error}\n"
 				"    An unknown error occurred.\n"
 				"    No details available\n"
-				"    Please refer to https://github.com/PoetaKodu/pacc/issues\n",
+				"    Please refer to https://github.com/RigCLang/rigc-lang/issues\n",
 
 				fmt_args::error()
 			);
@@ -65,10 +65,14 @@ auto main(int argc, char* argv[]) -> int
 	auto instance = rvm::Instance();
 	auto settings = rvm::InstanceSettings();
 
-	tryCatch([&]{
-		settings = rvm::parseArgs(args);
-		return 0;
-	});
+	auto parsingResult = tryCatch([&]{
+			settings = rvm::parseArgs(args);
+			return 0;
+		});
+	if (parsingResult != 0)
+	{
+		return 1;
+	}
 
 	auto runGuarded = [&]{
 		return tryCatch([&]{ return instance.run(settings); });
