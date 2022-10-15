@@ -6,6 +6,7 @@
 #include <RigCVM/Functions.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
+#include <RigCVM/TypeSystem/ClassType.hpp>
 
 #include <RigCVM/Builtin/Functions.hpp>
 
@@ -342,23 +343,43 @@ auto Scope::tryGenerateFunction(
 		FunctionParamTypeSpan	paramTypes_
 	) -> Function const*
 {
+	auto functionOverloads = (FunctionOverloads*)(nullptr);
+
 	auto templIt = functionTemplates.find(funcName_);
 	if (templIt == functionTemplates.end())
 	{
-		if (parent)
-			return parent->tryGenerateFunction(vm_, funcName_, paramTypes_);
-		return nullptr;
+
+		if (auto type = this->findType(funcName_))
+		{
+			if (auto classType = type->as<ClassType>())
+			{
+				return vm_.scopeOf(classType->declaration).tryGenerateFunction(vm_, "construct", paramTypes_);
+			}
+		}
+		else
+		{
+			if (parent)
+				return parent->tryGenerateFunction(vm_, funcName_, paramTypes_);
+			return nullptr;
+		}
+	}
+	else {
+		functionOverloads = &templIt->second;
 	}
 
-	for (auto& templ : templIt->second)
+
+	for (auto& templ : *functionOverloads)
 	{
-		if (paramTypes_.size() != templ->paramCount)
+		bool hasSelfParam = templ->outerType != nullptr;
+		int skippedParams = (hasSelfParam ? 1 : 0);
+
+		if (paramTypes_.size() != (templ->paramCount - skippedParams))
 			continue;
 
 		auto& fnScope = vm_.scopeOf(templ);
 		auto deduced = tryDeduceTemplateParams(
 				paramTypes_,
-				viewArray(templ->params, 0, templ->paramCount),
+				viewArray(templ->params, skippedParams, templ->paramCount - skippedParams),
 				fnScope.templateParams
 			);
 		// if (deduced.size() > 0)
@@ -379,11 +400,11 @@ auto Scope::tryGenerateFunction(
 		// if (testFunctionOverload(*templ, paramTypes_))
 		{
 			auto params = Function::Params();
-			for (size_t i = 0; i < paramTypes_.size(); ++i)
+			for (size_t i = 0; i < templ->paramCount; ++i)
 			{
 				if (!templ->params[i].type)
 				{
-					auto type = paramTypes_[i];
+					auto type = paramTypes_[templ->isConstructor ? i - 1 : i];
 					auto isRef = type->is<RefType>();
 					if (isRef) {
 						auto& typeName = *findElem<rigc::Name>(*templ->params[i].typeNode);
@@ -407,13 +428,13 @@ auto Scope::tryGenerateFunction(
 				}
 			}
 
-			auto paramsString = String();
-			for (size_t i = 0; i < paramTypes_.size(); ++i)
-			{
-				if (i > 0)
-					paramsString += ", ";
-				paramsString += params[i].type->name();
-			}
+			// auto paramsString = String();
+			// for (size_t i = 0; i < paramTypes_.size(); ++i)
+			// {
+			// 	if (i > 0)
+			// 		paramsString += ", ";
+			// 	paramsString += params[i].type->name();
+			// }
 
 			// fmt::print("Instantiating function template {} with params: {}\n", funcName_, paramsString);
 
@@ -421,11 +442,12 @@ auto Scope::tryGenerateFunction(
 					Function(
 						Function::RuntimeFn(templ->runtimeImpl().node),
 						std::move(params),
-						paramTypes_.size()
+						templ->paramCount
 					)
 				);
 
-
+			func.outerType = templ->outerType;
+			func.isConstructor = templ->isConstructor;
 			auto& funcScope = vm_.scopeOf(&func);
 			funcScope.func = &func;
 			funcScope.templateArguments = std::move(deduced);
