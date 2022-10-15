@@ -105,7 +105,7 @@ auto typeOf(Instance &vm_, Function::ArgSpan args_) -> OptValue
 ////////////////////////////////////////
 auto printMessage(Value const& msg) -> void
 {
-	// FIXME: for now just accepting the type StaticArray<Char, Size> cuz we cant do anything else
+	// FIXME: for now just accepting the type Array<Char, Size> cuz we cant do anything else
 	if (!msg.getType()->isArray() && msg.typeName() != "Char")
 		return;
 

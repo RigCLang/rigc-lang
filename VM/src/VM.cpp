@@ -632,11 +632,11 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) ->
 					this->evaluateType(*findElem<rigc::Type>(*inner))
 				);
 		}
-		else if (typeName == "StaticArray")
+		else if (typeName == "Array")
 		{
 			// ensure 2 template params
 			if (templateParams->children.size() != 2)
-				throw RigCError("StaticArray requires 2 template params: StaticArray<T, N: Int32>")
+				throw RigCError("Array requires 2 template params: Array<T, N: Int32>")
 								.withHelp("Provide the needed arguments correctly.")
 								.withLine(lastEvaluatedLine);
 

@@ -49,7 +49,7 @@ func contains(self: Range, elem: Elem)
 
 export
 template <T: type_name, N: Int32>
-func length(self: Ref<StaticArray<T, N>>)
+func length(self: Ref<Array<T, N>>)
 {
 	ret N;
 }
