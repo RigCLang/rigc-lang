@@ -371,7 +371,7 @@ auto Scope::tryGenerateFunction(
 	for (auto& templ : *functionOverloads)
 	{
 		bool hasSelfParam = templ->outerType != nullptr;
-		int skippedParams = (hasSelfParam ? 1 : 0);
+		int skippedParams = (hasSelfParam && templ->paramCount != paramTypes_.size() ? 1 : 0);
 
 		if (paramTypes_.size() != (templ->paramCount - skippedParams))
 			continue;
