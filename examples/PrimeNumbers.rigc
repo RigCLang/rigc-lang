@@ -1,7 +1,7 @@
 // A program that checks whether the number inputed by an user is prime or not.
 
 
-func isPrime(number: Int32) {
+func isPrime(number: Int32) -> Bool {
 	if (number == 0 or number == 1) ret false;
 
 	for(var i = 2; i <= number/2; i++) {
