@@ -44,7 +44,7 @@ auto Instance::findModulePath(StringView name_) const -> fs::path
 	auto relativeTo	= fs::current_path();
 	auto path		= fs::path(String(name_));
 
-	if (currentModule && name_.starts_with("./") || name_.starts_with(".\\"))
+	if (currentModule && (name_.starts_with("./") || name_.starts_with(".\\")))
 	{
 		relativeTo = currentModule->absolutePath.parent_path();
 	}
