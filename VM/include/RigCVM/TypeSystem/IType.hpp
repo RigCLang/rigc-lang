@@ -115,6 +115,9 @@ struct SafeCoreTypeSize<void> {
 };
 
 template <typename T>
-auto CreateCoreType(Instance &vm_, Scope& universeScope_, StringView name_, size_t size_ = SafeCoreTypeSize<T>::value) -> IType*;
+auto CreateCoreType(Instance &vm_, Scope& universeScope_) -> IType*;
+
+template <typename T>
+auto SetupCoreType(Instance &vm_, Scope& universeScope_, IType const& type_) -> void;
 
 }
