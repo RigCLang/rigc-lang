@@ -115,10 +115,8 @@ struct FrameBasedValue : ValueBase
 
 using OptValue = std::optional<Value>;
 
-using ConversionFunc = OptValue(Instance &, Value const&);
+using ConversionFunc = Func<OptValue(Instance &, Value const&)>;
 
-template <typename T>
-auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_) -> void;
-template <typename T>
-auto addTypeConversion(Instance &vm_, Scope& universeScope_, StringView from_, StringView to_, ConversionFunc& func_) -> void;
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc func_) -> void;
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, StringView from_, StringView to_, ConversionFunc func_) -> void;
 }

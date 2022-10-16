@@ -94,12 +94,12 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 }
 
 ////////////////////////////////////////
-auto typeOf(Instance &vm_, Function::ArgSpan args_) -> OptValue
+auto dumpTypeOf(Instance &vm_, Function::ArgSpan args_) -> OptValue
 {
 	auto name = args_[0].safeRemoveRef().type->name();
-	auto t = vm_.arrayOf(*vm_.builtinTypes.Char.raw, name.size());
+	fmt::print("{}", name);
 
-	return vm_.allocateOnStack( t, name.data(), name.size() );
+	return std::nullopt;
 }
 
 ////////////////////////////////////////

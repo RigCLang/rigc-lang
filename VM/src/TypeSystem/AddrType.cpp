@@ -71,7 +71,6 @@ auto AddrType::postInitialize(Instance& vm_) -> void
 	{
 		Function::Params params;
 
-
 		params[0] = { "self", this->shared_from_this() };
 		params[1] = { "rhs", vm_.builtinTypes.Int32.shared() };
 
@@ -115,5 +114,79 @@ auto AddrType::postInitialize(Instance& vm_) -> void
 
 		fn.returnType = refToSelf;
 	}
+
+	// assign null operator
+	{
+		Function::Params params;
+
+		params[0] = { "self", refToSelf };
+		params[1] = { "rhs", vm_.builtinTypes.Null.shared() };
+
+		auto& fn = vm_.universalScope().registerOperator(vm_, "=", Operator::Infix,
+			Function{
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
+				{
+					auto self = args_[0].safeRemoveRef();
+					self.view<void*>() = nullptr;
+					return args_[0];
+				},
+				std::move(params),
+				2
+			}
+		);
+
+		fn.returnType = refToSelf;
+	}
+
+	// compare null operator
+	{
+		Function::Params params;
+
+		params[0] = { "self", this->shared_from_this() };
+		params[1] = { "rhs", vm_.builtinTypes.Null.shared() };
+
+		auto& fn = vm_.universalScope().registerOperator(vm_, "==", Operator::Infix,
+			Function{
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
+				{
+					auto self = args_[0].safeRemoveRef();
+					return vm_.allocateOnStack<bool>("Bool", self.view<void*>() == nullptr);
+				},
+				std::move(params),
+				2
+			}
+		);
+
+		fn.returnType = vm_.builtinTypes.Bool.shared();
+	}
+
+	// compare not null operator
+	{
+		Function::Params params;
+
+		params[0] = { "self", this->shared_from_this() };
+		params[1] = { "rhs", vm_.builtinTypes.Null.shared() };
+
+		auto& fn = vm_.universalScope().registerOperator(vm_, "!=", Operator::Infix,
+			Function{
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
+				{
+					auto self = args_[0].safeRemoveRef();
+					return vm_.allocateOnStack<bool>("Bool", self.view<void*>() != nullptr);
+				},
+				std::move(params),
+				2
+			}
+		);
+
+		fn.returnType = vm_.builtinTypes.Bool.shared();
+	}
+
+	addTypeConversion(vm_, vm_.universalScope(), vm_.builtinTypes.Null.shared(), this->shared_from_this(),
+		[&](Instance& vm_, Value const& value_) -> OptValue
+		{
+			return vm_.allocateOnStack<void const*>(this->shared_from_this(), nullptr);
+		}
+	);
 }
 }

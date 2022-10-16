@@ -269,13 +269,13 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 							.withHelp("Check the spelling of the rhs.")
 							.withLine(vm.lastEvaluatedLine);
 
-		auto const rhsType = vm.findType(rhs->string_view());
+		auto const rhsType = vm.evaluateType(*rhs);
 		if(!rhsType)
 			throw RigCError("Rhs of the conversion operator should be a type.")
 							.withHelp("Check the spelling of the rhs and if the type is in scope.")
 							.withLine(vm.lastEvaluatedLine);
 
-		return vm.tryConvert(lhs, rhsType->shared_from_this());
+		return vm.tryConvert(lhs, rhsType);
 	}
 	else
 	{
