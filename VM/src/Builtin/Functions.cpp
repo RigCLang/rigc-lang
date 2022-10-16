@@ -98,7 +98,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 					.withHelp(
 						"Convert the address to Addr<Void> to print an address or Addr<Char> to print a null-terminated string.\n"
 						"[Example]:\n"
-						"    print(\"{}\", addr as Addr::<Void>);\n"
+						"    print(\"{{}}\", addr as Addr::<Void>);\n"
 					)
 					.withLine(vm_.lastEvaluatedLine);
 			}
