@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.0-prealpha](https://github.com/RigCLang/rigc-lang/compare/v0.2.0-prealpha...v0.3.0-prealpha) (2022-10-16)
+## [0.2.1](https://github.com/RigCLang/rigc-lang/compare/v0.2.0-prealpha...v0.2.1) (2022-10-16)
 
 
 ### Features
