@@ -108,6 +108,8 @@ struct ScopeOp : p::two<':'>{};
 //// Infix
 struct ConversionOp : AsKeyword {};
 
+struct DangerConversionOp : p::seq<AsKeyword, p::one<'!'>, p::at<Ws>> {};
+
 
 ///////////////////// Grammar ////////////////////////
 
@@ -167,6 +169,7 @@ struct InfixOperatorBase
 
 			ScopeOp,
 
+			DangerConversionOp,
 			ConversionOp,
 
 			TernaryFirstOp,

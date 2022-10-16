@@ -8,6 +8,8 @@
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/FuncType.hpp>
 
+#include <fmt/color.h>
+
 namespace rigc::vm
 {
 
@@ -36,7 +38,7 @@ auto operatorPriority(rigc::ParserNode const& node_) -> int
 {
 	auto op = node_.string_view();
 	if (op == ",") return 18;
-	if (op == "as") return 17;
+	if (op == "as" || op == "as!") return 17;
 	if (op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "%=")
 		return 16;
 	if (op == "or") return 15;
@@ -256,14 +258,13 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 		}
 
 	}
-	else if(op_ == "as")
+	else if(op_ == "as" || op_ == "as!")
 	{
 		auto lhs = evalSide(lhs_);
 
 		auto const rhs = rhs_.as<PendingAction>();
 		auto const rhsName = findElem<rigc::Name>(*rhs, false);
 
-		// FIXME: this is a quickfix, need to figure out how to properly handle templated types
 		if(!rhsName)
 			throw RigCError("Rhs of the conversion operator should be a valid identifier.")
 							.withHelp("Check the spelling of the rhs.")
@@ -274,6 +275,32 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 			throw RigCError("Rhs of the conversion operator should be a type.")
 							.withHelp("Check the spelling of the rhs and if the type is in scope.")
 							.withLine(vm.lastEvaluatedLine);
+
+		auto lhsNoRef = lhs.safeRemoveRef();
+		if (lhsNoRef.type->is<AddrType>() && rhsType->is<AddrType>())
+		{
+			if (lhsNoRef.type == rhsType)
+			{
+				auto& expr = lhs_.as<PendingAction>()->m_begin;
+				fmt::print(fmt::fg(fmt::color::orange), "[{} L{}:C{}] Warning: converting from {} to {} is a no-op.\n",
+						vm.currentModule->absolutePath.filename().string(),
+						expr.line, expr.column,
+						lhsNoRef.type->name(),
+						rhsType->name()
+					);
+			}
+			else if (op_ != "as!")
+			{
+				throw RigCError("Conversion from {} to {} is not allowed.",
+									lhsNoRef.type->name(),
+									rhsType->name()
+								)
+								.withHelp("Use the danger conversion operator (\"as!\") instead.")
+								.withLine(vm.lastEvaluatedLine);
+			}
+
+			return vm.allocateOnStack<void const*>(rhsType, lhsNoRef.view<void const*>());
+		}
 
 		return vm.tryConvert(lhs, rhsType);
 	}
