@@ -102,7 +102,7 @@ void DevelopmentServer::run()
 	};
 
 	auto sender = std::jthread([&]{
-		while (true)
+		while (!_stopped)
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds{100});
 			bool queueEmpty = false;
@@ -133,6 +133,12 @@ void DevelopmentServer::run()
 
 	// Start the Asio io_service run loop
 	_endpoint.run();
+}
+
+void DevelopmentServer::stop()
+{
+	_stopped = true;
+	_endpoint.stop();
 }
 
 void DevelopmentServer::enqueueMessage(String msg_)

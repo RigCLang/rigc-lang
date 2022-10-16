@@ -101,10 +101,14 @@ auto main(int argc, char* argv[]) -> int
 		};
 	};
 
+	int returnCode;
 	if (settings.skipRootExceptionCatching)
-		return instance.run(settings);
+		returnCode = instance.run(settings);
 	else
-		return runGuarded();
+		returnCode = runGuarded();
+
+	server->stop();
+	return returnCode;
 #else
 	return runGuarded();
 #endif

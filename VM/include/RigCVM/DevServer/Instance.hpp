@@ -19,6 +19,7 @@ public:
 	DevelopmentServer(LogStreamPtr loggingStream);
 
 	void run();
+	void stop();
 
 	void enqueueMessage(String msg_);
 
@@ -44,9 +45,10 @@ private:
 
 	auto setupLoggingTo(std::ostream* loggingStream) -> void;
 
-	Queue<String>	_messageQueue;
-	ConnectionSet	_connections;
-	ServerBase		_endpoint;
+	Queue<String>		_messageQueue;
+	ConnectionSet		_connections;
+	ServerBase			_endpoint;
+	std::atomic_bool	_stopped = false;
 };
 
 extern DevelopmentServer* g_devServer;
