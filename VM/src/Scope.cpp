@@ -22,6 +22,7 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 		SetupCoreType<CppName>(vm_, scope_, *vm_.builtinTypes.RigCName.raw);
 
 	MAKE_BUILTIN_TYPE(void,		Void);
+	MAKE_BUILTIN_TYPE(NullType,	Null);
 	MAKE_BUILTIN_TYPE(bool,		Bool);
 	MAKE_BUILTIN_TYPE(char,		Char);
 	MAKE_BUILTIN_TYPE(char16_t,	Char16);
@@ -39,18 +40,17 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	scope_.addType(std::make_unique<MethodType>());
 
 	SETUP_BUILTIN_TYPE(bool,		Bool);
-	SETUP_BUILTIN_TYPE(void,		Void);
 	SETUP_BUILTIN_TYPE(char,		Char);
 	SETUP_BUILTIN_TYPE(char16_t,	Char16);
 	SETUP_BUILTIN_TYPE(char32_t,	Char32);
-	SETUP_BUILTIN_TYPE(int16_t,	Int16);
-	SETUP_BUILTIN_TYPE(int32_t,	Int32);
-	SETUP_BUILTIN_TYPE(int64_t,	Int64);
+	SETUP_BUILTIN_TYPE(int16_t,		Int16);
+	SETUP_BUILTIN_TYPE(int32_t,		Int32);
+	SETUP_BUILTIN_TYPE(int64_t,		Int64);
 	SETUP_BUILTIN_TYPE(uint16_t,	Uint16);
 	SETUP_BUILTIN_TYPE(uint32_t,	Uint32);
 	SETUP_BUILTIN_TYPE(uint64_t,	Uint64);
-	SETUP_BUILTIN_TYPE(float,	Float32);
-	SETUP_BUILTIN_TYPE(double,	Float64);
+	SETUP_BUILTIN_TYPE(float,		Float32);
+	SETUP_BUILTIN_TYPE(double,		Float64);
 
 
 	auto addrOfChar = constructTemplateType<AddrType>(scope_, vm_.builtinTypes.Char.shared());
@@ -96,11 +96,11 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	}
 	// "typeof" builtin function
 	{
-		auto func = Function{ &builtin::typeOf, {}, 0 };
+		auto func = Function{ &builtin::dumpTypeOf, {}, 0 };
 		func.variadic = true;
-		func.raw().name = "builtin::typeOf";
+		func.raw().name = "builtin::dumpTypeOf";
 
-		scope_.registerFunction(vm_, "typeOf", std::move(func));
+		scope_.registerFunction(vm_, "dumpTypeOf", std::move(func));
 	}
 	// "readInt" builtin function
 	{

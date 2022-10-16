@@ -123,7 +123,7 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 	this->pushStackFrameOf(nullptr);
 
 	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
-		addTypeConversion<FromCppType>(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
+		addTypeConversion(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
 
 
 	// // Int16 -> floats

@@ -105,6 +105,13 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	// Either "PossiblyTemplatedSymbol" or "PossiblyTemplatedSymbolNoDisamb"
 	auto& name	= *findElem<rigc::Name>(expr_, false);
+
+	if (name.string_view() == "null")
+	{
+		// TODO: protect against `null<TemplateArgs...>`
+		return vm_.allocateOnStack<void const*>(vm_.builtinTypes.Null.shared(), nullptr);
+	}
+
 	auto opt	= vm_.findVariableByName(name.string_view());
 
 	// if (!opt) {

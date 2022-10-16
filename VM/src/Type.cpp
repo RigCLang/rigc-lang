@@ -111,174 +111,169 @@ template <typename T>
 auto SetupCoreType(Instance &vm_, Scope& universeScope_, IType const& type_) -> void
 {
 	auto t = type_.shared_from_this();
-	if constexpr (!std::is_same_v<T, void>)
+	Function::Params infixParams;
+	infixParams[0] = { "lhs", t };
+	infixParams[1] = { "rhs", t };
+
+	auto refToType = constructTemplateType<RefType>(universeScope_, t);
+
+	Function::Params infixAssignParams;
+	infixAssignParams[0] = { "lhs", refToType };
+	infixAssignParams[1] = { "rhs", t };
+
+	Function::Params prePostfixParams;
+	prePostfixParams[0] = { "lhs", refToType };
+
+	#define MAKE_INFIX_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
+			}; \
+		{ \
+			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
+			op.returnType = t; \
+			op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
+					Incantation, \
+					infixParams[0].type->name(), infixParams[1].type->name(), \
+					op.returnType->name() \
+				); \
+		}
+
+	#define MAKE_INFIX_REL_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
+			}; \
+		{ \
+			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
+			op.returnType = vm_.builtinTypes.Bool.shared(); \
+			op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
+					Incantation, \
+					infixParams[0].type->name(), infixParams[1].type->name(), \
+					op.returnType->name() \
+				); \
+		}
+
+	#define MAKE_INFIX_ASSIGN_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
+			}; \
+		{ \
+			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2)); \
+			op.returnType = refToType; \
+			op.returnsRef = true; \
+			op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
+					Incantation, \
+					infixAssignParams[0].type->name(), infixAssignParams[1].type->name(), \
+					op.returnType->name() \
+				); \
+		}
+
+	#define MAKE_POSTFIX_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0]); \
+			}; \
+		{ \
+			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Postfix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
+			op.returnType = t; \
+			op.raw().name = fmt::format("operator post {} (lhs: {}) -> {}", \
+					Incantation, \
+					prePostfixParams[0].type->name(), \
+					op.returnType->name() \
+				); \
+		}
+
+	#define MAKE_PREFIX_OP(Name, Incantation) \
+		static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
+			{ \
+				return builtin##Name##Operator<T>(vm_, args_[0]); \
+			}; \
+		{ \
+			auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Prefix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
+			op.returnType = refToType; \
+			op.returnsRef = true; \
+			op.raw().name = fmt::format("operator pre {} (rhs: {}) -> {}", \
+					Incantation, \
+					prePostfixParams[0].type->name(), \
+					op.returnType->name() \
+				); \
+		}
+
+	if constexpr (!std::is_same_v<T, bool>)
 	{
-		Function::Params infixParams;
-		infixParams[0] = { "lhs", t };
-		infixParams[1] = { "rhs", t };
+		// Math
+		MAKE_INFIX_OP(Add,				"+");
+		MAKE_INFIX_OP(Sub,				"-");
+		MAKE_INFIX_OP(Mult,				"*");
+		MAKE_INFIX_OP(Div,				"/");
 
-		auto refToType = constructTemplateType<RefType>(universeScope_, t);
-
-		Function::Params infixAssignParams;
-		infixAssignParams[0] = { "lhs", refToType };
-		infixAssignParams[1] = { "rhs", t };
-
-		Function::Params prePostfixParams;
-		prePostfixParams[0] = { "lhs", refToType };
-
-		#define MAKE_INFIX_OP(Name, Incantation) \
-			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
-				{ \
-					return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
-				}; \
-			{ \
-				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
-				op.returnType = t; \
-				op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
-						Incantation, \
-						infixParams[0].type->name(), infixParams[1].type->name(), \
-						op.returnType->name() \
-					); \
-			}
-
-		#define MAKE_INFIX_REL_OP(Name, Incantation) \
-			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
-				{ \
-					return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
-				}; \
-			{ \
-				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixParams, 2)); \
-				op.returnType = vm_.builtinTypes.Bool.shared(); \
-				op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
-						Incantation, \
-						infixParams[0].type->name(), infixParams[1].type->name(), \
-						op.returnType->name() \
-					); \
-			}
-
-		#define MAKE_INFIX_ASSIGN_OP(Name, Incantation) \
-			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
-				{ \
-					return builtin##Name##Operator<T>(vm_, args_[0], args_[1]); \
-				}; \
-			{ \
-				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Infix, Function(OPERATOR_##Name, infixAssignParams, 2)); \
-				op.returnType = refToType; \
-				op.returnsRef = true; \
-				op.raw().name = fmt::format("operator {} (lhs: {}, rhs: {}) -> {}", \
-						Incantation, \
-						infixAssignParams[0].type->name(), infixAssignParams[1].type->name(), \
-						op.returnType->name() \
-					); \
-			}
-
-		#define MAKE_POSTFIX_OP(Name, Incantation) \
-			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
-				{ \
-					return builtin##Name##Operator<T>(vm_, args_[0]); \
-				}; \
-			{ \
-				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Postfix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
-				op.returnType = t; \
-				op.raw().name = fmt::format("operator post {} (lhs: {}) -> {}", \
-						Incantation, \
-						prePostfixParams[0].type->name(), \
-						op.returnType->name() \
-					); \
-			}
-
-		#define MAKE_PREFIX_OP(Name, Incantation) \
-			static auto const& OPERATOR_##Name = [](Instance &vm_, Function::ArgSpan args_) \
-				{ \
-					return builtin##Name##Operator<T>(vm_, args_[0]); \
-				}; \
-			{ \
-				auto& op = universeScope_.registerOperator(vm_, Incantation, Operator::Prefix, Function(OPERATOR_##Name, prePostfixParams, 1)); \
-				op.returnType = refToType; \
-				op.returnsRef = true; \
-				op.raw().name = fmt::format("operator pre {} (rhs: {}) -> {}", \
-						Incantation, \
-						prePostfixParams[0].type->name(), \
-						op.returnType->name() \
-					); \
-			}
-
-		if constexpr (!std::is_same_v<T, bool>)
+		if constexpr (!std::is_floating_point_v<T>)
 		{
-			// Math
-			MAKE_INFIX_OP(Add,				"+");
-			MAKE_INFIX_OP(Sub,				"-");
-			MAKE_INFIX_OP(Mult,				"*");
-			MAKE_INFIX_OP(Div,				"/");
-
-			if constexpr (!std::is_floating_point_v<T>)
-			{
-				MAKE_INFIX_OP(Mod,			"%");
-				MAKE_INFIX_ASSIGN_OP(ModAssign,	"%=");
-			}
-
-			// Math (assignment)
-			MAKE_INFIX_ASSIGN_OP(AddAssign,		"+=");
-			MAKE_INFIX_ASSIGN_OP(SubAssign,		"-=");
-			MAKE_INFIX_ASSIGN_OP(MultAssign,	"*=");
-			MAKE_INFIX_ASSIGN_OP(DivAssign,		"/=");
-
-			// Postfix
-			MAKE_POSTFIX_OP(PostIncrement, "++");
-			MAKE_POSTFIX_OP(PostDecrement, "--");
-
-			// Prefix
-			MAKE_PREFIX_OP(PreIncrement, "++");
-			MAKE_PREFIX_OP(PreDecrement, "--");
-
-			// Relational
-			MAKE_INFIX_REL_OP(LowerThan,		"<");
-			MAKE_INFIX_REL_OP(GreaterThan,		">");
-			MAKE_INFIX_REL_OP(LowerEqThan,		"<=");
-			MAKE_INFIX_REL_OP(GreaterEqThan,	">=");
+			MAKE_INFIX_OP(Mod,			"%");
+			MAKE_INFIX_ASSIGN_OP(ModAssign,	"%=");
 		}
 
-		if constexpr (std::is_same_v<T, bool>)
-		{
-			// Logical
-			MAKE_INFIX_OP(LogicalAnd,	"and");
-			MAKE_INFIX_OP(LogicalOr,	"or");
-		}
+		// Math (assignment)
+		MAKE_INFIX_ASSIGN_OP(AddAssign,		"+=");
+		MAKE_INFIX_ASSIGN_OP(SubAssign,		"-=");
+		MAKE_INFIX_ASSIGN_OP(MultAssign,	"*=");
+		MAKE_INFIX_ASSIGN_OP(DivAssign,		"/=");
+
+		// Postfix
+		MAKE_POSTFIX_OP(PostIncrement, "++");
+		MAKE_POSTFIX_OP(PostDecrement, "--");
+
+		// Prefix
+		MAKE_PREFIX_OP(PreIncrement, "++");
+		MAKE_PREFIX_OP(PreDecrement, "--");
 
 		// Relational
-		MAKE_INFIX_REL_OP(Equal,	"==");
-		MAKE_INFIX_REL_OP(NotEqual,	"!=");
-
-		// Assignment
-		MAKE_INFIX_ASSIGN_OP(Assign,	"=");
-
-
-		#undef MAKE_INFIX_OP
-		#undef MAKE_INFIX_ASSIGN_OP
-		#undef MAKE_POSTFIX_OP
-		#undef MAKE_PREFIX_OP
+		MAKE_INFIX_REL_OP(LowerThan,		"<");
+		MAKE_INFIX_REL_OP(GreaterThan,		">");
+		MAKE_INFIX_REL_OP(LowerEqThan,		"<=");
+		MAKE_INFIX_REL_OP(GreaterEqThan,	">=");
 	}
+
+	if constexpr (std::is_same_v<T, bool>)
+	{
+		// Logical
+		MAKE_INFIX_OP(LogicalAnd,	"and");
+		MAKE_INFIX_OP(LogicalOr,	"or");
+	}
+
+	// Relational
+	MAKE_INFIX_REL_OP(Equal,	"==");
+	MAKE_INFIX_REL_OP(NotEqual,	"!=");
+
+	// Assignment
+	MAKE_INFIX_ASSIGN_OP(Assign,	"=");
+
+
+	#undef MAKE_INFIX_OP
+	#undef MAKE_INFIX_ASSIGN_OP
+	#undef MAKE_POSTFIX_OP
+	#undef MAKE_PREFIX_OP
 }
 
-template <typename T>
-auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc& func_) -> void
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, DeclType const& from_, DeclType const& to_, ConversionFunc func_) -> void
 {
 	Function::Params convertParams;
 	convertParams[0] = { "from", from_ };
 
-	auto const& OPERATOR_Convert = [&func_](Instance &vm_, Function::ArgSpan args_)
+	auto const& OPERATOR_Convert = [f = std::move(func_)](Instance &vm_, Function::ArgSpan args_)
 		{
-			return func_(vm_, args_[0]);
+			return f(vm_, args_[0]);
 		};
 	Function f(OPERATOR_Convert, convertParams, 1);
 	f.returnType = to_;
 	universeScope_.registerFunction( vm_, "operator convert", std::move(f) );
 }
 
-template <typename T>
-auto addTypeConversion(Instance &vm_, Scope& universeScope_, StringView from_, StringView to_, ConversionFunc& func_) -> void
+auto addTypeConversion(Instance &vm_, Scope& universeScope_, StringView from_, StringView to_, ConversionFunc func_) -> void
 {
-	addTypeConversion<T>(
+	addTypeConversion(
 			vm_, universeScope_,
 			vm_.findType(from_)->shared_from_this(),
 			vm_.findType(to_)->shared_from_this(),
@@ -287,25 +282,31 @@ auto addTypeConversion(Instance &vm_, Scope& universeScope_, StringView from_, S
 }
 
 #define LINK_BUILTIN_TYPE(TypeName) \
-	template IType* CreateCoreType<TypeName>(Instance&, Scope&); \
+	template IType* CreateCoreType<TypeName>(Instance&, Scope&);
+
+#define LINK_BUILTIN_TYPE_WITH_SETUP(TypeName) \
+	LINK_BUILTIN_TYPE(TypeName); \
 	template void SetupCoreType<TypeName>(Instance&, Scope&, IType const&); \
-	template auto addTypeConversion<TypeName>(Instance&, Scope&, DeclType const&, DeclType const&, ConversionFunc&) -> void; \
-	template auto addTypeConversion<TypeName>(Instance&, Scope&, StringView, StringView, ConversionFunc&) -> void
 
 
-LINK_BUILTIN_TYPE(void);
-LINK_BUILTIN_TYPE(bool);
-LINK_BUILTIN_TYPE(char);
-LINK_BUILTIN_TYPE(char16_t);
-LINK_BUILTIN_TYPE(char32_t);
-LINK_BUILTIN_TYPE(int16_t);
-LINK_BUILTIN_TYPE(int32_t);
-LINK_BUILTIN_TYPE(int64_t);
-LINK_BUILTIN_TYPE(uint16_t);
-LINK_BUILTIN_TYPE(uint32_t);
-LINK_BUILTIN_TYPE(uint64_t);
-LINK_BUILTIN_TYPE(float);
-LINK_BUILTIN_TYPE(double);
+
+// Link builtin Void and  type, without setting up and conversions
+template IType* CreateCoreType<void>(Instance&, Scope&);
+
+LINK_BUILTIN_TYPE(NullType);
+
+LINK_BUILTIN_TYPE_WITH_SETUP(bool);
+LINK_BUILTIN_TYPE_WITH_SETUP(char);
+LINK_BUILTIN_TYPE_WITH_SETUP(char16_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(char32_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(int16_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(int32_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(int64_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(uint16_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(uint32_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(uint64_t);
+LINK_BUILTIN_TYPE_WITH_SETUP(float);
+LINK_BUILTIN_TYPE_WITH_SETUP(double);
 
 #undef LINK_BUILTIN_TYPE
 

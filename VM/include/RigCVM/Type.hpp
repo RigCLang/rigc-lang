@@ -47,6 +47,7 @@ struct BuiltinTypes
 	};
 
 	Accessor Void;
+	Accessor Null;
 	Accessor Int16;
 	Accessor Int32;
 	Accessor Int64;
