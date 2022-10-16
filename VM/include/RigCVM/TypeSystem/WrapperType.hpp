@@ -45,4 +45,13 @@ inline auto constructTemplateType(Scope& ownerScope_, DeclType decl, CtorTypes&&
 	ownerScope_.addType(wrapper);
 	return wrapper;
 }
+
+inline auto wrappedType(IType const& type) -> DeclType const&
+{
+	assert(type.is<TemplateType>() && "type is not a template type");
+
+	auto& args = type.getTemplateArguments();
+	return args.front().as<DeclType>();
 }
+
+} // namespace rigc::vm

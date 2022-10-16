@@ -266,15 +266,19 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 		auto const rhsName = findElem<rigc::Name>(*rhs, false);
 
 		if(!rhsName)
+		{
 			throw RigCError("Rhs of the conversion operator should be a valid identifier.")
 							.withHelp("Check the spelling of the rhs.")
 							.withLine(vm.lastEvaluatedLine);
+		}
 
 		auto const rhsType = vm.evaluateType(*rhs);
 		if(!rhsType)
+		{
 			throw RigCError("Rhs of the conversion operator should be a type.")
 							.withHelp("Check the spelling of the rhs and if the type is in scope.")
 							.withLine(vm.lastEvaluatedLine);
+		}
 
 		auto lhsNoRef = lhs.safeRemoveRef();
 		if (lhsNoRef.type->is<AddrType>() && rhsType->is<AddrType>())
@@ -289,7 +293,7 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 						rhsType->name()
 					);
 			}
-			else if (op_ != "as!")
+			else if (op_ != "as!" && wrappedType(*rhsType).get() != vm.builtinTypes.Void)
 			{
 				throw RigCError("Conversion from {} to {} is not allowed.",
 									lhsNoRef.type->name(),

@@ -44,6 +44,8 @@ struct BuiltinTypes
 		auto shared() const	{ return raw->shared_from_this(); }
 		auto weak() const	{ return raw->weak_from_this(); }
 		auto weak()			{ return raw->weak_from_this(); }
+
+		operator IType*() const { return raw; }
 	};
 
 	Accessor Void;
