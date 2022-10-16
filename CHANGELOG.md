@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0-prealpha](https://github.com/RigCLang/rigc-lang/compare/v0.2.0-prealpha...v0.3.0-prealpha) (2022-10-16)
+
+
+### Features
+
+* **vm:** `--version` parameter. ([2bcf38f](https://github.com/RigCLang/rigc-lang/commit/2bcf38f7d0ad8639f3702ca4b50073575bc0fd41))
+
+
+### Bug Fixes
+
+* debug-mode devserver thread not stopping after module execution ends ([82cea9f](https://github.com/RigCLang/rigc-lang/commit/82cea9f90b5cc056791922dfe00b211cdba47b16))
+* missing `-lpthread` flag on linux ([575d9d8](https://github.com/RigCLang/rigc-lang/commit/575d9d8c859320b3a8faca656ae8aa287321259b))
+* **vm:** better wording when module name is missing from parameters ([2bcf38f](https://github.com/RigCLang/rigc-lang/commit/2bcf38f7d0ad8639f3702ca4b50073575bc0fd41))
+* **vm:** missing `fmt::runtime` when formatting a runtime string ([fe029cd](https://github.com/RigCLang/rigc-lang/commit/fe029cdf018a312b11f24a5a703c6ca83a10ab9c))
+
 ## [0.2.0-prealpha](https://github.com/RigCLang/rigc-lang/compare/v0.1.1-prealpha...v0.2.0-prealpha) (2022-10-16)
 
 
