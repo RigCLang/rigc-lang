@@ -35,8 +35,8 @@
 			"name": "VM",
 			"filters": {
 				"system:windows":	{ "defines": [ "PACC_SYSTEM_WINDOWS" ] },
-				"system:linux":		{ "defines": [ "PACC_SYSTEM_LINUX" ] },
-				"system:macosx":	{ "defines": [ "PACC_SYSTEM_MACOSX" ] }
+				"system:linux":		{ "defines": [ "PACC_SYSTEM_LINUX" ], "linkerOptions": ["-pthread"] },
+				"system:macosx":	{ "defines": [ "PACC_SYSTEM_MACOSX" ], "linkerOptions": ["-pthread"] }
 			},
 			"language": "C++20",
 			"type": "app",
@@ -54,7 +54,7 @@
 				"self:Parser",
 				"fmt@8.0.1",
 				"json@3.9.1",
-				"websocketpp@0.8.2"
+				"websocketpp@0.8.3"
 			]
 		}
 	]
