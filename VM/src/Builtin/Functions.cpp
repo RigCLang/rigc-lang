@@ -58,6 +58,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 	auto fmtView = StringView(chars, format.getType()->size());
 
 	auto store = fmt::dynamic_format_arg_store<fmt::format_context>();
+	store.reserve(args_.size() - 1, 0);
 	for (size_t c = 1; c < args_.size(); ++c)
 	{
 		Value val = args_[c].safeRemoveRef();
@@ -76,6 +77,32 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 			store.push_back(val.view<double>());
 		else if (typeName == "Bool")
 			store.push_back((val.view<bool>() ? "true" : "false"));
+		else if (val.type->is<AddrType>())
+		{
+			auto& addrType = val.type->getTemplateArguments()[0].as<DeclType>();
+			if (addrType.get() == vm_.builtinTypes.Void.raw)
+			{
+				if constexpr (sizeof(void*) == 8) {
+					store.push_back(fmt::format("0x{:0>16x}", uintptr_t(val.view<void*>())));
+				} else {
+					store.push_back(fmt::format("0x{:0>8x}", uintptr_t(val.view<void*>())));
+				}
+			}
+			else if (addrType.get() == vm_.builtinTypes.Char.raw)
+			{
+				store.push_back(val.view<char*>());
+			}
+			else
+			{
+				throw RigCError("Invalid type {} for \"print\" (builtin) function.", val.type->name())
+					.withHelp(
+						"Convert the address to Addr<Void> to print an address or Addr<Char> to print a null-terminated string.\n"
+						"[Example]:\n"
+						"    print(\"{}\", addr as Addr::<Void>);\n"
+					)
+					.withLine(vm_.lastEvaluatedLine);
+			}
+		}
 		else if (val.getType()->isArray() && decayedTypeName == "Char")
 		{
 			auto chars = &val.view<char const>();
