@@ -1,5 +1,6 @@
 #include RIGCVM_PCH
 
+#include <RigCVM/VM.hpp>
 #include <RigCVM/Settings.hpp>
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 
@@ -89,7 +90,14 @@ auto parseArgs(Span<StringView> args) -> InstanceSettings
 
 	if (args.size() < 2)
 	{
-		throw RigCError("No entry point specified.").withHelp("Use rigcvm [module name] to run RigC script.");
+		auto filename = fs::path(args[0]).filename();
+		throw RigCError("No entry point specified.").withHelp("Use \"{} [module name]\" to run its main function.", filename.string());
+	}
+
+	if (args[1] == "--version")
+	{
+		fmt::print("{} v{}\n", Instance::PrettyName, Instance::Version);
+		std::exit(0);
 	}
 
 	result.entryModuleName = args[1];
