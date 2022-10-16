@@ -36,7 +36,7 @@ struct EntryPoint
 struct Instance
 {
 	constexpr static auto PrettyName	= StringView("RigC Virtual Machine");
-	constexpr static auto Version		= StringView("0.3.0");
+	constexpr static auto Version		= StringView("0.3.1");
 
 	InstanceSettings const* settings;
 
