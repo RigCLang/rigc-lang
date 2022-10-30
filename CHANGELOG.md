@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/RigCLang/rigc-lang/compare/v0.2.1...v0.3.0) (2022-10-16)
+
+
+### Features
+
+* **vm:** danger conversion operator ([4458a9f](https://github.com/RigCLang/rigc-lang/commit/4458a9fca7c0d5a7d4cafde7e006da269549e16e))
+* **vm:** null keyword and `Null` type. ([a51ba6a](https://github.com/RigCLang/rigc-lang/commit/a51ba6a4e7f5bc780a4ac66e26311286d1258e0a))
+* **vm:** proper `Addr<T>` printing ([c68421d](https://github.com/RigCLang/rigc-lang/commit/c68421d44cb5d1fa464edc72728e8cd035dac2c0))
+
+
+### Bug Fixes
+
+* **vm:** allow non-danger `as` operator to convert `Addr<T>` to `Addr<Void>` ([698dfd3](https://github.com/RigCLang/rigc-lang/commit/698dfd33da8ed5123941369b4d9ee7f8b1d1f9dc))
+* **vm:** missing escape of `{}` format braces ([8934a79](https://github.com/RigCLang/rigc-lang/commit/8934a79f344d692acbbbd6103c7125967243dcf0))
+
 ## [0.2.1](https://github.com/RigCLang/rigc-lang/compare/v0.2.0-prealpha...v0.2.1) (2022-10-16)
 
 
