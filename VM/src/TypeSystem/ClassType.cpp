@@ -1,4 +1,4 @@
-#include RIGCVM_PCH
+#include "VM/include/RigCVM/RigCVMPCH.hpp"
 
 #include <RigCVM/TypeSystem/ClassType.hpp>
 #include <RigCVM/VM.hpp>
@@ -35,6 +35,22 @@ auto ClassType::defaultConstructor() const
 		return nullptr;
 
 	return *def;
+}
+
+auto ClassType::findDataMember(StringView name) -> DataMember*
+{
+	auto it = rg::find(dataMembers, name, &DataMember::name);
+	if (it == dataMembers.end())
+		return nullptr;
+	return &*it;
+}
+
+auto ClassType::findDataMember(StringView name) const -> DataMember const*
+{
+	auto it = rg::find(dataMembers, name, &DataMember::name);
+	if (it == dataMembers.end())
+		return nullptr;
+	return &*it;
 }
 
 ///////////////////////////////////////////

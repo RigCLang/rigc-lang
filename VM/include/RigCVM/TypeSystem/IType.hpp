@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCVM_PCH
+#include <RigCVM/RigCVMPCH.hpp>
 
 #include <RigCVM/Helper/ExtendedVariant.hpp>
 
@@ -76,6 +76,9 @@ struct IType : public std::enable_shared_from_this<IType>
 
 	using MethodsMap = UMap<StringView, DynArray<Function*>>;
 	MethodsMap methods;
+
+	DynArray<Function*>* findMethod(StringView name_);
+	DynArray<Function*> const* findMethod(StringView name_) const;
 
 	template <std::derived_from<IType> T>
 	auto is() const -> bool{

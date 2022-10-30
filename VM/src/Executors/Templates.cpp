@@ -1,4 +1,4 @@
-#include RIGCVM_PCH
+#include "VM/include/RigCVM/RigCVMPCH.hpp"
 
 #include <RigCVM/VM.hpp>
 #include <RigCVM/TypeSystem/TypeConstraint.hpp>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCPARSER_PCH
+#include <RigCParser/RigCParserPCH.hpp>
 
 #include <RigCParser/Grammar/Parts.hpp>
 #include <RigCParser/Grammar/Templates.hpp>

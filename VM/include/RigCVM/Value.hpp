@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCVM_PCH
+#include <RigCVM/RigCVMPCH.hpp>
 
 #include <RigCVM/Type.hpp>
 
@@ -8,6 +8,7 @@ namespace rigc::vm
 {
 struct Instance;
 struct DataMember;
+class ClassType;
 
 struct StackFrame;
 
@@ -40,7 +41,7 @@ struct Value : ValueBase
 	template <typename T>
 	auto view() const -> T const&
 	{
-		return *reinterpret_cast<T*>(data);
+		return *reinterpret_cast<T const*>(data);
 	}
 
 	// Temp:
@@ -48,6 +49,16 @@ struct Value : ValueBase
 	{
 		return data;
 	}
+
+	/**
+	 * @brief Returns its type as a ClassType, or null if not instance of any class type.
+	*/
+	auto getClass() const -> ClassType const*;
+
+	/**
+	 * @brief Returns true if the type of this value is a class type.
+	*/
+	auto instanceOfAnyClass() const -> bool;
 
 	// Calls destructor on it.
 	// Precondition: its type has to be a class type

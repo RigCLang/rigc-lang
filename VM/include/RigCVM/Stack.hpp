@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCVM_PCH
+#include <RigCVM/RigCVMPCH.hpp>
 
 #include <RigCVM/StackFrame.hpp>
 #include <RigCVM/DevServer/Messaging.hpp>

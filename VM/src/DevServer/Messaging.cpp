@@ -1,4 +1,4 @@
-#include RIGCVM_PCH
+#include "VM/include/RigCVM/RigCVMPCH.hpp"
 
 #include <RigCVM/DevServer/Instance.hpp>
 #include <RigCVM/DevServer/Messaging.hpp>

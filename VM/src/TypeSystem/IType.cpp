@@ -1,4 +1,4 @@
-#include RIGCVM_PCH
+#include "VM/include/RigCVM/RigCVMPCH.hpp"
 
 #include <RigCVM/TypeSystem/IType.hpp>
 #include <RigCVM/TypeSystem/ClassType.hpp>
@@ -8,6 +8,24 @@
 
 namespace rigc::vm
 {
+
+//////////////////////////////////////
+DynArray<Function*>* IType::findMethod(StringView name_) {
+		auto it = this->methods.find(name_);
+		if (it == this->methods.end())
+			return nullptr;
+
+		return &it->second;
+	}
+
+//////////////////////////////////////
+DynArray<Function*> const* IType::findMethod(StringView name_) const {
+	auto it = this->methods.find(name_);
+	if (it == this->methods.end())
+		return nullptr;
+
+	return &it->second;
+}
 
 //////////////////////////////////////
 auto IType::addMethod(StringView name_, Function* func_) -> void
