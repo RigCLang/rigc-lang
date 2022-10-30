@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCPARSER_PCH
+#include <RigCParser/RigCParserPCH.hpp>
 
 #include <RigCParser/Grammar/Functions.hpp>
 #include <RigCParser/Grammar/Templates.hpp>
@@ -63,7 +63,7 @@ struct UnionCodeBlock
 
 struct UnionDefinition
 	: p::seq<
-			p::opt<ExportKeyword, Ws>, 
+			p::opt<ExportKeyword, Ws>,
 			p::opt<TemplateDefPreamble, Ws>,
 			p::if_must< UnionKeyword, Ws, Name, OptWs, UnionCodeBlock > >
 {

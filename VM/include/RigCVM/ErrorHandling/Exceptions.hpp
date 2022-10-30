@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCVM_PCH
+#include <RigCVM/RigCVMPCH.hpp>
 
 #include <source_location>
 #include <stdexcept>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCVM_PCH
+#include <RigCVM/RigCVMPCH.hpp>
 
 #include <RigCVM/Value.hpp>
 #include <RigCVM/Helper/ExtendedVariant.hpp>

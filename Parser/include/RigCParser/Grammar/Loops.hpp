@@ -1,5 +1,5 @@
 #pragma once
-#include RIGCPARSER_PCH
+#include <RigCParser/RigCParserPCH.hpp>
 
 #include <RigCParser/Grammar/Parts.hpp>
 #include <RigCParser/Grammar/Variables.hpp>
@@ -28,7 +28,7 @@ struct WhileStatement
 struct ForStatement
 	:
 	p::seq<
-		ForKeyword, 
+		ForKeyword,
 		WsWrapped<
 			p::one<'('>,
 				WsWrapped<VariableDefinition>, p::one<';'>,

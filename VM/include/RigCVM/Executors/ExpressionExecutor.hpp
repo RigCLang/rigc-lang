@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCVM_PCH
+#include <RigCVM/RigCVMPCH.hpp>
 
 #include <RigCVM/Value.hpp>
 #include <RigCVM/Helper/ExtendedVariant.hpp>
@@ -45,7 +45,14 @@ private:
 	auto evalPrefixOperator(StringView op_, Action& rhs_) -> ProcessedAction;
 	auto evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction;
 
-	std::vector<Action> actions;
+	auto evalGenericPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction;
+
+	auto tryEvalDataMember(Value const& lhs, std::string_view memberName) -> OptValue;
+
+	auto tryFindEarlyBoundFunction(Action& action_, FunctionCandidates& candidates_) -> bool;
+	auto tryFindEarlyBoundMethod(Action& action_, FunctionCandidates& candidates_, OptValue& self_, StringView& functionName_) -> bool;
+
+	DynArray<Action> actions;
 };
 
 

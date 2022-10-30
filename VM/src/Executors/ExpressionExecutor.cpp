@@ -1,4 +1,4 @@
-#include RIGCVM_PCH
+#include "VM/include/RigCVM/RigCVMPCH.hpp"
 
 #include <RigCVM/VM.hpp>
 #include <RigCVM/Executors/ExpressionExecutor.hpp>
@@ -169,6 +169,18 @@ auto ExpressionExecutor::evalSingleAction(Action & lhs_) -> ProcessedAction
 	return lhs_.as<ProcessedAction>();
 }
 
+auto ExpressionExecutor::tryEvalDataMember(Value const& lhs, std::string_view memberName) -> OptValue
+{
+	if (auto classType = lhs.getClass())
+	{
+		if (auto member = classType->findDataMember(memberName))
+		{
+			return vm.allocateReference(lhs.member(member->offset, member->type));
+		}
+	}
+	return std::nullopt;
+}
+
 ////////////////////////////////////////
 auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action& rhs_) -> ProcessedAction
 {
@@ -178,60 +190,90 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 	{
 		auto lhs = evalSide(lhs_);
 
-		if (!lhs.type->is<RefType>())
-			lhs = vm.allocateReference(lhs);
+		// TODO: ensure that the commented lines below are unnecessary
+		// The reference was being removed right in the `isSymbol` section.
+		// if (!lhs.type->is<RefType>())
+		// 	lhs = vm.allocateReference(lhs);
 
 		auto rhsExpr = rhs_.as<PendingAction>();
 
+		/// Handle a symbol after the dot:
+		///
+		/// @example
+		/// symbol.memberName
+		/// (expr).memberName
+		///
+		/// @note
+		/// "memberName" can be data member or a function name (possibly an extension method)
 		if (isSymbol(*rhsExpr))
 		{
-			auto& symbolName = *rhsExpr->children[0];
-			lhs = lhs.removeRef();
+			// Name is the first child of the (possibly templated) Symbol
+			auto& nameNode = *rhsExpr->children[0];
 
-			auto memberName = symbolName.string_view();
+			// TODO: ensure the reference is properly handled here
+			lhs = lhs.safeRemoveRef();
 
-			if (auto classType = lhs.type->as<ClassType>())
+			auto memberName = nameNode.string_view();
+
+			if (auto val = this->tryEvalDataMember(lhs, memberName))
 			{
-				auto dmIt = rg::find(classType->dataMembers, memberName, &DataMember::name);
-				if (dmIt != classType->dataMembers.end())
-				{
-					return vm.allocateReference(lhs.member(dmIt->offset, dmIt->type));
-				}
+				return val;
 			}
 
-			FunctionCandidates candidates;
+			auto candidates = FunctionCandidates();
 
-
-			auto methodsIt = lhs.type->methods.find(memberName);
-			if (methodsIt != lhs.type->methods.end())
+			// Try find type methods
+			if (auto methods = lhs.type->findMethod(memberName))
 			{
 				// TODO: check the scope of the method
-				candidates.push_back( { &vm.scopeOf(nullptr), &methodsIt->second } );
+				candidates.push_back( { &vm.scopeOf(nullptr), methods } );
 			}
-			else
+
+			/// Try find free functions of the same name
+			/// @note this is necessary for proper handling of extension methods.
+			/// An extension method can be called like a method.
+			///
+			/// @example
+			///
+			/// func length(self: Vec2) -> Float32 { ... }
+			/// var v = Vec2(1, 2);
+			/// v.length(); // ✔ valid code
+			/// @note 2: this will collect every function, not only extension methods.
+			/// Non-extending methods will be filtered out during the `()` operator evaluation
+			/// because it won't be a candidate.
 			{
-				candidates = vm.findFunction(memberName);
+				auto freeFunctions = vm.findFunction(memberName);
+
+				// TODO: properly handle the scope of the method.
+				candidates.insert(std::end(candidates), std::begin(freeFunctions), std::end(freeFunctions));
 			}
 
 			return ProcessedFunction{ candidates, lhs, memberName };
 		}
 		else
+		{
 			throw RigCError("Invalid expression.")
 							.withLine(vm.lastEvaluatedLine);
+		}
 	}
-	else if(op_ == "::")
+	else if(op_ == "::") // Handle the scope resultion operator
 	{
 		auto const rhs = rhs_.as<PendingAction>();
 		if(!isSymbol(*rhs))
+		{
 			throw RigCError("Rhs of the :: operator should be a valid identifier.")
 							.withHelp("Check the spelling of the right side of the operator.")
 							.withLine(vm.lastEvaluatedLine);
+		}
+
 
 		auto const source = lhs_.as<PendingAction>();
 		if(!isSymbol(*source))
+		{
 			throw RigCError("Lhs of the :: operator should be a valid identifier.")
 							.withHelp("Check the spelling of the right side of the operator.")
 							.withLine(vm.lastEvaluatedLine);
+		}
 
 		auto const memberName = rhs->string();
 		auto const sourceName = source->string_view();
@@ -388,18 +430,25 @@ auto ExpressionExecutor::evalPrefixOperator(StringView op_, Action& rhs_) -> Pro
 	return {};
 }
 
-////////////////////////////////////////
-size_t evaluateFunctionArguments(
-		Instance&				vm_,
-		rigc::ParserNode const&	op_,
-		Function::ArgSpan		evaluated_,
-		FunctionParamTypeSpan	types_
-	)
+auto getFunctionArguments(rigc::ParserNode const& op_) -> Span<rigc::ParserNodePtr>
 {
 	auto args = findElem<rigc::ListOfFunctionArguments>(op_, false);
 
+	assert(args && "getFunctionArguments called with invalid operator.");
+
+	return args->children;
+}
+
+////////////////////////////////////////
+size_t evaluateFunctionArguments(
+		Instance&					vm_,
+		Span<rigc::ParserNodePtr>	args_,
+		Function::ArgSpan			evaluated_,
+		FunctionParamTypeSpan		types_
+	)
+{
 	size_t count = 0;
-	for(auto& arg : args->children)
+	for(auto& arg : args_)
 	{
 		evaluated_[count]	= vm_.evaluate(*arg).value();
 		types_[count]		= evaluated_[count].type;
@@ -411,7 +460,6 @@ size_t evaluateFunctionArguments(
 ////////////////////////////////////////
 auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction
 {
-
 	auto op = op_.string_view();
 	if (op[0] == '[') // array access
 	{
@@ -431,148 +479,7 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 	}
 	else if (op[0] == '(') // function call
 	{
-		auto autoOverloadResolution = false;
-		auto candidates	= FunctionCandidates();
-		auto self		= OptValue();
-		auto fnName		= StringView();
-
-		if (lhs_.is<PendingAction>()) // lhs is yet to be processed
-		{
-			// Supports automatic function overload resolution
-			// because a symbol is provided directly before `()` operator.
-			// Valid code:
-			//
-			//    funcWithOverloads(param1, param2);
-			//    func::< Int32, 32 >(param1, param2);
-			//
-			// Not matching example:
-			//
-			//    var func: Ref = funcWithOverloads; // 🔴 Error
-			//    func(param1, param2);
-			//
-			if (auto act = lhs_.as<PendingAction>(); isSymbol(*act))
-			{
-				autoOverloadResolution = true;
-				auto symbolName = findElem<rigc::Name>(*act)->string_view();
-				candidates = vm.findFunction(symbolName);
-			}
-		}
-		else if (auto act = lhs_.as<ProcessedAction>(); act.is<ProcessedFunction>())
-		{
-			autoOverloadResolution = true;
-			auto& processedFunc = act.as<ProcessedFunction>();
-
-			candidates	= processedFunc.candidates;
-			self		= processedFunc.self;
-			fnName		= processedFunc.name;
-		}
-
-		FunctionParamTypes paramTypes;
-		size_t numParams = 0;
-
-		// First one is reserved to optional `self` (ignored if self is not provided)
-		constexpr size_t NonSelfParamStartIndex = 1;
-
-		Function::Args evaluatedArgs;
-		bool method			= self.has_value();
-		bool constructor	= false;
-
-		if (!autoOverloadResolution)
-		{
-			auto lhs = *this->evalSingleAction(lhs_).as<RuntimeValue>();
-			auto funcVal = lhs.safeRemoveRef();
-
-			if (funcVal.type->is<FuncType>())
-				candidates.push_back( { &vm.scopeOf(nullptr), funcVal.view<FunctionOverloads const*>() } );
-		}
-
-		if (self)
-		{
-			evaluatedArgs[0] = vm.allocateReference(*self);
-			paramTypes[0] = evaluatedArgs[0].type;
-			++numParams;
-		}
-
-		auto paramCount = evaluateFunctionArguments(
-				vm, op_,
-				// Args span:
-				viewArray(evaluatedArgs, NonSelfParamStartIndex),
-				viewArray(paramTypes, NonSelfParamStartIndex)
-			);
-		numParams += paramCount;
-
-		auto reqParamTypes = viewArray(paramTypes, (self ? 0 : 1), numParams);
-
-		auto fn = findOverload(candidates, reqParamTypes, method);
-
-		if (!fn)
-		{
-			if (fnName.empty() && lhs_.is<PendingAction>())
-			{
-				auto& lhsExpr = *lhs_.as<PendingAction>();
-				if (isSymbol(lhsExpr)) // TODO: support variable templates
-				{
-					fnName = findElem<rigc::Name>(lhsExpr, false)->string_view();
-				}
-
-			}
-
-			if (!fnName.empty())
-			{
-				if (self) {
-					if (auto classType = self->type->as<ClassType>())
-					{
-						fn = vm.scopeOf(classType->declaration).tryGenerateFunction(vm, fnName, reqParamTypes);
-					}
-				}
-				if (!fn)
-					fn = vm.currentScope->tryGenerateFunction(vm, fnName, reqParamTypes);
-			}
-		}
-
-		//
-		if (!fn) {
-			String paramsString;
-			size_t paramNumber = 0;
-			for(size_t i = 0; paramNumber < numParams; ++i)
-			{
-				if (i == 0 && !paramTypes[i])
-					continue;
-				if (paramNumber > 0)
-					paramsString += ", ";
-				paramsString += paramTypes[i]->name();
-				++paramNumber;
-			}
-
-			throw RigCError("Not matching function {}to call with arguments of type: {}.",
-								fnName.empty() ? "" : fmt::format("\"{}\" ", fnName),
-								paramsString
-							)
-							.withHelp("Check the function name and arguments' arity and types.")
-							.withLine(vm.lastEvaluatedLine);
-		}
-
-		// Create the object used by the constructor:
-		// (Precondition: self was nullopt)
-		if (fn->isConstructor)
-		{
-			constructor			= true;
-			paramTypes[0]		= fn->outerType->shared_from_this();
-			self				= vm.allocateReference(vm.allocateOnStack(paramTypes[0], nullptr, 0));
-			evaluatedArgs[0]	= *self;
-			++numParams;
-			// fmt::print("> Constructed value of type {} is at {}\n", paramTypes[0]->name(), self->removeRef().data);
-			// fmt::print("> Constructed reference of type {} is at {}\n", self->type->name(), self->data);
-			// fmt::print("> Constructed reference points at {}\n", self->view<void*>());
-			// fmt::print("> Its ref size: {} bytes\n", self->type->size());
-		}
-
-		auto result = vm.executeFunction(*fn, viewArray( evaluatedArgs, (self ? 0 : 1), numParams) );
-
-		if (constructor)
-			return evaluatedArgs[0];
-
-		return result;
+		return this->evalGenericPostfixOperator(op_, lhs_);
 	}
 	else if (op == "--" || op == "++")
 	{
@@ -582,4 +489,200 @@ auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action
 
 	return {};
 }
+
+auto ExpressionExecutor::tryFindEarlyBoundFunction(Action& action_, FunctionCandidates& candidates_) -> bool
+{
+	// Supports early binding if the symbol name is provided directly before `()` operator.
+	// Valid code:
+	//
+	//    funcWithOverloads(param1, param2);
+	//    func::< Int32, 32 >(param1, param2);
+	//
+	// Not matching example:
+	//
+	//    var func: Ref = funcWithOverloads; // 🔴 Error
+	//    func(param1, param2);
+	//
+	auto expr = action_.as<PendingAction>();
+	if (isSymbol(*expr))
+	{
+		// TODO: support function call template arguments
+		// For now just ignore them and use the function name.
+		auto symbolName = findElem<rigc::Name>(*expr)->string_view();
+
+		candidates_ = vm.findFunction(symbolName);
+		return true;
+	}
+	return false;
+}
+
+auto ExpressionExecutor::tryFindEarlyBoundMethod(Action& action_, FunctionCandidates& candidates_, OptValue& self_, StringView& functionName_) -> bool
+{
+	auto processedAction = action_.as<ProcessedAction>();
+	if (processedAction.is<ProcessedFunction>())
+	{
+		/// This function was already processed for example by the evaluation of `.` operator,
+		/// so just use the result here.
+		///
+		/// @example
+		///
+		/// symbol.func
+		/// @see evalInfixOperator ('.' operator)
+
+		auto& processedFunc = processedAction.as<ProcessedFunction>();
+
+		candidates_		= processedFunc.candidates;
+		self_			= processedFunc.self;
+		functionName_	= processedFunc.name;
+
+		return true;
+	}
+
+	return false;
+}
+
+void handleNoMatchingFunction(Instance& vm, StringView fnName, FunctionParamTypes const& paramTypes, size_t numParams)
+{
+	auto paramsString = String();
+	auto paramNumber = size_t(0);
+	for(size_t i = 0; paramNumber < numParams; ++i)
+	{
+		if (i == 0 && !paramTypes[i])
+			continue;
+		if (paramNumber > 0)
+			paramsString += ", ";
+		paramsString += paramTypes[i]->name();
+		++paramNumber;
+	}
+
+	throw RigCError("Not matching function {}to call with arguments of type: {}.",
+						fnName.empty() ? "" : fmt::format("\"{}\" ", fnName),
+						paramsString
+					)
+					.withHelp("Check the function name and arguments' arity and types.")
+					.withLine(vm.lastEvaluatedLine);
+}
+
+////////////////////////////////////////
+auto ExpressionExecutor::evalGenericPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction
+{
+	// Note: this function uses a special case for Func<Ts...>::operator()
+	// to support function calls for the moment.
+	// TODO: Generate proper operator() in the future.
+
+	// func operator()(func: Func<R, T1, T2, ...>, arg1: T1, arg2: T2, ...) -> R {
+	//		return vm_.evaluateFunction(func, arg1, arg2, ...);
+	// }
+
+	// func(arg1, arg2)			-> funkcja to `func`
+	// func(arg1, arg2)			-> funkcja to `operator()(self: type_of(func), arg1, arg2)`
+	// variable(arg1, arg2)		-> funkcja to `operator()(self: type_of(variable), arg1, arg2)`
+	// variable[arg1, arg2]		-> funkcja to `operator[](self: type_of(variable), arg1, arg2)`
+	// variable.func()			-> funkcja to `func`
+	// variable++				-> funkcja to `operator++(self: type_of(variable))`
+	// variable Op				-> funkcja to `operator Op(self: type_of(variable))`
+
+
+	auto usesEarlyBinding	= false;
+	auto candidates			= FunctionCandidates();
+	auto self				= OptValue();
+	auto fnName				= StringView();
+
+	if (this->tryFindEarlyBoundFunction(lhs_, candidates))
+	{
+		usesEarlyBinding = true;
+	}
+	else if (this->tryFindEarlyBoundMethod(lhs_, candidates, self, fnName))
+	{
+		usesEarlyBinding = true;
+	}
+	else {
+		throw std::logic_error("Late binding not implemented yet.");
+
+		/// The function call has to be resolved at runtime.
+		/// TODO: support passing function as an argument.
+
+		auto lhs = *this->evalSingleAction(lhs_).as<RuntimeValue>();
+		auto funcVal = lhs.safeRemoveRef();
+
+		if (funcVal.type->is<FuncType>())
+		{
+			candidates.push_back( { &vm.scopeOf(nullptr), funcVal.view<FunctionOverloads const*>() } );
+		}
+	}
+
+	// First one is reserved to optional `self` (ignored if self is not provided)
+	constexpr auto NonSelfParamStartIndex = size_t(1);
+
+	Function::Args evaluatedArgs;
+	FunctionParamTypes paramTypes;
+	auto numParams = size_t(0);
+
+
+	if (self)
+	{
+		evaluatedArgs[0] = vm.allocateReference(*self);
+		paramTypes[0] = evaluatedArgs[0].type;
+		++numParams;
+	}
+
+	auto argsNodeList = getFunctionArguments(op_);
+	auto paramCount = evaluateFunctionArguments(
+			vm, argsNodeList,
+			// Args span:
+			viewArray(evaluatedArgs, NonSelfParamStartIndex),
+			viewArray(paramTypes, NonSelfParamStartIndex)
+		);
+	numParams += paramCount;
+
+	auto evalParamStartIdx = [&] { return (self ? 0 : NonSelfParamStartIndex); };
+
+	auto reqParamTypes = viewArray(paramTypes, evalParamStartIdx(), numParams);
+
+	auto fn = findOverload(candidates, reqParamTypes, self.has_value());
+
+	if (!fn && !fnName.empty())
+	{
+		// Try generate method from method template inside the class type of `self`.
+		if (self)
+		{
+			if (auto classType = self->getClass())
+			{
+				fn = vm.scopeOf(classType->declaration).tryGenerateFunction(vm, fnName, reqParamTypes);
+			}
+		}
+
+		// Try generate function from a global function template:
+		if (!fn)
+		{
+			fn = vm.currentScope->tryGenerateFunction(vm, fnName, reqParamTypes);
+		}
+	}
+
+	if (!fn)
+	{
+		handleNoMatchingFunction(vm, fnName, paramTypes, numParams);
+	}
+
+	// Create the object used by the constructor:
+	// (Precondition: self was nullopt)
+	if (fn->isConstructor)
+	{
+		paramTypes[0]		= fn->outerType->shared_from_this();
+		self				= vm.allocateReference(vm.allocateOnStack(paramTypes[0], nullptr, 0));
+		evaluatedArgs[0]	= *self;
+		++numParams;
+	}
+
+	auto result = vm.executeFunction(*fn, viewArray( evaluatedArgs, evalParamStartIdx(), numParams) );
+
+	if (fn->isConstructor)
+	{
+		return evaluatedArgs[0];
+	}
+
+	return result;
+}
+
+
 }

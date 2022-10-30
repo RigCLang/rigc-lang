@@ -1,4 +1,4 @@
-#include RIGCVM_PCH
+#include "VM/include/RigCVM/RigCVMPCH.hpp"
 
 #include <RigCVM/Value.hpp>
 
@@ -13,6 +13,19 @@
 
 namespace rigc::vm
 {
+
+/////////////////////////////////////
+auto Value::instanceOfAnyClass() const -> bool
+{
+	return type->is<ClassType>();
+}
+
+/////////////////////////////////////
+auto Value::getClass() const -> ClassType const*
+{
+	return type->as<ClassType const>();
+}
+
 /////////////////////////////////////
 auto Value::member(DataMember const& dm_) const -> Value
 {

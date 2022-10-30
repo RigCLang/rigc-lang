@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCPARSER_PCH
+#include <RigCParser/RigCParserPCH.hpp>
 
 #define DEFINE_KEYWORD(structName, keywordName) \
 	struct structName##Keyword \

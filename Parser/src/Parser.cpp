@@ -1,4 +1,4 @@
-#include RIGCPARSER_PCH
+#include "Parser/include/RigCParser/RigCParserPCH.hpp"
 
 #include <RigCParser/Parser.hpp>
 #include <RigCParser/Grammar.hpp>
@@ -6,7 +6,7 @@
 namespace rigc
 {
 
-auto parse(p::file_input<> &in) -> ParserNodePtr 
+auto parse(p::file_input<> &in) -> ParserNodePtr
 {
 	namespace pt = pegtl::parse_tree;
 

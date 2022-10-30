@@ -1,4 +1,4 @@
-#include RIGCVM_PCH
+#include "VM/include/RigCVM/RigCVMPCH.hpp"
 
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
 #include <RigCVM/ErrorHandling/Formatting.hpp>
@@ -32,9 +32,9 @@ auto dumpException(std::runtime_error const& exception_) -> void
 
 auto dumpException(RigCError const& exception_) -> void
 {
-	if(exception_.lineNumber() == 0) 
+	if(exception_.lineNumber() == 0)
 		dumpPlainException(exception_);
-	else 
+	else
 		dumpRigCErrorWithLine(exception_);
 
 	if(!exception_.help().empty())

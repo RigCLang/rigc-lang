@@ -1,6 +1,6 @@
 #pragma once
 
-#include RIGCPARSER_PCH
+#include <RigCParser/RigCParserPCH.hpp>
 
 namespace rigc
 {
@@ -41,7 +41,7 @@ struct char_semicolon
 
 
 struct Semicolon
-	: p::seq< p::opt<Whitespace>, p::one<';'> > 
+	: p::seq< p::opt<Whitespace>, p::one<';'> >
 {
 };
 
