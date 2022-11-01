@@ -113,12 +113,4 @@ auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVa
 	return vm_.allocateReference(outArray);
 }
 
-// ////////////////////////////////////////
-// auto evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
-// {
-// 	Value v( vm_.evaluate(*expr_.children[0]).value() );
-
-// 	// vm_.stack.push( v );
-// 	return v;
-// }
 }
