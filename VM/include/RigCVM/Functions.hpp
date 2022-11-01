@@ -50,18 +50,19 @@ struct Function
 			RawFn
 		>;
 
-	Impl				impl;
-	Params				params;
-	size_t				paramCount;
-	ReturnType			returnType;
-	bool				variadic = false;
-	IType*				outerType = nullptr;
-	bool				isConstructor = false;
+	Impl		impl;
+	Params		params;
+	size_t		paramCount;
+	ReturnType	returnType;
+	bool		variadic = false;
+	IType*		outerType = nullptr;
+	bool		isConstructor = false;
+	bool		treatAsExtensionMethod = false;
 
 	// TODO: workaround, remove this
 	// once we have a proper explicit return type deduction for
 	// func name -> Ref
-	bool				returnsRef = false;
+	bool		returnsRef = false;
 
 	auto invoke(Instance& vm_, ArgSpan args_) const -> OptValue;
 

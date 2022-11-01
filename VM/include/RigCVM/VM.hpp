@@ -9,6 +9,7 @@
 #include <RigCVM/Stack.hpp>
 
 #include <RigCVM/Functions.hpp>
+#include <RigCVM/Identifier.hpp>
 
 #if DEBUG
 #include <RigCVM/DevServer/Breakpoint.hpp>
@@ -61,6 +62,10 @@ struct Instance
 	auto findVariableByName(StringView name_) -> OptValue;
 	auto findType(StringView name_) -> IType const*;
 	auto findFunction(StringView name_) -> FunctionCandidates;
+
+	auto functionValue(Function const& func_) -> Value;
+
+	auto getIdentifierType(StringView name_) const -> Opt<Identifier::Type>;
 
 	auto tryConvert(Value value_, DeclType const& to_) -> OptValue;
 

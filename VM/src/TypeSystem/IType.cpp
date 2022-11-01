@@ -3,7 +3,7 @@
 #include <RigCVM/TypeSystem/IType.hpp>
 #include <RigCVM/TypeSystem/ClassType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
-#include <RigCVM/TypeSystem/WrapperType.hpp>
+#include <RigCVM/TypeSystem/TemplateType.hpp>
 #include <RigCVM/Functions.hpp>
 
 namespace rigc::vm

@@ -151,10 +151,6 @@ auto dump(Instance& vm_, Value const& value_) -> String
 	{
 		return fmt::format("{} => {}", type.name(), value_.data);
 	}
-	else if (type.is<MethodType>())
-	{
-		return fmt::format("{} => {}", type.name(), value_.data);
-	}
 	else
 	{
 		auto addr = fmt::format("(addr: {}) ", offset);

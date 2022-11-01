@@ -45,6 +45,7 @@ Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(ClassDefinition,					evaluateClassDefinition),
 	MAKE_EXECUTOR(EnumDefinition,					executeEnumDefinition),
 	MAKE_EXECUTOR(MethodDef,						evaluateMethodDefinition),
+	MAKE_EXECUTOR(MemberOperatorDef,				evaluateMemberOperatorDefinition),
 	MAKE_EXECUTOR(DataMemberDef,					evaluateDataMemberDefinition),
 };
 
@@ -114,9 +115,15 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 
 	auto opt	= vm_.findVariableByName(name.string_view());
 
-	// if (!opt) {
-	// 	opt = vm_.findFunctionExpr(actualExpr.string_view());
-	// }
+	if (!opt) {
+		auto func = vm_.findFunction(name.string_view());
+		if (!func.empty())
+		{
+			// fmt::print("Found function: {}\n", name.string_view());
+			// PLACEHOLDER:
+			opt = vm_.functionValue(*func.front().second->front());
+		}
+	}
 
 	if (!opt)
 	{
@@ -125,7 +132,7 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 						.withLine(vm_.lastEvaluatedLine);
 	}
 
-	if (auto ref = opt->type->as<RefType>())
+	if (opt->type->is<RefType>())
 		return opt;
 
 	return vm_.allocateReference(opt.value());

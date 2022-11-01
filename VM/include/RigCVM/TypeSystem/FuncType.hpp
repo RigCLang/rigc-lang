@@ -3,19 +3,18 @@
 #include <RigCVM/RigCVMPCH.hpp>
 
 #include <RigCVM/TypeSystem/IType.hpp>
+#include <RigCVM/TypeSystem/TemplateType.hpp>
 #include <RigCVM/Functions.hpp>
 
 namespace rigc::vm
 {
-//todo: refactor maybe use template?
-struct FuncType : IType
+
+
+struct FuncType : TemplateType
 {
-	using Super = IType;
+	using Super = TemplateType;
 
-	InnerType result;
-	std::vector<InnerType> parameters;
-
-	bool isVariadic = false;
+	using Super::Super;
 
 	auto name() const -> String override;
 	auto symbolName() const -> String override {
@@ -33,30 +32,11 @@ struct FuncType : IType
 	auto decay() const -> InnerType override { return nullptr; }
 
 	auto postInitialize(Instance& vm_) -> void override;
+
+	static auto hashWrapped(DeclType const& returnType, Span<DeclType> args) -> std::size_t;
 };
 
-struct MethodType : IType
-{
-	InnerType result;
-	InnerType classType;
-	std::vector<InnerType> parameters;
+auto constructFunctionType(Scope& ownerScope_, Span<DeclType> args_) -> MutDeclType;
 
 
-	auto name() const -> String override;
-	auto symbolName() const -> String override {
-		return "Method";
-	}
-
-	auto size() const -> std::size_t override {
-		return sizeof(void*) * 2; // self reference + method pointer
-	}
-
-	auto isArray() const -> bool override {
-		return false;
-	}
-
-	auto decay() const -> InnerType override { return nullptr; }
-};
-
-Value allocateMethodOverloads(Instance& vm_, Value self_, FunctionOverloads const* overloads_);
 }

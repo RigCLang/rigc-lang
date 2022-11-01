@@ -3,7 +3,7 @@
 #include <RigCVM/Builtin/Functions.hpp>
 
 #include <RigCVM/TypeSystem/RefType.hpp>
-#include <RigCVM/TypeSystem/WrapperType.hpp>
+#include <RigCVM/TypeSystem/TemplateType.hpp>
 #include <RigCVM/TypeSystem/ArrayType.hpp>
 #include <RigCVM/VM.hpp>
 

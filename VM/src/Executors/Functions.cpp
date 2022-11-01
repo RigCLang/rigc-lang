@@ -4,6 +4,7 @@
 #include <RigCVM/Executors/Templates.hpp>
 #include <RigCVM/VM.hpp>
 
+#include <RigCVM/Scope.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/TypeSystem/ClassType.hpp>
 
@@ -165,4 +166,70 @@ auto evaluateMethodDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> O
 
 	return {};
 }
+
+////////////////////////////////////////
+auto evaluateMemberOperatorDefinition(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	auto& scope = vm_.universalScope();//vm_.scopeOf(vm_.currentClass->declaration);
+
+	auto name = findElem<rigc::OverridableOperatorNames>(expr_, false)->string_view();
+
+	auto templateParamList = getTemplateParamList(expr_);
+	auto isTemplate = !templateParamList.empty();
+
+	auto templateParams = TemplateParameters();
+	for (auto& tp : templateParamList)
+	{
+		templateParams[tp.first] = tp.second;
+		// fmt::print("{} is constrained with {}\n", tp.first, tp.second.name);
+	}
+
+
+	// TODO: Properly parse return type
+	bool returnsRef = false;
+	auto returnType = DeclType();
+	if (auto explicitReturnType = findElem<rigc::ExplicitReturnType>(expr_, false))
+	{
+		if (!isTemplatedType(*findElem<rigc::Type>(*explicitReturnType), templateParams))
+		{
+			returnType = vm_.evaluateType(*findElem<rigc::Type>(*explicitReturnType));
+			if (returnType->is<RefType>())
+				returnsRef = true;
+		}
+		// else: Leave the return type empty -> it has to be resolved for each instantiation
+	}
+	else
+		returnType = vm_.builtinTypes.Void.shared();
+
+	Function::Params params;
+	size_t numParams = 0;
+	params[numParams++] = {
+		"self",
+		constructTemplateType<RefType>(vm_.universalScope(), vm_.currentClass->shared_from_this())
+	};
+
+	auto paramList = findElem<rigc::FunctionParams>(expr_, false);
+	if (paramList)
+		evaluateFunctionParams(vm_, *paramList, params, numParams, templateParams);
+
+	auto operatorName = Scope::formatOperatorName(name, Operator::Infix);
+
+	Function* method = nullptr;
+	if (isTemplate)
+		method = &scope.registerFunctionTemplate(vm_, StringView( operatorName.data(), operatorName.numChars ), Function(Function::RuntimeFn(&expr_), params, numParams));
+	else
+		method = &scope.registerFunction(vm_, StringView( operatorName.data(), operatorName.numChars ), Function(Function::RuntimeFn(&expr_), params, numParams));
+
+	method->returnsRef = returnsRef;
+	method->returnType = std::move(returnType);
+	vm_.currentClass->methods[name].push_back(method);
+	method->outerType = vm_.currentClass;
+
+	auto& methodScope = vm_.scopeOf(method);
+	methodScope.templateParams = std::move(templateParams);
+
+	return {};
+}
+
+
 }

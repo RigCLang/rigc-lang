@@ -183,6 +183,7 @@ auto SetupCoreType(Instance &vm_, Scope& universeScope_, IType const& type_) -> 
 					prePostfixParams[0].type->name(), \
 					op.returnType->name() \
 				); \
+			op.treatAsExtensionMethod = true; \
 		}
 
 	#define MAKE_PREFIX_OP(Name, Incantation) \
@@ -199,6 +200,7 @@ auto SetupCoreType(Instance &vm_, Scope& universeScope_, IType const& type_) -> 
 					prePostfixParams[0].type->name(), \
 					op.returnType->name() \
 				); \
+			op.treatAsExtensionMethod = true; \
 		}
 
 	if constexpr (!std::is_same_v<T, bool>)

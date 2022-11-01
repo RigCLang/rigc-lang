@@ -3,7 +3,7 @@
 #include <RigCVM/RigCVMPCH.hpp>
 
 #include <RigCVM/TypeSystem/IType.hpp>
-#include <RigCVM/TypeSystem/WrapperType.hpp>
+#include <RigCVM/TypeSystem/TemplateType.hpp>
 #include <RigCVM/TypeSystem/TemplateParameter.hpp>
 
 namespace rigc::vm

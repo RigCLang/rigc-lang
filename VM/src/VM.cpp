@@ -397,7 +397,7 @@ R"msg(
 		// Runtime function:
 		auto const& fn = *func_.runtimeImpl().node;
 
-		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>())
+		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>() || fn.is_type<rigc::MemberOperatorDef>())
 		{
 			result = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
@@ -626,10 +626,25 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) ->
 		}
 		else if (typeName == "Addr")
 		{
-			auto inner = findElem<rigc::TemplateParam>(*templateParams);
+			auto& inner = *findElem<rigc::TemplateParam>(*templateParams);
 			return constructTemplateType<AddrType>(
 					this->universalScope(),
-					this->evaluateType(*findElem<rigc::Type>(*inner))
+					this->evaluateType(*findElem<rigc::Type>(inner))
+				);
+		}
+		else if (typeName == "Func")
+		{
+			auto args = Array<DeclType, Function::MAX_PARAMS + 1>();
+			for (size_t i = 0; i < templateParams->children.size(); ++i)
+			{
+				args[i] = this->evaluateType(
+					*findElem<rigc::Type>(*templateParams->children[i])
+				);
+			}
+
+			return constructFunctionType(
+					this->universalScope(),
+					viewArray(args, 0, templateParams->children.size())
 				);
 		}
 		else if (typeName == "Array")
@@ -703,6 +718,32 @@ auto Instance::findFunction(StringView name_) -> FunctionCandidates
 	}
 
 	return candidates;
+}
+
+//////////////////////////////////////////
+auto Instance::functionValue(Function const& func_) -> Value
+{
+	auto args = Array<DeclType, Function::MAX_PARAMS + 1>();
+
+	args[0] = func_.returnType;
+	for (size_t i = 0; i < func_.paramCount; ++i)
+		args[i + 1] = func_.params[i].type;
+
+	auto type = constructFunctionType(this->universalScope(), viewArray(args, 0, func_.paramCount + 1));
+
+	return this->allocateOnStack(type, &func_);
+}
+
+//////////////////////////////////////////
+auto Instance::getIdentifierType(StringView name_) const -> Opt<Identifier::Type>
+{
+	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
+	{
+		if (auto result = it->scope->getIdentifierType(name_))
+			return *result;
+	}
+
+	return std::nullopt;
 }
 
 //////////////////////////////////////////

@@ -36,9 +36,6 @@ auto setupUniverseScope(Instance &vm_, Scope& scope_) -> void
 	MAKE_BUILTIN_TYPE(float,	Float32);
 	MAKE_BUILTIN_TYPE(double,	Float64);
 
-	scope_.addType(std::make_unique<FuncType>());
-	scope_.addType(std::make_unique<MethodType>());
-
 	SETUP_BUILTIN_TYPE(bool,		Bool);
 	SETUP_BUILTIN_TYPE(char,		Char);
 	SETUP_BUILTIN_TYPE(char16_t,	Char16);
@@ -191,10 +188,30 @@ auto testFunctionOverload(Function& func_, FunctionParamTypeSpan paramTypes_) ->
 }
 
 ///////////////////////////////////////////////////////////////
-auto Scope::findFunction(StringView funcName_) const -> FunctionOverloads const*
+auto Scope::findVariable(StringView name_) const -> FrameBasedValue const*
 {
-	auto it = functions.find(funcName_);
+	auto it = variables.find(name_);
+	if (it != variables.end())
+		return &it->second;
+
+	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
+auto Scope::findFunction(StringView name_) const -> FunctionOverloads const*
+{
+	auto it = functions.find(name_);
 	if (it != functions.end())
+		return &it->second;
+
+	return nullptr;
+}
+
+///////////////////////////////////////////////////////////////
+auto Scope::findFunctionTemplate(StringView name_) const -> FunctionOverloads const*
+{
+	auto it = functionTemplates.find(name_);
+	if (it != functionTemplates.end())
 		return &it->second;
 
 	return nullptr;
@@ -506,7 +523,7 @@ auto findOverload(
 
 	for (size_t i = 0; i < overloads_.size(); ++i)
 	{
-		if (method_ && overloads_[i]->params[0].name != "self")
+		if (method_ && !overloads_[i]->treatAsExtensionMethod && overloads_[i]->params[0].name != "self")
 			continue;
 
 		if (testFunctionOverload(*overloads_[i], paramTypes_))
@@ -572,6 +589,27 @@ auto Scope::findOperator(StringView opName_, Operator::Type type_) const -> Func
 		);
 }
 
+
+///////////////////////////////////////////////////////////////
+auto Scope::getIdentifierType(StringView id_) const -> Opt<Identifier::Type>
+{
+	// NOTE: we could cache identifiers within one big container.
+	// to improve performance.
+
+	if (this->findFunction(id_) != nullptr)
+		return Identifier::Function;
+
+	if (this->findType(id_) != nullptr)
+		return Identifier::TypeName;
+
+	if (this->findVariable(id_) != nullptr)
+		return Identifier::Variable;
+
+	if (this->findFunctionTemplate(id_) != nullptr)
+		return Identifier::FunctionTemplate;
+
+	return std::nullopt;
+}
 
 ///////////////////////////////////////////////////////////////
 auto Scope::registerType(Instance& vm_, StringView name_, IType& type_) -> IType&

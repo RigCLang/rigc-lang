@@ -15,6 +15,35 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 	// Setup template arguments:
 	assert((args.size() == 2) && "ArrayType::postInitialize: ArrayType must have 2 template arguments");
 
+	auto selfRefType = constructTemplateType<RefType>(vm_.universalScope(), this->shared_from_this());
+	{
+		Function::Params params;
+
+		params[0].name = "self";
+		params[0].type = selfRefType;
+
+		params[1].name = "index";
+		params[1].type = vm_.builtinTypes.Int32.shared();
+
+		auto& fn = vm_.universalScope().registerOperator(vm_, "[]", Operator::Postfix,
+			Function{
+				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
+				{
+					Value elem = args_[0].removeRef();
+					elem.type = args_[0].type->decay();
+
+					elem.data = (char*)elem.data + args_[1].view<int>() * elem.type->size();
+					return vm_.allocateReference(elem);
+				},
+				params,
+				2
+			}
+		);
+
+		fn.returnType = constructTemplateType<RefType>(vm_.universalScope(), this->inner());
+		this->addMethod("[]", &fn);
+	}
+
 	// "data" method
 	{
 		auto& fn = vm_.universalScope().registerFunction(vm_, "data",
@@ -26,7 +55,7 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 
 					return vm_.allocatePointer(firstElem);
 				},
-				{ { "self", constructTemplateType<RefType>(vm_.universalScope(), this->shared_from_this()) } },
+				{ { "self", selfRefType } },
 				1
 			}
 		);
@@ -46,12 +75,19 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 							int(val.type->size())
 						);
 				},
-				{ { "self", constructTemplateType<RefType>(vm_.universalScope(), this->shared_from_this()) } },
+				{ { "self", selfRefType } },
 				1
 			}
 		);
 		fn.returnType = vm_.builtinTypes.Int32.shared();
 		this->addMethod("size", &fn);
 	}
+
+
+	// if (op[0] == '[') // array access
+	// {
+	//
+	// }
+	// else
 }
 }

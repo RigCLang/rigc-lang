@@ -7,6 +7,7 @@
 #include <RigCVM/Functions.hpp>
 #include <RigCVM/StaticString.hpp>
 #include <RigCVM/StackFrame.hpp>
+#include <RigCVM/Identifier.hpp>
 #include <RigCVM/TypeSystem/TypeRegistry.hpp>
 #include <RigCVM/TypeSystem/TypeConstraint.hpp>
 
@@ -87,10 +88,22 @@ struct Scope
 	auto findConversion(DeclType const& from_, DeclType const& to_) const -> Function const*;
 
 	/// <summary>
-	/// Returns all function overloads with name `funcName_`,
+	/// Returns all frame based value of a variable with name `name_`,
+	/// or `nullptr` if no such variable exist within this scope.
+	/// </summary>
+	auto findVariable(StringView name_) const -> FrameBasedValue const*;
+
+	/// <summary>
+	/// Returns all function overloads with name `name_`,
 	/// or `nullptr` if no such function exist within this scope.
 	/// </summary>
-	auto findFunction(StringView funcName_) const -> FunctionOverloads const*;
+	auto findFunction(StringView name_) const -> FunctionOverloads const*;
+
+	/// <summary>
+	/// Returns all function templates with name `name_`,
+	/// or `nullptr` if no such function template exist within this scope.
+	/// </summary>
+	auto findFunctionTemplate(StringView name_) const -> FunctionOverloads const*;
 
 
 	/// <summary>
@@ -103,7 +116,7 @@ struct Scope
 			FunctionParamTypeSpan	paramTypes_
 		) -> Function const*;
 
-	/// <summary>
+	/// <summary>x
 	/// Returns type with name `typeName_`,
 	/// or `nullptr` if no such type exist within this scope.
 	/// </summary>
@@ -123,6 +136,8 @@ struct Scope
 	/// `formatOperatorName` is used within this function to get the correct name of an operator.
 	/// </remarks>
 	auto findOperator(StringView opName_, Operator::Type type_) const -> FunctionOverloads const*;
+
+	auto getIdentifierType(StringView id_) const -> Opt<Identifier::Type>;
 
 	/// <summary>
 	/// Registers a type alias within this scope.
