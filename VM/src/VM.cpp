@@ -29,6 +29,8 @@ namespace rigc::vm
 		return vm_.allocateOnStack<ToCppType>(#ToRuntimeType, ToCppType(lhsData));			\
 	}
 
+DEFINE_BUILTIN_CONVERT_OP	(bool,		Bool);
+
 DEFINE_BUILTIN_CONVERT_OP	(char,		Char);
 
 DEFINE_BUILTIN_CONVERT_OP	(int16_t,	Int16);
@@ -159,6 +161,12 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 	ADD_CONVERSION(char, 	Char,		Int16);
 	ADD_CONVERSION(char, 	Char,		Int32);
 	ADD_CONVERSION(char, 	Char,		Int64);
+
+	// Integer types -> Bool
+	ADD_CONVERSION(char, 	Char,		Bool);
+	ADD_CONVERSION(int16_t,	Int16,		Bool);
+	ADD_CONVERSION(int32_t, Int32,		Bool);
+	ADD_CONVERSION(int64_t, Int64,		Bool);
 
 	#undef ADD_CONVERSION
 
