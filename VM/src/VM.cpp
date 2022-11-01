@@ -29,6 +29,8 @@ namespace rigc::vm
 		return vm_.allocateOnStack<ToCppType>(#ToRuntimeType, ToCppType(lhsData));			\
 	}
 
+DEFINE_BUILTIN_CONVERT_OP	(char,		Char);
+
 DEFINE_BUILTIN_CONVERT_OP	(int16_t,	Int16);
 DEFINE_BUILTIN_CONVERT_OP	(int32_t,	Int32);
 DEFINE_BUILTIN_CONVERT_OP	(int64_t,	Int64);
@@ -126,27 +128,37 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 		addTypeConversion(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
 
 
-	// // Int16 -> floats
+	// Int16 -> floats
 	ADD_CONVERSION(int16_t,	Int16,		Float32);
 	ADD_CONVERSION(int16_t,	Int16,		Float64);
 
-	// // Int32 -> floats
+	// Int32 -> floats
 	ADD_CONVERSION(int32_t,	Int32,		Float32);
 	ADD_CONVERSION(int32_t,	Int32,		Float64);
 
-	// // Int64 -> floats
+	// Int64 -> floats
 	ADD_CONVERSION(int64_t,	Int64,		Float32);
 	ADD_CONVERSION(int64_t,	Int64,		Float64);
 
-	// // Float32 -> ints
+	// Float32 -> ints
 	ADD_CONVERSION(float,	Float32,	Int16);
 	ADD_CONVERSION(float,	Float32,	Int32);
 	ADD_CONVERSION(float,	Float32,	Int64);
 
-	// // Float64 -> ints
+	// Float64 -> ints
 	ADD_CONVERSION(double,	Float64,	Int16);
 	ADD_CONVERSION(double,	Float64,	Int32);
 	ADD_CONVERSION(double,	Float64,	Int64);
+
+	// Ints -> Char
+	ADD_CONVERSION(int16_t,	Int16,		Char);
+	ADD_CONVERSION(int32_t,	Int32,		Char);
+	ADD_CONVERSION(int64_t,	Int64,		Char);
+
+	// Char -> Ints
+	ADD_CONVERSION(char, 	Char,		Int16);
+	ADD_CONVERSION(char, 	Char,		Int32);
+	ADD_CONVERSION(char, 	Char,		Int64);
 
 	#undef ADD_CONVERSION
 

@@ -348,7 +348,15 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 			return vm.allocateOnStack<void const*>(rhsType, lhsNoRef.view<void const*>());
 		}
 
-		return vm.tryConvert(lhs, rhsType);
+		if (auto result = vm.tryConvert(lhs, rhsType))
+			return result;
+
+		throw RigCError("No conversion operator found from {} to {}.",
+				lhsNoRef.type->name(),
+				rhsType->name()
+			)
+			.withHelp("Check if the type implements the conversion operator.")
+			.withLine(vm.lastEvaluatedLine);
 	}
 	else
 	{

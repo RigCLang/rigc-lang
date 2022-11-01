@@ -79,9 +79,6 @@ bool copyConstructOn(Instance&, Value, Value const&);
 auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 
-	std::vector<Value> arr;
-	arr.reserve(expr_.children.size());
-
 	if (expr_.children.empty())
 	{
 		// TODO: add support for an empty literal
@@ -89,6 +86,7 @@ auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVa
 	}
 
 	auto outArray = Value();
+	auto elementType = DeclType();
 
 	for (size_t i = 0; i < expr_.children.size(); ++i)
 	{
@@ -96,7 +94,21 @@ auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVa
 
 		if (i == 0)
 		{
+			elementType = v.type;
 			outArray = vm_.allocateOnStack( vm_.arrayOf(*v.type, expr_.children.size()), nullptr, expr_.children.size() );
+		}
+		else
+		{
+			if (v.type != elementType)
+			{
+				throw RigCError("Mismatch between elements inside the array literal: {} is not directly assignable to {}",
+						v.type->name(), elementType->name()
+					)
+					.withHelp(
+						"The type of the array literal is deduced from the first element. Try using a cast, i.e.:\n"
+						"\t[ 4, 13, 'c' as Int32 ]"
+					);
+			}
 		}
 
 		auto buf = &outArray.view<char>();

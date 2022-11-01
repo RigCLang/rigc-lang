@@ -25,7 +25,7 @@ Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(ReturnStatement,					executeReturnStatement),
 	MAKE_EXECUTOR(SingleBlockStatement,				executeSingleStatement),
 	MAKE_EXECUTOR(Expression,						evaluateExpression),
-	MAKE_EXECUTOR(ExprWithoutComma,					evaluateExpression),
+	MAKE_EXECUTOR(ArrayElement,						evaluateArrayElement),
 	MAKE_EXECUTOR(BreakStatement,					evaluateBreakStatement),
 	MAKE_EXECUTOR(ContinueStatement,				evaluateContinueStatement),
 	MAKE_EXECUTOR(PossiblyTemplatedSymbol,			evaluateSymbol),
@@ -38,7 +38,6 @@ Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(Float32Literal,					evaluateFloat32Literal),
 	MAKE_EXECUTOR(Float64Literal,					evaluateFloat64Literal),
 	MAKE_EXECUTOR(ArrayLiteral,						evaluateArrayLiteral),
-	// MAKE_EXECUTOR(ArrayElement,					evaluateArrayElement),
 	MAKE_EXECUTOR(VariableDefinition,				evaluateVariableDefinition),
 	MAKE_EXECUTOR(FunctionDefinition,				evaluateFunctionDefinition),
 	MAKE_EXECUTOR(InitializerValue,					evaluateExpression),
@@ -99,6 +98,12 @@ auto executeSingleStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 {
 	return ExpressionExecutor{vm_, expr_}.evaluate();
+}
+
+////////////////////////////////////////
+auto evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	return evaluateExpression(vm_, expr_);
 }
 
 //todo refactor evaluateSymbol and evaluateName
