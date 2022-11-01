@@ -73,22 +73,45 @@ auto evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVal
 	return vm_.allocateOnStack( vm_.builtinTypes.Char.shared(), c );
 }
 
-// ////////////////////////////////////////
-// auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
-// {
-// 	std::vector<Value> arr;
-// 	arr.reserve(expr_.children.size());
+bool copyConstructOn(Instance&, Value, Value const&);
 
-// 	for (auto const& c : expr_.children)
-// 	{
-// 		arr.push_back( vm_.evaluate(*c).value() );
-// 	}
+////////////////////////////////////////
+auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
 
-// 	Value v( std::move(arr) );
+	std::vector<Value> arr;
+	arr.reserve(expr_.children.size());
 
-// 	// vm_.stack.push( v );
-// 	return v;
-// }
+	if (expr_.children.empty())
+	{
+		// TODO: add support for an empty literal
+		throw RigCError("Cannot deduce array type from an empty literal");
+	}
+
+	auto outArray = Value();
+
+	for (size_t i = 0; i < expr_.children.size(); ++i)
+	{
+		auto v = vm_.evaluate(*expr_.children[i]).value();
+
+		if (i == 0)
+		{
+			outArray = vm_.allocateOnStack( vm_.arrayOf(*v.type, expr_.children.size()), nullptr, expr_.children.size() );
+		}
+
+		auto buf = &outArray.view<char>();
+		auto inplaceValue = Value();
+		inplaceValue.type = v.type;
+		inplaceValue.data = buf + (i * v.type->size());
+
+		if (!copyConstructOn(vm_, inplaceValue, v))
+		{
+			std::memcpy(inplaceValue.data, v.data, v.type->size());
+		}
+	}
+
+	return vm_.allocateReference(outArray);
+}
 
 // ////////////////////////////////////////
 // auto evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue

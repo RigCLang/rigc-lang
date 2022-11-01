@@ -86,7 +86,8 @@ struct AnyLiteral
 		IntegerLiteral,
 		BoolLiteral,
 		StringLiteral,
-		CharLiteral
+		CharLiteral,
+		ArrayLiteral
 	>
 {
 };
