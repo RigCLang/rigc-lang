@@ -67,12 +67,12 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 	{
 		auto& fn = vm_.universalScope().registerFunction(vm_, "size",
 			Function{
-				[](Instance& vm_, Function::ArgSpan args_) -> OptValue
+				[this](Instance& vm_, Function::ArgSpan args_) -> OptValue
 				{
 					auto val = args_[0].removeRef();
 					return vm_.allocateOnStack(
 							vm_.builtinTypes.Int32.shared(),
-							int(val.type->size())
+							int(args[1].as<int>())
 						);
 				},
 				{ { "self", selfRefType } },
@@ -82,12 +82,5 @@ auto ArrayType::postInitialize(Instance& vm_) -> void
 		fn.returnType = vm_.builtinTypes.Int32.shared();
 		this->addMethod("size", &fn);
 	}
-
-
-	// if (op[0] == '[') // array access
-	// {
-	//
-	// }
-	// else
 }
 }
