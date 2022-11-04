@@ -105,30 +105,10 @@ auto Instance::evaluateModule(Module& module_) -> void
 	}
 }
 
-//////////////////////////////////////////
-auto Instance::run(InstanceSettings const& settings_) -> int
+void setupDefaultConversions(Instance& vm_, Scope& scope_)
 {
-	settings = &settings_;
-
-	entryPoint.module_ = this->parseModule(settings->entryModuleName);
-	if (!entryPoint.module_)
-	{
-		throw RigCError("Failed to run module \"{}\".", settings->entryModuleName);
-	}
-
-	// Use its parent path as the working directory
-	// This is important for modules to work properly.
-	fs::current_path(entryPoint.module_->absolutePath.parent_path());
-
-	stack.container.resize(StackSize);
-	auto& scope = this->scopeOf(nullptr);
-	currentScope = &scope;
-	setupUniverseScope(*this, scope);
-	this->pushStackFrameOf(nullptr);
-
 	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
-		addTypeConversion(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
-
+		addTypeConversion(vm_, scope_, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
 
 	// Int16 -> floats
 	ADD_CONVERSION(int16_t,	Int16,		Float32);
@@ -169,6 +149,30 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 	ADD_CONVERSION(int64_t, Int64,		Bool);
 
 	#undef ADD_CONVERSION
+}
+
+//////////////////////////////////////////
+auto Instance::run(InstanceSettings const& settings_) -> int
+{
+	settings = &settings_;
+
+	entryPoint.module_ = this->parseModule(settings->entryModuleName);
+	if (!entryPoint.module_)
+	{
+		throw RigCError("Failed to run module \"{}\".", settings->entryModuleName);
+	}
+
+	// Use its parent path as the working directory
+	// This is important for modules to work properly.
+	fs::current_path(entryPoint.module_->absolutePath.parent_path());
+
+	stack.container.resize(StackSize);
+	auto& scope = this->scopeOf(nullptr);
+	currentScope = &scope;
+	setupUniverseScope(*this, scope);
+	this->pushStackFrameOf(nullptr);
+
+	setupDefaultConversions(*this, scope);
 
 	this->evaluateModule(*entryPoint.module_);
 
