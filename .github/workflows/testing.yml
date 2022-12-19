@@ -47,12 +47,18 @@ jobs:
           ../pacc/bin/pacc install
           ../pacc/bin/pacc build --verbose -c=Release --cores=2
         working-directory: rigc-lang
+
+      - name: Run tests
+        working-directory: ${{runner.workspace}}/rigc-lang
+        run: |
+          ./bin/x64/Release/VMTest
         
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ format('rigc-{0}-linux-x64', github.ref_name) }}
-          path: rigc-lang/bin/x64/Release/VM
+          path: |
+            rigc-lang/bin/x64/Release/VMApp
 
   Build-on-Windows:
     # The type of runner that the job will run on
@@ -80,9 +86,15 @@ jobs:
           ..\pacc\bin\pacc install
           ..\pacc\bin\pacc build --verbose -c=Release --cores=2
         working-directory: rigc-lang
+
+      - name: Run tests
+        working-directory: ${{runner.workspace}}/rigc-lang
+        run: |
+          .\bin\x64\Release\VMTest.exe
         
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ format('rigc-{0}-windows-x64', github.ref_name) }}
-          path: rigc-lang/bin/x64/Release/VM.exe
+          path: |
+            rigc-lang/bin/x64/Release/VMApp.exe
