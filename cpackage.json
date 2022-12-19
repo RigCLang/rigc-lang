@@ -39,8 +39,10 @@
 				"system:macosx":	{ "defines": [ "PACC_SYSTEM_MACOSX" ], "linkerOptions": ["-pthread"] }
 			},
 			"language": "C++20",
-			"type": "app",
-			"includeFolders": "VM/include",
+			"type": "static lib",
+			"includeFolders": {
+				"public": "VM/include"
+			},
 			"files": [
 				"VM/include/RigCVM/**.hpp",
 				"VM/src/**.cpp"
@@ -50,11 +52,40 @@
 				"source": "VM/src/RigCVMPCH.cpp",
 				"definition": "RIGCVM_PCH"
 			},
+			"dependencies": {
+				"public": [
+					"self:Parser",
+					"fmt@8.0.1",
+					"json@3.9.1",
+					"websocketpp@0.8.3"
+				]
+			}
+		},
+		{
+			"name": "VMApp",
+			"type": "app",
+			"language": "C++20",
+			"includeFolders": "VMApp/include",
+			"files": [
+				"VMApp/include/RigCVMApp/**.hpp",
+				"VMApp/src/**.cpp"
+			],
 			"dependencies": [
-				"self:Parser",
-				"fmt@8.0.1",
-				"json@3.9.1",
-				"websocketpp@0.8.3"
+				"self:VM"
+			]
+		},
+		{
+			"name": "VMTest",
+			"type": "app",
+			"language": "C++20",
+			"includeFolders": "VMTest/include",
+			"files": [
+				"VMTest/include/RigCVMTest/**.hpp",
+				"VMTest/src/**.cpp"
+			],
+			"dependencies": [
+				"self:VM",
+				"catch2-amlg@3.1.1"
 			]
 		}
 	]

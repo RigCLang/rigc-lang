@@ -39,7 +39,7 @@ auto printCharacters(Instance &vm_, Function::ArgSpan args_) -> OptValue
 	auto chars = &args_[0].removePtr().view<char>();
 	auto size = args_[1].view<int>();
 
-	fmt::print("{}", StringView(chars, size_t(size)));
+	vm_.print("{}", StringView(chars, size_t(size)));
 
 	return std::nullopt;
 }
@@ -115,7 +115,7 @@ auto print(Instance &vm_, Function::ArgSpan args_) -> OptValue
 			store.push_back(dump(vm_, val));
 	}
 
-	fmt::vprint(fmtView, store);
+	vm_.std_out() << fmt::vformat(fmtView, store);
 
 	return {};
 }

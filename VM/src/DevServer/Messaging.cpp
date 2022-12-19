@@ -10,7 +10,9 @@ namespace rigc::vm
 
 void sendDebugMessage(String const& msg_)
 {
-	g_devServer->enqueueMessage(msg_);
+	if (g_devServer) {
+		g_devServer->enqueueMessage(msg_);
+	}
 }
 
 auto serializeLogLevel(LogLevel level_) -> StringView
@@ -28,6 +30,10 @@ auto serializeLogLevel(LogLevel level_) -> StringView
 
 void sendLogMessage(LogLevel level_, StringView msg_)
 {
+	if (!g_devServer) {
+		return;
+	}
+
 	auto escaped = String(msg_);
 	rigc::vm::replaceAll(escaped, "\"", "\\\"");
 

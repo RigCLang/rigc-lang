@@ -14,6 +14,7 @@
 #include <RigCVM/DevServer/Instance.hpp>
 #include <RigCVM/DevServer/Messaging.hpp>
 #include <RigCVM/DevServer/Utils.hpp>
+#include <RigCVM/DevServer/Presets.hpp>
 
 #include <RigCVM/Helper/String.hpp>
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
@@ -90,7 +91,7 @@ auto Instance::parseModule(StringView name_) -> Module*
 }
 
 //////////////////////////////////////////
-auto Instance::evaluateModule(Module& module_) -> void
+auto Instance::analyzeModule(Module& module_, ModuleAnalysisSettings settings_) -> void
 {
 	auto prevModule = currentModule;
 	currentModule = &module_;
@@ -151,6 +152,15 @@ void setupDefaultConversions(Instance& vm_, Scope& scope_)
 	#undef ADD_CONVERSION
 }
 
+// TODO: move this to a separate file
+auto useEntryPointPath(EntryPoint const& entryPoint) -> fs::path
+{
+	auto current = fs::current_path();
+	fs::current_path(entryPoint.module_->absolutePath.parent_path());
+
+	return current;
+}
+
 //////////////////////////////////////////
 auto Instance::run(InstanceSettings const& settings_) -> int
 {
@@ -164,7 +174,7 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 
 	// Use its parent path as the working directory
 	// This is important for modules to work properly.
-	fs::current_path(entryPoint.module_->absolutePath.parent_path());
+	auto prevPath = useEntryPointPath(entryPoint);
 
 	stack.container.resize(StackSize);
 	auto& scope = this->scopeOf(nullptr);
@@ -174,8 +184,17 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 
 	setupDefaultConversions(*this, scope);
 
-	this->evaluateModule(*entryPoint.module_);
+	this->analyzeModule(*entryPoint.module_);
 
+	this->runFromEntryPoint();
+
+	fs::current_path(prevPath);
+
+	return 0;
+}
+
+void Instance::runFromEntryPoint()
+{
 	auto mainFuncOv = this->universalScope().findFunction(entryPoint.functionName);
 
 	if (!mainFuncOv)
@@ -187,7 +206,26 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 		throw RigCError("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName)
 						.withLine(lastEvaluatedLine);
 
+
+
+	this->handleSessionStarted();
+
+	try {
+		this->executeFunction(*(*mainFuncOv)[0]);
+	}
+	catch(...) {
+		this->handleSessionEnded();
+		throw;
+	}
+
+	this->handleSessionEnded();
+}
+
+void Instance::handleSessionStarted()
+{
 #if DEBUG
+	namespace dp = devserver_presets;
+
 	if (onInitializeDevTools) {
 		onInitializeDevTools();
 	}
@@ -197,47 +235,37 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 		std::this_thread::sleep_for(settings->warmupDuration);
 	}
 
-	sendDebugMessage(fmt::format(R"msg(
-{{
-	"type": "stack",
-	"action": "setBaseAddress",
-	"data": "{}"
-}}
-)msg", intptr_t(stack.data())));
-
-	if (settings->waitForConnection)
+	if (g_devServer)
 	{
-		devserverLog("Waiting for debugger to connect...\n");
-		g_devServer->waitForConnection();
-		sendDebugMessage(fmt::format(R"msg(
-{{
-	"type": "session",
-	"action": "started"
-}}
-		)msg"));
 
-		g_devServer->waitForContinue();
+		sendDebugMessage(fmt::format(dp::SetBaseAddressContent, intptr_t(stack.data())));
+
+		if (settings->waitForConnection)
+		{
+			devserverLog("Waiting for debugger to connect...\n");
+			g_devServer->waitForConnection();
+			sendDebugMessage(String(dp::SessionStartedContent));
+
+			g_devServer->waitForContinue();
 
 
-		devserverLog("Execution started...\n");
+			devserverLog("Execution started...\n");
+		}
 	}
 #endif
-
-	this->executeFunction(*(*mainFuncOv)[0]);
-
-#if DEBUG
-		sendDebugMessage(fmt::format(R"msg(
-{{
-	"type": "session",
-	"action": "finished"
-}}
-		)msg"));
-#endif
-
-	return 0;
 }
 
-//////////////////////////////////////////
+
+void Instance::handleSessionEnded()
+{
+#if DEBUG
+	namespace dp = devserver_presets;
+	if (g_devServer)
+	{
+		sendDebugMessage(String(dp::SessionFinishedContent));
+	}
+#endif
+}
 
 #if DEBUG
 

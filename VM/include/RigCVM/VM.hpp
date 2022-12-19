@@ -124,7 +124,7 @@ struct Instance
 
 	auto parseModule(StringView name_) -> Module*;
 
-	auto evaluateModule(Module& module_) -> void;
+	auto analyzeModule(Module& module_, ModuleAnalysisSettings settings_ = {}) -> void;
 	auto findModulePath(StringView name_) const -> fs::path;
 
 	Set<FsPath>					loadedModules;
@@ -165,8 +165,50 @@ struct Instance
 
 	size_t lineAt(rigc::ParserNode const& node_) const;
 	size_t lastEvaluatedLine = 0;
+
+
+	// Streams:
+	inline auto& std_out() const {
+		return *settings->streams.out;
+	}
+
+	inline auto& std_in() const {
+		return *settings->streams.in;
+	}
+
+	inline auto& std_log() const {
+		return *settings->streams.log;
+	}
+
+	inline auto& std_err() const {
+		return *settings->streams.err;
+	}
+
+	template <typename... TArgs>
+	void print(fmt::format_string<TArgs...> format, TArgs&&... args) const
+	{
+		std_out() << fmt::format(format, std::forward<TArgs>(args)...);
+	}
+
+	template <typename... TArgs>
+	void printLog(fmt::format_string<TArgs...> format, TArgs&&... args) const
+	{
+		std_log() << fmt::format(format, std::forward<TArgs>(args)...);
+	}
+
+	template <typename... TArgs>
+	void printError(fmt::format_string<TArgs...> format, TArgs&&... args) const
+	{
+		std_err() << fmt::format(format, std::forward<TArgs>(args)...);
+	}
+
 private:
 	rigc::ParserNode const* root = nullptr;
+
+	void handleSessionStarted();
+	void handleSessionEnded();
+
+	void runFromEntryPoint();
 
 #if DEBUG
 	rigc::ParserNode const*	lastExecutedNode = nullptr;

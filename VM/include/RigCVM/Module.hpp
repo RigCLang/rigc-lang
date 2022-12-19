@@ -28,4 +28,10 @@ public:
 
 	State state = State::Unresolved;
 };
+
+struct ModuleAnalysisSettings
+{
+	// None yet
+};
+
 }
