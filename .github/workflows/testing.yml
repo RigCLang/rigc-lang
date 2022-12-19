@@ -55,7 +55,7 @@ jobs:
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ format('rigc-{0}-linux-x64', github.ref_name) }}
+          name: ${{ format('rigc-{0}_{1}_{2}-windows-x64', github.run_id, github.run_number, github.run_attempt) }}
           path: |
             rigc-lang/bin/x64/Release/VMApp
 
@@ -90,12 +90,11 @@ jobs:
         shell: pwsh
         working-directory: rigc-lang
         run: |
-          dir
           .\bin\x64\Release\VMTest.exe
         
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ format('rigc-{0}-windows-x64', github.ref_name) }}
+          name: ${{ format('rigc-{0}_{1}_{2}-windows-x64', github.run_id, github.run_number, github.run_attempt) }}
           path: |
             rigc-lang/bin/x64/Release/VMApp.exe

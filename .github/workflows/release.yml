@@ -49,7 +49,7 @@ jobs:
         working-directory: rigc-lang
 
       - name: Run tests
-        working-directory: ${{runner.workspace}}/rigc-lang
+        working-directory: rigc-lang
         run: |
           ./bin/x64/Release/VMTest
         
@@ -89,7 +89,7 @@ jobs:
         working-directory: rigc-lang
 
       - name: Run tests
-        working-directory: ${{runner.workspace}}/rigc-lang
+        working-directory: rigc-lang
         run: |
           .\bin\x64\Release\VMTest.exe
         
