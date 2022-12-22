@@ -2,7 +2,7 @@
 
 #include <RigCVM/TypeSystem/EnumType.hpp>
 #include <RigCVM/TypeSystem/EnumValue.hpp>
-#include <RigCVM/TypeSystem/WrapperType.hpp>
+#include <RigCVM/TypeSystem/TemplateType.hpp>
 #include <RigCVM/TypeSystem/RefType.hpp>
 #include <RigCVM/Alloc.hpp>
 #include <RigCVM/ErrorHandling/Exceptions.hpp>

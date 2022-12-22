@@ -1,13 +1,12 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Testing CI
 
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches:
-      - testing
+  pull_request:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -46,13 +45,21 @@ jobs:
           export LD_PRELOAD=$GITHUB_WORKSPACE/pacc/bin/libstdc++.so.6
           ../pacc/bin/pacc install
           ../pacc/bin/pacc build --verbose -c=Release --cores=2
+          chmod +x ./bin/x64/Release/VMApp
+          chmod +x ./bin/x64/Release/VMTest
         working-directory: rigc-lang
+
+      - name: Run tests
+        working-directory: rigc-lang
+        run: |
+          ./bin/x64/Release/VMTest
         
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ format('rigc-{0}-linux-x64', github.ref_name) }}
-          path: rigc-lang/bin/x64/Release/VM
+          name: ${{ format('rigc-{0}_{1}_{2}-linux-x64', github.run_id, github.run_number, github.run_attempt) }}
+          path: |
+            rigc-lang/bin/x64/Release/VMApp
 
   Build-on-Windows:
     # The type of runner that the job will run on
@@ -80,9 +87,16 @@ jobs:
           ..\pacc\bin\pacc install
           ..\pacc\bin\pacc build --verbose -c=Release --cores=2
         working-directory: rigc-lang
+
+      - name: Run tests
+        shell: pwsh
+        working-directory: rigc-lang
+        run: |
+          .\bin\x64\Release\VMTest.exe
         
       - name: Upload VM artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ format('rigc-{0}-windows-x64', github.ref_name) }}
-          path: rigc-lang/bin/x64/Release/VM.exe
+          name: ${{ format('rigc-{0}_{1}_{2}-windows-x64', github.run_id, github.run_number, github.run_attempt) }}
+          path: |
+            rigc-lang/bin/x64/Release/VMApp.exe

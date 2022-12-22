@@ -8,6 +8,8 @@
 namespace rigc
 {
 
+struct OverridableOperatorNames;
+
 struct ExplicitType
 	: p::seq< p::one<':'>, OptWs, Type >
 {};
@@ -16,12 +18,21 @@ struct DataMemberDef
 	: p::seq< Name, OptWs, p::sor<p::seq<ExplicitType, p::opt<Initialization>>, p::opt<Initialization>>, OptWs>
 {};
 
+struct MemberOperatorDef
+	: p::seq<
+		p::opt< OverrideKeyword, Ws >,
+		p::opt<TemplateDefPreamble, OptWs>,
+		OperatorKeyword, OptWs, OverridableOperatorNames,
+		OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
+{};
+
 struct MethodDef
 	: p::seq< p::opt< OverrideKeyword, Ws >, p::opt<TemplateDefPreamble, OptWs>, Name, OptWs, p::opt<FunctionParams>, p::opt<OptWs, ExplicitReturnType>, OptWs, CodeBlock >
 {};
 
 struct MemberDef
 	: p::sor<
+		MemberOperatorDef,
 		p::seq<DataMemberDef, p::one<';'>>,
 		MethodDef
 	>

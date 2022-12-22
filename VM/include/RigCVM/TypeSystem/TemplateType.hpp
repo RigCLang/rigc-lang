@@ -27,7 +27,7 @@ struct TemplateType : IType
 		return args.front().as<DeclType>()->decay();
 	}
 
-	auto getTemplateArguments() const -> std::vector<TemplateArgument> const& override
+	auto getTemplateArguments() const -> DynArray<TemplateArgument> const& override
 	{
 		return args;
 	}

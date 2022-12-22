@@ -25,6 +25,7 @@ Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(ReturnStatement,					executeReturnStatement),
 	MAKE_EXECUTOR(SingleBlockStatement,				executeSingleStatement),
 	MAKE_EXECUTOR(Expression,						evaluateExpression),
+	MAKE_EXECUTOR(ArrayElement,						evaluateArrayElement),
 	MAKE_EXECUTOR(BreakStatement,					evaluateBreakStatement),
 	MAKE_EXECUTOR(ContinueStatement,				evaluateContinueStatement),
 	MAKE_EXECUTOR(PossiblyTemplatedSymbol,			evaluateSymbol),
@@ -36,8 +37,7 @@ Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(CharLiteral,						evaluateCharLiteral),
 	MAKE_EXECUTOR(Float32Literal,					evaluateFloat32Literal),
 	MAKE_EXECUTOR(Float64Literal,					evaluateFloat64Literal),
-	// MAKE_EXECUTOR(ArrayLiteral,					evaluateArrayLiteral),
-	// MAKE_EXECUTOR(ArrayElement,					evaluateArrayElement),
+	MAKE_EXECUTOR(ArrayLiteral,						evaluateArrayLiteral),
 	MAKE_EXECUTOR(VariableDefinition,				evaluateVariableDefinition),
 	MAKE_EXECUTOR(FunctionDefinition,				evaluateFunctionDefinition),
 	MAKE_EXECUTOR(InitializerValue,					evaluateExpression),
@@ -45,6 +45,7 @@ Map<ExecutorTrigger, ExecutorFunction*, std::less<>> Executors = {
 	MAKE_EXECUTOR(ClassDefinition,					evaluateClassDefinition),
 	MAKE_EXECUTOR(EnumDefinition,					executeEnumDefinition),
 	MAKE_EXECUTOR(MethodDef,						evaluateMethodDefinition),
+	MAKE_EXECUTOR(MemberOperatorDef,				evaluateMemberOperatorDefinition),
 	MAKE_EXECUTOR(DataMemberDef,					evaluateDataMemberDefinition),
 };
 
@@ -99,6 +100,12 @@ auto evaluateExpression(Instance &vm_, rigc::ParserNode const& expr_) -> OptValu
 	return ExpressionExecutor{vm_, expr_}.evaluate();
 }
 
+////////////////////////////////////////
+auto evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
+	return evaluateExpression(vm_, expr_);
+}
+
 //todo refactor evaluateSymbol and evaluateName
 ////////////////////////////////////////
 auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
@@ -114,9 +121,15 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 
 	auto opt	= vm_.findVariableByName(name.string_view());
 
-	// if (!opt) {
-	// 	opt = vm_.findFunctionExpr(actualExpr.string_view());
-	// }
+	if (!opt) {
+		auto func = vm_.findFunction(name.string_view());
+		if (!func.empty())
+		{
+			// fmt::print("Found function: {}\n", name.string_view());
+			// PLACEHOLDER:
+			opt = vm_.functionValue(*func.front().second->front());
+		}
+	}
 
 	if (!opt)
 	{
@@ -125,7 +138,7 @@ auto evaluateSymbol(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
 						.withLine(vm_.lastEvaluatedLine);
 	}
 
-	if (auto ref = opt->type->as<RefType>())
+	if (opt->type->is<RefType>())
 		return opt;
 
 	return vm_.allocateReference(opt.value());

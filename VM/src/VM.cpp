@@ -14,6 +14,7 @@
 #include <RigCVM/DevServer/Instance.hpp>
 #include <RigCVM/DevServer/Messaging.hpp>
 #include <RigCVM/DevServer/Utils.hpp>
+#include <RigCVM/DevServer/Presets.hpp>
 
 #include <RigCVM/Helper/String.hpp>
 #include <RigCVM/ErrorHandling/Exceptions.hpp>
@@ -28,6 +29,10 @@ namespace rigc::vm
 		FromType const&	lhsData = *reinterpret_cast<FromType const*>(lhs_.blob());			\
 		return vm_.allocateOnStack<ToCppType>(#ToRuntimeType, ToCppType(lhsData));			\
 	}
+
+DEFINE_BUILTIN_CONVERT_OP	(bool,		Bool);
+
+DEFINE_BUILTIN_CONVERT_OP	(char,		Char);
 
 DEFINE_BUILTIN_CONVERT_OP	(int16_t,	Int16);
 DEFINE_BUILTIN_CONVERT_OP	(int32_t,	Int32);
@@ -86,7 +91,7 @@ auto Instance::parseModule(StringView name_) -> Module*
 }
 
 //////////////////////////////////////////
-auto Instance::evaluateModule(Module& module_) -> void
+auto Instance::analyzeModule(Module& module_, ModuleAnalysisSettings settings_) -> void
 {
 	auto prevModule = currentModule;
 	currentModule = &module_;
@@ -99,6 +104,61 @@ auto Instance::evaluateModule(Module& module_) -> void
 	if (prevModule) {
 		currentModule = prevModule;
 	}
+}
+
+void setupDefaultConversions(Instance& vm_, Scope& scope_)
+{
+	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
+		addTypeConversion(vm_, scope_, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
+
+	// Int16 -> floats
+	ADD_CONVERSION(int16_t,	Int16,		Float32);
+	ADD_CONVERSION(int16_t,	Int16,		Float64);
+
+	// Int32 -> floats
+	ADD_CONVERSION(int32_t,	Int32,		Float32);
+	ADD_CONVERSION(int32_t,	Int32,		Float64);
+
+	// Int64 -> floats
+	ADD_CONVERSION(int64_t,	Int64,		Float32);
+	ADD_CONVERSION(int64_t,	Int64,		Float64);
+
+	// Float32 -> ints
+	ADD_CONVERSION(float,	Float32,	Int16);
+	ADD_CONVERSION(float,	Float32,	Int32);
+	ADD_CONVERSION(float,	Float32,	Int64);
+
+	// Float64 -> ints
+	ADD_CONVERSION(double,	Float64,	Int16);
+	ADD_CONVERSION(double,	Float64,	Int32);
+	ADD_CONVERSION(double,	Float64,	Int64);
+
+	// Ints -> Char
+	ADD_CONVERSION(int16_t,	Int16,		Char);
+	ADD_CONVERSION(int32_t,	Int32,		Char);
+	ADD_CONVERSION(int64_t,	Int64,		Char);
+
+	// Char -> Ints
+	ADD_CONVERSION(char, 	Char,		Int16);
+	ADD_CONVERSION(char, 	Char,		Int32);
+	ADD_CONVERSION(char, 	Char,		Int64);
+
+	// Integer types -> Bool
+	ADD_CONVERSION(char, 	Char,		Bool);
+	ADD_CONVERSION(int16_t,	Int16,		Bool);
+	ADD_CONVERSION(int32_t, Int32,		Bool);
+	ADD_CONVERSION(int64_t, Int64,		Bool);
+
+	#undef ADD_CONVERSION
+}
+
+// TODO: move this to a separate file
+auto useEntryPointPath(EntryPoint const& entryPoint) -> fs::path
+{
+	auto current = fs::current_path();
+	fs::current_path(entryPoint.module_->absolutePath.parent_path());
+
+	return current;
 }
 
 //////////////////////////////////////////
@@ -114,7 +174,7 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 
 	// Use its parent path as the working directory
 	// This is important for modules to work properly.
-	fs::current_path(entryPoint.module_->absolutePath.parent_path());
+	auto prevPath = useEntryPointPath(entryPoint);
 
 	stack.container.resize(StackSize);
 	auto& scope = this->scopeOf(nullptr);
@@ -122,36 +182,19 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 	setupUniverseScope(*this, scope);
 	this->pushStackFrameOf(nullptr);
 
-	#define ADD_CONVERSION(FromCppType, FromRigCName, ToRigCName) \
-		addTypeConversion(*this, scope, #FromRigCName, #ToRigCName, builtinConvertOperator_##ToRigCName<FromCppType>)
+	setupDefaultConversions(*this, scope);
 
+	this->analyzeModule(*entryPoint.module_);
 
-	// // Int16 -> floats
-	ADD_CONVERSION(int16_t,	Int16,		Float32);
-	ADD_CONVERSION(int16_t,	Int16,		Float64);
+	this->runFromEntryPoint();
 
-	// // Int32 -> floats
-	ADD_CONVERSION(int32_t,	Int32,		Float32);
-	ADD_CONVERSION(int32_t,	Int32,		Float64);
+	fs::current_path(prevPath);
 
-	// // Int64 -> floats
-	ADD_CONVERSION(int64_t,	Int64,		Float32);
-	ADD_CONVERSION(int64_t,	Int64,		Float64);
+	return 0;
+}
 
-	// // Float32 -> ints
-	ADD_CONVERSION(float,	Float32,	Int16);
-	ADD_CONVERSION(float,	Float32,	Int32);
-	ADD_CONVERSION(float,	Float32,	Int64);
-
-	// // Float64 -> ints
-	ADD_CONVERSION(double,	Float64,	Int16);
-	ADD_CONVERSION(double,	Float64,	Int32);
-	ADD_CONVERSION(double,	Float64,	Int64);
-
-	#undef ADD_CONVERSION
-
-	this->evaluateModule(*entryPoint.module_);
-
+void Instance::runFromEntryPoint()
+{
 	auto mainFuncOv = this->universalScope().findFunction(entryPoint.functionName);
 
 	if (!mainFuncOv)
@@ -163,7 +206,26 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 		throw RigCError("Entry point function \"{}\" cannot be overloaded.", entryPoint.functionName)
 						.withLine(lastEvaluatedLine);
 
+
+
+	this->handleSessionStarted();
+
+	try {
+		this->executeFunction(*(*mainFuncOv)[0]);
+	}
+	catch(...) {
+		this->handleSessionEnded();
+		throw;
+	}
+
+	this->handleSessionEnded();
+}
+
+void Instance::handleSessionStarted()
+{
 #if DEBUG
+	namespace dp = devserver_presets;
+
 	if (onInitializeDevTools) {
 		onInitializeDevTools();
 	}
@@ -173,47 +235,37 @@ auto Instance::run(InstanceSettings const& settings_) -> int
 		std::this_thread::sleep_for(settings->warmupDuration);
 	}
 
-	sendDebugMessage(fmt::format(R"msg(
-{{
-	"type": "stack",
-	"action": "setBaseAddress",
-	"data": "{}"
-}}
-)msg", intptr_t(stack.data())));
-
-	if (settings->waitForConnection)
+	if (g_devServer)
 	{
-		devserverLog("Waiting for debugger to connect...\n");
-		g_devServer->waitForConnection();
-		sendDebugMessage(fmt::format(R"msg(
-{{
-	"type": "session",
-	"action": "started"
-}}
-		)msg"));
 
-		g_devServer->waitForContinue();
+		sendDebugMessage(fmt::format(dp::SetBaseAddressContent, intptr_t(stack.data())));
+
+		if (settings->waitForConnection)
+		{
+			devserverLog("Waiting for debugger to connect...\n");
+			g_devServer->waitForConnection();
+			sendDebugMessage(String(dp::SessionStartedContent));
+
+			g_devServer->waitForContinue();
 
 
-		devserverLog("Execution started...\n");
+			devserverLog("Execution started...\n");
+		}
 	}
 #endif
-
-	this->executeFunction(*(*mainFuncOv)[0]);
-
-#if DEBUG
-		sendDebugMessage(fmt::format(R"msg(
-{{
-	"type": "session",
-	"action": "finished"
-}}
-		)msg"));
-#endif
-
-	return 0;
 }
 
-//////////////////////////////////////////
+
+void Instance::handleSessionEnded()
+{
+#if DEBUG
+	namespace dp = devserver_presets;
+	if (g_devServer)
+	{
+		sendDebugMessage(String(dp::SessionFinishedContent));
+	}
+#endif
+}
 
 #if DEBUG
 
@@ -397,7 +449,7 @@ R"msg(
 		// Runtime function:
 		auto const& fn = *func_.runtimeImpl().node;
 
-		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>())
+		if (fn.is_type<rigc::FunctionDefinition>() || fn.is_type<rigc::MethodDef>() || fn.is_type<rigc::MemberOperatorDef>())
 		{
 			result = this->evaluate( *findElem<rigc::CodeBlock>(fn) );
 		}
@@ -626,10 +678,25 @@ auto Instance::evaluateType(rigc::ParserNode const& typeNode_, Scope* scope_) ->
 		}
 		else if (typeName == "Addr")
 		{
-			auto inner = findElem<rigc::TemplateParam>(*templateParams);
+			auto& inner = *findElem<rigc::TemplateParam>(*templateParams);
 			return constructTemplateType<AddrType>(
 					this->universalScope(),
-					this->evaluateType(*findElem<rigc::Type>(*inner))
+					this->evaluateType(*findElem<rigc::Type>(inner))
+				);
+		}
+		else if (typeName == "Func")
+		{
+			auto args = Array<DeclType, Function::MAX_PARAMS + 1>();
+			for (size_t i = 0; i < templateParams->children.size(); ++i)
+			{
+				args[i] = this->evaluateType(
+					*findElem<rigc::Type>(*templateParams->children[i])
+				);
+			}
+
+			return constructFunctionType(
+					this->universalScope(),
+					viewArray(args, 0, templateParams->children.size())
 				);
 		}
 		else if (typeName == "Array")
@@ -703,6 +770,32 @@ auto Instance::findFunction(StringView name_) -> FunctionCandidates
 	}
 
 	return candidates;
+}
+
+//////////////////////////////////////////
+auto Instance::functionValue(Function const& func_) -> Value
+{
+	auto args = Array<DeclType, Function::MAX_PARAMS + 1>();
+
+	args[0] = func_.returnType;
+	for (size_t i = 0; i < func_.paramCount; ++i)
+		args[i + 1] = func_.params[i].type;
+
+	auto type = constructFunctionType(this->universalScope(), viewArray(args, 0, func_.paramCount + 1));
+
+	return this->allocateOnStack(type, &func_);
+}
+
+//////////////////////////////////////////
+auto Instance::getIdentifierType(StringView name_) const -> Opt<Identifier::Type>
+{
+	for (auto it = stack.frames.rbegin(); it != stack.frames.rend(); ++it)
+	{
+		if (auto result = it->scope->getIdentifierType(name_))
+			return *result;
+	}
+
+	return std::nullopt;
 }
 
 //////////////////////////////////////////

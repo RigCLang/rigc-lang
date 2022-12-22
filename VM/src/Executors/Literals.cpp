@@ -73,29 +73,56 @@ auto evaluateCharLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptVal
 	return vm_.allocateOnStack( vm_.builtinTypes.Char.shared(), c );
 }
 
-// ////////////////////////////////////////
-// auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
-// {
-// 	std::vector<Value> arr;
-// 	arr.reserve(expr_.children.size());
+bool copyConstructOn(Instance&, Value, Value const&);
 
-// 	for (auto const& c : expr_.children)
-// 	{
-// 		arr.push_back( vm_.evaluate(*c).value() );
-// 	}
+////////////////////////////////////////
+auto evaluateArrayLiteral(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
+{
 
-// 	Value v( std::move(arr) );
+	if (expr_.children.empty())
+	{
+		// TODO: add support for an empty literal
+		throw RigCError("Cannot deduce array type from an empty literal");
+	}
 
-// 	// vm_.stack.push( v );
-// 	return v;
-// }
+	auto outArray = Value();
+	auto elementType = DeclType();
 
-// ////////////////////////////////////////
-// auto evaluateArrayElement(Instance &vm_, rigc::ParserNode const& expr_) -> OptValue
-// {
-// 	Value v( vm_.evaluate(*expr_.children[0]).value() );
+	for (size_t i = 0; i < expr_.children.size(); ++i)
+	{
+		auto v = vm_.evaluate(*expr_.children[i]).value();
 
-// 	// vm_.stack.push( v );
-// 	return v;
-// }
+		if (i == 0)
+		{
+			elementType = v.type;
+			outArray = vm_.allocateOnStack( vm_.arrayOf(*v.type, expr_.children.size()), nullptr, expr_.children.size() );
+		}
+		else
+		{
+			if (v.type != elementType)
+			{
+				throw RigCError("Mismatch between elements inside the array literal: {} is not directly assignable to {}",
+						v.type->name(), elementType->name()
+					)
+					.withHelp(
+						"The type of the array literal is deduced from the first element. Try using a cast, i.e.:\n"
+						"\t[ 4, 13, 'c' as Int32 ]"
+					);
+			}
+		}
+
+		auto buf = &outArray.view<char>();
+		auto inplaceValue = Value();
+		inplaceValue.type = v.type;
+		inplaceValue.data = buf + (i * v.type->size());
+
+		if (!copyConstructOn(vm_, inplaceValue, v))
+		{
+			std::memcpy(inplaceValue.data, v.data, v.type->size());
+		}
+	}
+
+	return vm_.allocateReference(outArray);
+}
+
 }

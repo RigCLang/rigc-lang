@@ -52,6 +52,8 @@ private:
 	auto tryFindEarlyBoundFunction(Action& action_, FunctionCandidates& candidates_) -> bool;
 	auto tryFindEarlyBoundMethod(Action& action_, FunctionCandidates& candidates_, OptValue& self_, StringView& functionName_) -> bool;
 
+	auto tryGenerateMethod(OptValue self, StringView fnName, Span< DeclType > reqParamTypes) -> Function const*;
+
 	DynArray<Action> actions;
 };
 

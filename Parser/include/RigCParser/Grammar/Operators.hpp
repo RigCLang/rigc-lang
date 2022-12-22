@@ -14,6 +14,41 @@ struct PrefixOperator;
 struct PostfixOperator;
 struct ListOfFunctionArguments;
 
+#define OP_NAME(...) p::string<__VA_ARGS__>
+
+struct OverridableOperatorNames : p::sor<
+		OP_NAME('+','='),
+		OP_NAME('-','='),
+		OP_NAME('*','='),
+		OP_NAME('/','='),
+		OP_NAME('%','='),
+
+		OP_NAME('<','='),
+		OP_NAME('>','='),
+		OP_NAME('<'),
+		OP_NAME('>'),
+		OP_NAME('!','='),
+		OP_NAME('=','='),
+
+		OP_NAME('='),
+
+		OP_NAME('+'),
+		OP_NAME('-'),
+		OP_NAME('*'),
+		OP_NAME('/'),
+		OP_NAME('%'),
+
+		OP_NAME('p','r','e','+','+'),
+		OP_NAME('p','r','e','-','-'),
+
+		OP_NAME('p','o','s','t','+','+'),
+		OP_NAME('p','o','s','t','-','-'),
+
+		OP_NAME('a','s')
+	> {};
+
+#undef OP_NAME
+
 // Pointer and reference operators
 //// Prefix
 struct DereferenceOp	: p::one	<'*'> {};
@@ -33,7 +68,7 @@ struct DotOp			: p::string	<'.'> {};
 
 // Subscript operator
 //// Postfix
-struct SubscriptOp		: p::seq	< p::one<'['>, OptWs, Expression, OptWs, p::one<']'> > {};
+struct SubscriptOp		: p::seq	< p::one<'['>, OptWs, ListOfFunctionArguments, OptWs, p::one<']'> > {};
 
 //// Postfix
 struct FunctionCallOp	: p::seq	< p::one<'('>, OptWs, ListOfFunctionArguments, OptWs, p::one<')'> > {};

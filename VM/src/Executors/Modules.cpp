@@ -25,7 +25,7 @@ auto executeImportStatement(Instance &vm_, rigc::ParserNode const& stmt_) -> Opt
 
 	if (auto mod = vm_.parseModule(moduleName))
 	{
-		vm_.evaluateModule(*mod);
+		vm_.analyzeModule(*mod);
 		return {};
 	}
 	throw RigCError("Module {} not found", moduleName)

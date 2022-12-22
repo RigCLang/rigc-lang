@@ -348,7 +348,15 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 			return vm.allocateOnStack<void const*>(rhsType, lhsNoRef.view<void const*>());
 		}
 
-		return vm.tryConvert(lhs, rhsType);
+		if (auto result = vm.tryConvert(lhs, rhsType))
+			return result;
+
+		throw RigCError("No conversion operator found from {} to {}.",
+				lhsNoRef.type->name(),
+				rhsType->name()
+			)
+			.withHelp("Check if the type implements the conversion operator.")
+			.withLine(vm.lastEvaluatedLine);
 	}
 	else
 	{
@@ -378,65 +386,12 @@ auto ExpressionExecutor::evalInfixOperator(StringView op_, Action& lhs_, Action&
 	}
 }
 
-auto executeIncrementDecrement(Instance& vm, StringView op, Value& operand, Operator::Type operatorType) {
-	FunctionParamTypes types;
-	size_t typeIdx = 0;
-	types[typeIdx++] = operand.getType();
-
-	if (auto overloads = vm.universalScope().findOperator(op, operatorType))
-	{
-		if (auto func = findOverload(*overloads, { types.data(), 1 }))
-		{
-			Function::Args args;
-			args[0] = operand;
-			return vm.executeFunction(*func, Function::ArgSpan{ args.data(), 1 }).value();
-		}
-	}
-
-	throw RigCError(
-		"No matching {} operator \"{}\" for argument type: {}.",
-		operatorType == Operator::Type::Postfix ? "postfix" : "prefix",
-		op,
-		operand.type->name()
-	)
-	.withLine(vm.lastEvaluatedLine);
-}
-
-////////////////////////////////////////
-auto ExpressionExecutor::evalPrefixOperator(StringView op_, Action& rhs_) -> ProcessedAction
+auto tryGetFunctionArguments(rigc::ParserNode const& op_) -> Span<rigc::ParserNodePtr>
 {
-	auto rhs = *this->evalSingleAction(rhs_).as<RuntimeValue>();
-
-	if (op_ == "*")
-	{
-		auto noRef = rhs.safeRemoveRef();
-		auto noPtr = noRef.removePtr();
-		auto ref = vm.allocateReference(noPtr);
-		return ref;
-		// return vm.allocateReference(rhs.safeRemoveRef().removePtr());
-	}
-	else if (op_ == "&")
-	{
-		return vm.allocatePointer(rhs);
-	}
-	else if (op_ == "--" || op_ == "++")
-	{
-		return executeIncrementDecrement(vm, op_, rhs, Operator::Prefix);
-	}
-	else
-		throw RigCError("Invalid prefix operator \"{}\".", op_)
-						.withLine(vm.lastEvaluatedLine);
+	if (auto args = findElem<rigc::ListOfFunctionArguments>(op_, false))
+		return args->children;
 
 	return {};
-}
-
-auto getFunctionArguments(rigc::ParserNode const& op_) -> Span<rigc::ParserNodePtr>
-{
-	auto args = findElem<rigc::ListOfFunctionArguments>(op_, false);
-
-	assert(args && "getFunctionArguments called with invalid operator.");
-
-	return args->children;
 }
 
 ////////////////////////////////////////
@@ -455,39 +410,6 @@ size_t evaluateFunctionArguments(
 		++count;
 	}
 	return count;
-}
-
-////////////////////////////////////////
-auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction
-{
-	auto op = op_.string_view();
-	if (op[0] == '[') // array access
-	{
-		auto lhs = *this->evalSingleAction(lhs_).as<RuntimeValue>();
-
-		auto& expr = *findElem<rigc::Expression>(op_, false);
-		auto data = lhs.safeRemoveRef();
-
-		auto index		= vm.evaluate(expr)->safeRemoveRef();
-		auto elemType	= data.type->decay();
-
-		Value elem;
-		elem.data = (char*)data.data + index.view<int>() * elemType->size();
-		elem.type = elemType;
-
-		return vm.allocateReference(elem);
-	}
-	else if (op[0] == '(') // function call
-	{
-		return this->evalGenericPostfixOperator(op_, lhs_);
-	}
-	else if (op == "--" || op == "++")
-	{
-		auto lhs = *this->evalSingleAction(lhs_).as<RuntimeValue>();
-		return executeIncrementDecrement(vm, op, lhs, Operator::Postfix);
-	}
-
-	return {};
 }
 
 auto ExpressionExecutor::tryFindEarlyBoundFunction(Action& action_, FunctionCandidates& candidates_) -> bool
@@ -563,51 +485,141 @@ void handleNoMatchingFunction(Instance& vm, StringView fnName, FunctionParamType
 					.withLine(vm.lastEvaluatedLine);
 }
 
+auto ExpressionExecutor::tryGenerateMethod(OptValue self, StringView fnName, Span< DeclType > reqParamTypes) -> Function const*
+{
+	if (self)
+	{
+		// Try generate method from method template inside the class type of `self`.
+		if (auto classType = self->getClass())
+		{
+			return vm.scopeOf(classType->declaration).tryGenerateFunction(vm, fnName, reqParamTypes);
+		}
+	}
+	return nullptr;
+}
+
+auto operatorName(rigc::ParserNode const& op_) -> StringView
+{
+	auto op = op_.string_view();
+
+	if (op[0] == '(') return "()";
+	else if (op[0] == '[') return "[]";
+	else
+		return op;
+}
+
+auto executeIncrementDecrement(Instance& vm, StringView op, Value& operand, Operator::Type operatorType) {
+	FunctionParamTypes types;
+	size_t typeIdx = 0;
+	types[typeIdx++] = operand.getType();
+
+	if (auto overloads = vm.universalScope().findOperator(op, operatorType))
+	{
+		if (auto func = findOverload(*overloads, { types.data(), 1 }))
+		{
+			Function::Args args;
+			args[0] = operand;
+			return vm.executeFunction(*func, Function::ArgSpan{ args.data(), 1 }).value();
+		}
+	}
+
+	throw RigCError(
+		"No matching {} operator \"{}\" for argument type: {}.",
+		operatorType == Operator::Type::Postfix ? "postfix" : "prefix",
+		op,
+		operand.type->name()
+	)
+	.withLine(vm.lastEvaluatedLine);
+}
+
+////////////////////////////////////////
+auto ExpressionExecutor::evalPrefixOperator(StringView op_, Action& rhs_) -> ProcessedAction
+{
+	auto rhs = *this->evalSingleAction(rhs_).as<RuntimeValue>();
+
+	if (op_ == "*")
+	{
+		auto noRef = rhs.safeRemoveRef();
+		auto noPtr = noRef.removePtr();
+		auto ref = vm.allocateReference(noPtr);
+		return ref;
+		// return vm.allocateReference(rhs.safeRemoveRef().removePtr());
+	}
+	else if (op_ == "&")
+	{
+		return vm.allocatePointer(rhs);
+	}
+	else if (op_ == "--" || op_ == "++")
+	{
+		return executeIncrementDecrement(vm, op_, rhs, Operator::Prefix);
+	}
+	else
+		throw RigCError("Invalid prefix operator \"{}\".", op_)
+						.withLine(vm.lastEvaluatedLine);
+
+	return {};
+}
+
+////////////////////////////////////////
+auto ExpressionExecutor::evalPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction
+{
+	auto op = op_.string_view();
+	if (op[0] == '(' || op[0] == '[' || op == "--" || op == "++")
+	{
+		return this->evalGenericPostfixOperator(op_, lhs_);
+	}
+	else
+	{
+		throw RigCError("Invalid postfix operator \"{}\".", op)
+				.withLine(vm.lastEvaluatedLine);
+	}
+
+	return {};
+}
+
+
 ////////////////////////////////////////
 auto ExpressionExecutor::evalGenericPostfixOperator(rigc::ParserNode const& op_, Action& lhs_) -> ProcessedAction
 {
-	// Note: this function uses a special case for Func<Ts...>::operator()
-	// to support function calls for the moment.
-	// TODO: Generate proper operator() in the future.
-
-	// func operator()(func: Func<R, T1, T2, ...>, arg1: T1, arg2: T2, ...) -> R {
-	//		return vm_.evaluateFunction(func, arg1, arg2, ...);
-	// }
-
-	// func(arg1, arg2)			-> funkcja to `func`
-	// func(arg1, arg2)			-> funkcja to `operator()(self: type_of(func), arg1, arg2)`
-	// variable(arg1, arg2)		-> funkcja to `operator()(self: type_of(variable), arg1, arg2)`
-	// variable[arg1, arg2]		-> funkcja to `operator[](self: type_of(variable), arg1, arg2)`
-	// variable.func()			-> funkcja to `func`
-	// variable++				-> funkcja to `operator++(self: type_of(variable))`
-	// variable Op				-> funkcja to `operator Op(self: type_of(variable))`
-
-
-	auto usesEarlyBinding	= false;
 	auto candidates			= FunctionCandidates();
 	auto self				= OptValue();
-	auto fnName				= StringView();
+	auto opName				= operatorName(op_);
+	auto supportOverloadRes	= false;
 
-	if (this->tryFindEarlyBoundFunction(lhs_, candidates))
+	auto ident				= lhs_.is<PendingAction>() ? findElem<rigc::Name>(*lhs_.as<PendingAction>()) : nullptr;
+	auto identName			= ident ? ident->string_view() : StringView();
+	auto identKind			= vm.getIdentifierType(identName);
+
+	if (lhs_.is<PendingAction>())
 	{
-		usesEarlyBinding = true;
-	}
-	else if (this->tryFindEarlyBoundMethod(lhs_, candidates, self, fnName))
-	{
-		usesEarlyBinding = true;
-	}
-	else {
-		throw std::logic_error("Late binding not implemented yet.");
-
-		/// The function call has to be resolved at runtime.
-		/// TODO: support passing function as an argument.
-
-		auto lhs = *this->evalSingleAction(lhs_).as<RuntimeValue>();
-		auto funcVal = lhs.safeRemoveRef();
-
-		if (funcVal.type->is<FuncType>())
+		// Function or TypeName because you can call type constructor using: TypeName()
+		if ((identKind == Identifier::Function || identKind == Identifier::TypeName) && opName == "()")
 		{
-			candidates.push_back( { &vm.scopeOf(nullptr), funcVal.view<FunctionOverloads const*>() } );
+			if (this->tryFindEarlyBoundFunction(lhs_, candidates))
+			{
+				// Early binding was successful.
+				// Multiple overloads could now be inside `candidates`.
+				supportOverloadRes = true;
+			}
+		}
+	}
+	else if (this->tryFindEarlyBoundMethod(lhs_, candidates, self, identName))
+	{
+		supportOverloadRes = true;
+	}
+
+	if (!supportOverloadRes && identKind != Identifier::FunctionTemplate)
+	{
+		// There is still chance for early binding but with no overload resolution.
+		self = lhs_.is<PendingAction>() ?
+			this->evalSingleAction(lhs_).as<RuntimeValue>()
+			:
+			lhs_.as<ProcessedAction>().as<RuntimeValue>();
+
+		if (auto ops = vm.universalScope().findOperator(opName, Operator::Postfix))
+		{
+			// fmt::print("Using the builtin operator{} found.\n", opName);
+			candidates.push_back( { &vm.universalScope(), ops } );
 		}
 	}
 
@@ -621,13 +633,16 @@ auto ExpressionExecutor::evalGenericPostfixOperator(rigc::ParserNode const& op_,
 
 	if (self)
 	{
-		evaluatedArgs[0] = vm.allocateReference(*self);
+		// TODO: check why it works.
+		evaluatedArgs[0] = supportOverloadRes ? vm.allocateReference(*self) : *self;
+
 		paramTypes[0] = evaluatedArgs[0].type;
 		++numParams;
 	}
 
-	auto argsNodeList = getFunctionArguments(op_);
-	auto paramCount = evaluateFunctionArguments(
+	auto argsNodeList = tryGetFunctionArguments(op_);
+
+	auto paramCount = argsNodeList.empty() ? 0 : evaluateFunctionArguments(
 			vm, argsNodeList,
 			// Args span:
 			viewArray(evaluatedArgs, NonSelfParamStartIndex),
@@ -641,27 +656,20 @@ auto ExpressionExecutor::evalGenericPostfixOperator(rigc::ParserNode const& op_,
 
 	auto fn = findOverload(candidates, reqParamTypes, self.has_value());
 
-	if (!fn && !fnName.empty())
+	if (!fn && !identName.empty())
 	{
-		// Try generate method from method template inside the class type of `self`.
-		if (self)
-		{
-			if (auto classType = self->getClass())
-			{
-				fn = vm.scopeOf(classType->declaration).tryGenerateFunction(vm, fnName, reqParamTypes);
-			}
-		}
+		fn = this->tryGenerateMethod(self, identName, reqParamTypes);
 
 		// Try generate function from a global function template:
 		if (!fn)
 		{
-			fn = vm.currentScope->tryGenerateFunction(vm, fnName, reqParamTypes);
+			fn = vm.currentScope->tryGenerateFunction(vm, identName, reqParamTypes);
 		}
 	}
 
 	if (!fn)
 	{
-		handleNoMatchingFunction(vm, fnName, paramTypes, numParams);
+		handleNoMatchingFunction(vm, identName, paramTypes, numParams);
 	}
 
 	// Create the object used by the constructor:
