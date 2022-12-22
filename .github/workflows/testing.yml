@@ -45,6 +45,8 @@ jobs:
           export LD_PRELOAD=$GITHUB_WORKSPACE/pacc/bin/libstdc++.so.6
           ../pacc/bin/pacc install
           ../pacc/bin/pacc build --verbose -c=Release --cores=2
+          chmod +x ./bin/x64/Release/VMApp
+          chmod +x ./bin/x64/Release/VMTest
         working-directory: rigc-lang
 
       - name: Run tests
